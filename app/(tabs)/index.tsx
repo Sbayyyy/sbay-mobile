@@ -85,35 +85,31 @@ export default function Home() {
   }, [activeCategory, search]);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Welcome to SBay</Text>
-            <Text style={styles.subtitle}>Find your next favorite item</Text>
-          </View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>SB</Text>
-          </View>
-        </View>
 
-        <View style={styles.searchBar}>
-          <FontAwesome name="search" size={18} color="#6b7280" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search products, brands, or categories"
-            placeholderTextColor="#9ca3af"
-            value={search}
-            onChangeText={setSearch}
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")}>
-              <FontAwesome name="times" size={16} color="#9ca3af" />
-            </TouchableOpacity>
-          )}
+        <View style={styles.searchRow}>
+          <View style={styles.searchBar}>
+            <FontAwesome name="search" size={18} color="#6b7280" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search products, brands, or categories"
+              placeholderTextColor="#9ca3af"
+              value={search}
+              onChangeText={setSearch}
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch("")}>
+                <FontAwesome name="times" size={16} color="#9ca3af" />
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity style={styles.notificationButton}>
+            <FontAwesome name="bell-o" size={20} color="#1d4ed8" />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.sectionHeader}>
@@ -190,6 +186,7 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: "#f9fafb",
+    paddingTop: 12,
   },
   scrollContent: {
     paddingBottom: 32,
@@ -226,7 +223,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   searchBar: {
-    marginHorizontal: 20,
+    flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 16,
@@ -240,10 +237,29 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+  searchRow: {
+    marginHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
   searchInput: {
     flex: 1,
     fontSize: 15,
     color: "#111827",
+  },
+  notificationButton: {
+    width: 55,
+    height: 65,
+    borderRadius: 16,
+    backgroundColor: "#ffffffff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#111827",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   sectionHeader: {
     marginTop: 24,
