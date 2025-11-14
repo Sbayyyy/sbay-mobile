@@ -1,37 +1,40 @@
 import { useMemo, useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ScrollView,
-  View,
-  Text,
   StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { AppScreen } from "@/components/layout/AppScreen";
+import { ChipPicker } from "@/components/form/ChipPicker";
+import {
+  ADD_LISTING_CATEGORIES,
+  CURRENCY_OPTIONS,
+  LISTING_CONDITIONS,
+  PHOTO_SLOTS,
+} from "@/constants/mockData";
 
-const categories = [
-  { id: "electronics", label: "Electronics" },
-  { id: "fashion", label: "Fashion" },
-  { id: "home", label: "Home" },
-  { id: "sports", label: "Sports" },
-  { id: "toys", label: "Toys" },
-];
+const currencyOptions = Array.from(CURRENCY_OPTIONS).map((item) => ({
+  id: item,
+  label: item,
+}));
 
-const conditions = ["New", "Like New", "Good", "Fair"];
-
-const currencyOptions = ["SYP", "USD", "EUR"];
-
-const photoSlots = Array.from({ length: 5 }, (_, index) => index + 1);
+const conditionOptions = Array.from(LISTING_CONDITIONS).map((item) => ({
+  id: item,
+  label: item,
+}));
 
 export default function AddListingScreen() {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
-  const [category, setCategory] = useState(categories[0].id);
-  const [condition, setCondition] = useState(conditions[0]);
+  const [category, setCategory] = useState(ADD_LISTING_CATEGORIES[0].id);
+  const [condition, setCondition] = useState(conditionOptions[0].id);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
-  const [currency, setCurrency] = useState(currencyOptions[0]);
+  const [currency, setCurrency] = useState(currencyOptions[0].id);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isFormValid = useMemo(() => {
@@ -39,176 +42,113 @@ export default function AddListingScreen() {
   }, [price, title]);
 
   const handleSubmit = () => {
-    if (!isFormValid || isSubmitting) {
-      return;
-    }
-
+    if (!isFormValid || isSubmitting) return;
     setIsSubmitting(true);
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-    }, 1500);
+    setTimeout(() => setIsSubmitting(false), 1500);
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
+    <AppScreen backgroundColor="#f9fafb">
       <View style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-        <View style={styles.header}>
-          <Text style={styles.title}>Create a listing</Text>
-          <Text style={styles.subtitle}>
-            Add details so people can find and buy your item.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Photos</Text>
-            <Text style={styles.sectionHint}>Add up to 5 photos</Text>
+          <View style={styles.header}>
+            <Text style={styles.title}>Create a listing</Text>
+            <Text style={styles.subtitle}>
+              Add details so people can find and buy your item.
+            </Text>
           </View>
-          <View style={styles.photoGrid}>
-            {photoSlots.map((slot) => (
-              <TouchableOpacity key={slot} style={styles.photoSlot}>
-                <FontAwesome name="camera" size={20} color="#6b7280" />
-                <Text style={styles.photoSlotLabel}>Add</Text>
-              </TouchableOpacity>
-            ))}
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Photos</Text>
+              <Text style={styles.sectionHint}>Add up to 5 photos</Text>
+            </View>
+            <View style={styles.photoGrid}>
+              {PHOTO_SLOTS.map((slot) => (
+                <TouchableOpacity key={slot} style={styles.photoSlot}>
+                  <FontAwesome name="camera" size={20} color="#6b7280" />
+                  <Text style={styles.photoSlotLabel}>Add</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.inputLabel}>Listing title</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Vintage record player"
-            placeholderTextColor="#9ca3af"
-            value={title}
-            onChangeText={setTitle}
-          />
-        </View>
-
-        <View style={[styles.section, styles.row]}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.inputLabel}>Price</Text>
+          <View style={styles.section}>
+            <Text style={styles.inputLabel}>Listing title</Text>
             <TextInput
               style={styles.input}
-              placeholder="$120"
+              placeholder="e.g. Vintage record player"
               placeholderTextColor="#9ca3af"
-              keyboardType="decimal-pad"
-              value={price}
-              onChangeText={setPrice}
+              value={title}
+              onChangeText={setTitle}
             />
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.inputLabel}>Location</Text>
+
+          <View style={[styles.section, styles.row]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.inputLabel}>Price</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="$120"
+                placeholderTextColor="#9ca3af"
+                keyboardType="decimal-pad"
+                value={price}
+                onChangeText={setPrice}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.inputLabel}>Location</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="City, Country"
+                placeholderTextColor="#9ca3af"
+                value={location}
+                onChangeText={setLocation}
+              />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <ChipPicker
+              label="Category"
+              options={ADD_LISTING_CATEGORIES}
+              value={category}
+              onChange={setCategory}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <ChipPicker
+              label="Condition"
+              options={conditionOptions}
+              value={condition}
+              onChange={setCondition}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <ChipPicker
+              label="Currency"
+              options={currencyOptions}
+              value={currency}
+              onChange={setCurrency}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.inputLabel}>Description</Text>
             <TextInput
-              style={styles.input}
-              placeholder="City, Country"
+              style={[styles.input, styles.descriptionInput]}
+              placeholder="Add details buyers should know"
               placeholderTextColor="#9ca3af"
-              value={location}
-              onChangeText={setLocation}
+              value={description}
+              onChangeText={setDescription}
+              multiline
             />
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.inputLabel}>Currency</Text>
-          <View style={styles.chipRow}>
-            {currencyOptions.map((item) => {
-              const isActive = currency === item;
-              return (
-                <TouchableOpacity
-                  key={item}
-                  style={[styles.chip, isActive && styles.chipActive]}
-                  onPress={() => setCurrency(item)}
-                >
-                  <Text
-                    style={[
-                      styles.chipLabel,
-                      isActive && styles.chipLabelActive,
-                    ]}
-                  >
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.inputLabel}>Category</Text>
-          <View style={styles.chipRow}>
-            {categories.map((item) => {
-              const isActive = category === item.id;
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.chip,
-                    isActive && styles.chipActive,
-                  ]}
-                  onPress={() => setCategory(item.id)}
-                >
-                  <Text
-                    style={[
-                      styles.chipLabel,
-                      isActive && styles.chipLabelActive,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.inputLabel}>Condition</Text>
-          <View style={styles.chipRow}>
-            {conditions.map((item) => {
-              const isActive = condition === item;
-              return (
-                <TouchableOpacity
-                  key={item}
-                  style={[
-                    styles.chip,
-                    isActive && styles.chipActive,
-                  ]}
-                  onPress={() => setCondition(item)}
-                >
-                  <Text
-                    style={[
-                      styles.chipLabel,
-                      isActive && styles.chipLabelActive,
-                    ]}
-                  >
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.inputLabel}>Description</Text>
-          <TextInput
-            style={[styles.input, styles.descriptionInput]}
-            placeholder="Describe your item, its condition, and any extras"
-            placeholderTextColor="#9ca3af"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-        </View>
-
         </ScrollView>
 
         <View style={styles.footer}>
@@ -217,38 +157,29 @@ export default function AddListingScreen() {
               styles.submitButton,
               (!isFormValid || isSubmitting) && styles.submitDisabled,
             ]}
-            disabled={!isFormValid || isSubmitting}
             onPress={handleSubmit}
+            disabled={!isFormValid || isSubmitting}
           >
             <Text style={styles.submitLabel}>
-              {!isFormValid
-                ? "Add title and price to continue"
-                : isSubmitting
-                ? "Submitting..."
-                : "Publish listing"}
+              {isSubmitting ? "Publishing..." : "Publish listing"}
             </Text>
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#f9fafb",
-  },
   container: {
     flex: 1,
   },
   content: {
     padding: 20,
-    paddingBottom: 32,
-    gap: 24,
+    gap: 16,
   },
   header: {
-    gap: 6,
+    gap: 8,
   },
   title: {
     fontSize: 24,
@@ -322,34 +253,11 @@ const styles = StyleSheet.create({
   },
   descriptionInput: {
     height: 120,
+    textAlignVertical: "top",
   },
   row: {
     flexDirection: "row",
     gap: 12,
-  },
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  chip: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  chipActive: {
-    backgroundColor: "#dbeafe",
-    borderColor: "#2563eb",
-  },
-  chipLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#374151",
-  },
-  chipLabelActive: {
-    color: "#1d4ed8",
   },
   footer: {
     padding: 20,
