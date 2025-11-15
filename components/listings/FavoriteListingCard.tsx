@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { View, StyleSheet } from "react-native";
 import {
   Avatar,
@@ -6,7 +7,11 @@ import {
   Chip,
   Text as PaperText,
 } from "react-native-paper";
+import { useTranslation } from "react-i18next";
+
 import { FavoriteListing } from "@/types/listing";
+import { type ThemeColors } from "@/constants/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 
 type FavoriteListingCardProps = {
   listing: FavoriteListing;
@@ -19,6 +24,9 @@ export function FavoriteListingCard({
   onMessage,
   onMore,
 }: FavoriteListingCardProps) {
+  const theme = useAppTheme();
+  const { t } = useTranslation();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const initials = listing.seller
     .split(" ")
     .map((part) => part[0])
@@ -36,7 +44,7 @@ export function FavoriteListingCard({
             compact
             mode="text"
             icon="dots-horizontal"
-            textColor="#6b7280"
+            textColor={theme.textMuted}
             onPress={() => onMore?.(listing)}
             style={styles.overflowButton}
           > </Button>
@@ -51,17 +59,21 @@ export function FavoriteListingCard({
             {listing.currency} {listing.price}
           </PaperText>
           {listing.priceDrop ? (
-            <Chip compact style={styles.badge} textStyle={styles.badgeLabel}>
+            <Chip
+              compact
+              style={[styles.badge, { backgroundColor: theme.successBackground }]}
+              textStyle={[styles.badgeLabel, { color: theme.success }]}
+            >
               {listing.priceDrop}
             </Chip>
           ) : null}
           {listing.isNew ? (
             <Chip
               compact
-              style={[styles.badge, styles.badgeNew]}
-              textStyle={[styles.badgeLabel, styles.badgeLabelNew]}
+              style={[styles.badge, { backgroundColor: theme.infoBackground }]}
+              textStyle={[styles.badgeLabel, { color: theme.info }]}
             >
-              New
+              {t("favoritesCard.newBadge")}
             </Chip>
           ) : null}
         </View>
@@ -76,7 +88,7 @@ export function FavoriteListingCard({
           <View style={{ flex: 1 }}>
             <PaperText style={styles.sellerName}>{listing.seller}</PaperText>
             <PaperText style={styles.sellerMeta}>
-              Updated {listing.updatedAt}
+              {t("favoritesCard.updated", { time: listing.updatedAt })}
             </PaperText>
           </View>
           <Button
@@ -84,11 +96,11 @@ export function FavoriteListingCard({
             icon="message-outline"
             compact
             style={styles.messageButton}
-            textColor="#1d4ed8"
-            buttonColor="#e0ecff"
+            textColor={theme.chipActiveText}
+            buttonColor={theme.chipActiveBackground}
             onPress={() => onMessage?.(listing)}
           >
-            Message
+            {t("common.actions.message")}
           </Button>
         </View>
       </Card.Content>
@@ -96,87 +108,81 @@ export function FavoriteListingCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 18,
-    overflow: "hidden",
-  },
-  cardImage: {
-    height: 170,
-  },
-  cardBody: {
-    gap: 12,
-    paddingTop: 16,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  overflowButton: {
-    marginTop: -8,
-  },
-  cardTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  cardMeta: {
-    fontSize: 13,
-    color: "#6b7280",
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  cardPrice: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1d4ed8",
-  },
-  badge: {
-    borderRadius: 999,
-    backgroundColor: "#ecfdf5",
-    height: 32,
-  },
-  badgeLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#059669",
-  },
-  badgeNew: {
-    backgroundColor: "#eef2ff",
-  },
-  badgeLabelNew: {
-    color: "#4f46e5",
-  },
-  sellerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  sellerAvatar: {
-    backgroundColor: "#dbeafe",
-  },
-  avatarLabel: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#1d4ed8",
-  },
-  sellerName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  sellerMeta: {
-    fontSize: 13,
-    color: "#6b7280",
-  },
-  messageButton: {
-    borderRadius: 14,
-  },
-});
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      borderRadius: 18,
+      overflow: "hidden",
+      backgroundColor: theme.surface,
+    },
+    cardImage: {
+      height: 170,
+    },
+    cardBody: {
+      gap: 12,
+      paddingTop: 16,
+    },
+    cardHeader: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    overflowButton: {
+      marginTop: -8,
+    },
+    cardTitle: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: "700",
+      color: theme.text,
+    },
+    cardMeta: {
+      fontSize: 13,
+      color: theme.textMuted,
+    },
+    priceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      flexWrap: "wrap",
+    },
+    cardPrice: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: theme.primary,
+    },
+    badge: {
+      borderRadius: 999,
+      height: 32,
+    },
+    badgeLabel: {
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    sellerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    sellerAvatar: {
+      backgroundColor: theme.primaryMuted,
+    },
+    avatarLabel: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: theme.chipActiveText,
+    },
+    sellerName: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: theme.text,
+    },
+    sellerMeta: {
+      fontSize: 13,
+      color: theme.textMuted,
+    },
+    messageButton: {
+      borderRadius: 14,
+    },
+  });

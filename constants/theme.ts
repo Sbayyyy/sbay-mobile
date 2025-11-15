@@ -5,27 +5,51 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const tintColor = '#1d4ed8';
 
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+export const Theme = {
+  colors: {
+    text: '#111827',
+    textSecondary: '#374151',
+    textMuted: '#6b7280',
+    textSubtle: '#9ca3af',
+    background: '#f9fafb',
+    surface: '#ffffff',
+    surfaceMuted: '#f3f4f6',
+    border: '#e5e7eb',
+    hairline: '#f3f4f6',
+    tint: tintColor,
+    icon: tintColor,
+    tabIconDefault: '#9ca3af',
+    tabIconSelected: tintColor,
+    primary: tintColor,
+    primaryMuted: '#dbeafe',
+    primaryForeground: '#ffffff',
+    primarySoftText: '#bfdbfe',
+    success: '#059669',
+    successBackground: '#ecfdf5',
+    info: '#4f46e5',
+    infoBackground: '#eef2ff',
+    warning: '#b45309',
+    warningBackground: '#fff7ed',
+    danger: '#b91c1c',
+    dangerBackground: '#fee2e2',
+    pillBackground: tintColor,
+    pillForeground: '#ffffff',
+    chipBorder: '#e5e7eb',
+    chipBackground: '#ffffff',
+    chipActiveBackground: '#dbeafe',
+    chipActiveText: '#1d4ed8',
+    shadow: 'rgba(17, 24, 39, 0.1)',
+    overlay: 'rgba(15, 23, 42, 0.05)',
+    navigationBackground: '#ffffff',
+    navigationBorder: '#e5e7eb',
+    inputBackground: '#ffffff',
+    inputPlaceholder: '#9ca3af',
   },
 };
+
+export type ThemeColors = typeof Theme.colors;
 
 export const Fonts = Platform.select({
   ios: {

@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useTranslation } from "react-i18next";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ChipPicker } from "@/components/form/ChipPicker";
 import {
@@ -16,26 +17,44 @@ import {
   LISTING_CONDITIONS,
   PHOTO_SLOTS,
 } from "@/constants/mockData";
+import { useAppTheme } from "@/hooks/use-app-theme";
+import { type ThemeColors } from "@/constants/theme";
 
 const currencyOptions = Array.from(CURRENCY_OPTIONS).map((item) => ({
   id: item,
   label: item,
 }));
 
-const conditionOptions = Array.from(LISTING_CONDITIONS).map((item) => ({
-  id: item,
-  label: item,
-}));
+type ConditionId = (typeof LISTING_CONDITIONS)[number];
 
 export default function AddListingScreen() {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState(ADD_LISTING_CATEGORIES[0].id);
-  const [condition, setCondition] = useState(conditionOptions[0].id);
+  const [condition, setCondition] = useState<ConditionId>(LISTING_CONDITIONS[0]);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [currency, setCurrency] = useState(currencyOptions[0].id);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const theme = useAppTheme();
+  const { t } = useTranslation();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const categories = useMemo(() => {
+    return ADD_LISTING_CATEGORIES.map((item) => ({
+      ...item,
+      label: t(item.translationKey ?? `categories.${item.id}`, {
+        defaultValue: item.label,
+      }),
+    }));
+  }, [t]);
+
+  const conditionOptions = useMemo(() => {
+    return Array.from(LISTING_CONDITIONS).map((item) => ({
+      id: item,
+      label: t(`addListing.conditions.${item}`),
+    }));
+  }, [t]);
 
   const isFormValid = useMemo(() => {
     return title.trim().length > 0 && price.trim().length > 0;
@@ -48,40 +67,38 @@ export default function AddListingScreen() {
   };
 
   return (
-    <AppScreen backgroundColor="#f9fafb">
+    <AppScreen>
       <View style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Create a listing</Text>
-            <Text style={styles.subtitle}>
-              Add details so people can find and buy your item.
-            </Text>
+            <Text style={styles.title}>{t("addListing.title")}</Text>
+            <Text style={styles.subtitle}>{t("addListing.subtitle")}</Text>
           </View>
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Photos</Text>
-              <Text style={styles.sectionHint}>Add up to 5 photos</Text>
+              <Text style={styles.sectionTitle}>{t("addListing.photos.title")}</Text>
+              <Text style={styles.sectionHint}>{t("addListing.photos.hint")}</Text>
             </View>
             <View style={styles.photoGrid}>
               {PHOTO_SLOTS.map((slot) => (
                 <TouchableOpacity key={slot} style={styles.photoSlot}>
-                  <FontAwesome name="camera" size={20} color="#6b7280" />
-                  <Text style={styles.photoSlotLabel}>Add</Text>
+                  <FontAwesome name="camera" size={20} color={theme.textMuted} />
+                  <Text style={styles.photoSlotLabel}>{t("addListing.photos.add")}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.inputLabel}>Listing title</Text>
+            <Text style={styles.inputLabel}>{t("addListing.fields.title")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Vintage record player"
-              placeholderTextColor="#9ca3af"
+              placeholder={t("addListing.fields.titlePlaceholder")}
+              placeholderTextColor={theme.inputPlaceholder}
               value={title}
               onChangeText={setTitle}
             />
@@ -89,22 +106,22 @@ export default function AddListingScreen() {
 
           <View style={[styles.section, styles.row]}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.inputLabel}>Price</Text>
+              <Text style={styles.inputLabel}>{t("addListing.fields.price")}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="$120"
-                placeholderTextColor="#9ca3af"
+                placeholder={t("addListing.fields.pricePlaceholder")}
+                placeholderTextColor={theme.inputPlaceholder}
                 keyboardType="decimal-pad"
                 value={price}
                 onChangeText={setPrice}
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.inputLabel}>Location</Text>
+              <Text style={styles.inputLabel}>{t("addListing.fields.location")}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="City, Country"
-                placeholderTextColor="#9ca3af"
+                placeholder={t("addListing.fields.locationPlaceholder")}
+                placeholderTextColor={theme.inputPlaceholder}
                 value={location}
                 onChangeText={setLocation}
               />
@@ -113,8 +130,8 @@ export default function AddListingScreen() {
 
           <View style={styles.section}>
             <ChipPicker
-              label="Category"
-              options={ADD_LISTING_CATEGORIES}
+              label={t("addListing.fields.category")}
+              options={categories}
               value={category}
               onChange={setCategory}
             />
@@ -122,7 +139,7 @@ export default function AddListingScreen() {
 
           <View style={styles.section}>
             <ChipPicker
-              label="Condition"
+              label={t("addListing.fields.condition")}
               options={conditionOptions}
               value={condition}
               onChange={setCondition}
@@ -131,7 +148,7 @@ export default function AddListingScreen() {
 
           <View style={styles.section}>
             <ChipPicker
-              label="Currency"
+              label={t("addListing.fields.currency")}
               options={currencyOptions}
               value={currency}
               onChange={setCurrency}
@@ -139,11 +156,11 @@ export default function AddListingScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.inputLabel}>Description</Text>
+            <Text style={styles.inputLabel}>{t("addListing.fields.description")}</Text>
             <TextInput
               style={[styles.input, styles.descriptionInput]}
-              placeholder="Add details buyers should know"
-              placeholderTextColor="#9ca3af"
+              placeholder={t("addListing.fields.descriptionPlaceholder")}
+              placeholderTextColor={theme.inputPlaceholder}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -161,7 +178,9 @@ export default function AddListingScreen() {
             disabled={!isFormValid || isSubmitting}
           >
             <Text style={styles.submitLabel}>
-              {isSubmitting ? "Publishing..." : "Publish listing"}
+              {isSubmitting
+                ? t("common.actions.publishing")
+                : t("common.actions.publishListing")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -170,119 +189,121 @@ export default function AddListingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-    gap: 16,
-  },
-  header: {
-    gap: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "#6b7280",
-    lineHeight: 20,
-  },
-  section: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#111827",
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    gap: 12,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  sectionHint: {
-    fontSize: 13,
-    color: "#6b7280",
-  },
-  photoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  photoSlot: {
-    width: "30%",
-    aspectRatio: 1,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: "#e5e7eb",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 6,
-  },
-  photoSlotLabel: {
-    fontSize: 13,
-    color: "#6b7280",
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  input: {
-    marginTop: 4,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: "#111827",
-    backgroundColor: "#f9fafb",
-  },
-  descriptionInput: {
-    height: 120,
-    textAlignVertical: "top",
-  },
-  row: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  footer: {
-    padding: 20,
-    paddingBottom: 28,
-    backgroundColor: "#f9fafb",
-  },
-  submitButton: {
-    width: "100%",
-    borderRadius: 16,
-    backgroundColor: "#1d4ed8",
-    paddingVertical: 16,
-    alignItems: "center",
-    shadowColor: "#1d4ed8",
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  submitDisabled: {
-    backgroundColor: "#94a3b8",
-    shadowOpacity: 0,
-  },
-  submitLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-});
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    content: {
+      padding: 20,
+      gap: 16,
+    },
+    header: {
+      gap: 8,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: theme.text,
+    },
+    subtitle: {
+      fontSize: 15,
+      color: theme.textMuted,
+      lineHeight: 20,
+    },
+    section: {
+      backgroundColor: theme.surface,
+      borderRadius: 16,
+      padding: 16,
+      shadowColor: theme.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+      gap: 12,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: theme.text,
+    },
+    sectionHint: {
+      fontSize: 13,
+      color: theme.textMuted,
+    },
+    photoGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 12,
+    },
+    photoSlot: {
+      width: "30%",
+      aspectRatio: 1,
+      borderRadius: 14,
+      borderWidth: 1.5,
+      borderColor: theme.border,
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: theme.surfaceMuted,
+    },
+    photoSlotLabel: {
+      fontSize: 13,
+      color: theme.textMuted,
+    },
+    inputLabel: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: theme.text,
+    },
+    input: {
+      marginTop: 4,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 15,
+      color: theme.text,
+      backgroundColor: theme.surface,
+    },
+    descriptionInput: {
+      height: 120,
+      textAlignVertical: "top",
+    },
+    row: {
+      flexDirection: "row",
+      gap: 12,
+    },
+    footer: {
+      padding: 20,
+      paddingBottom: 28,
+      backgroundColor: theme.background,
+    },
+    submitButton: {
+      width: "100%",
+      borderRadius: 16,
+      backgroundColor: theme.primary,
+      paddingVertical: 16,
+      alignItems: "center",
+      shadowColor: theme.primary,
+      shadowOpacity: 0.25,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 3,
+    },
+    submitDisabled: {
+      backgroundColor: theme.textSubtle,
+      shadowOpacity: 0,
+    },
+    submitLabel: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: theme.primaryForeground,
+    },
+  });

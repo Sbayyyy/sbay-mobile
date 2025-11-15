@@ -1,0 +1,142 @@
+{
+  "common": {
+    "search": "بحث",
+    "actions": {
+      "seeAll": "عرض الكل",
+      "exploreMore": "اكتشف المزيد",
+      "exploreListings": "استكشف الإعلانات",
+      "publishListing": "نشر الإعلان",
+      "publishing": "جارٍ النشر...",
+      "edit": "تعديل",
+      "message": "مراسلة",
+      "logIn": "تسجيل الدخول",
+      "createAccount": "إنشاء حساب",
+      "logout": "تسجيل الخروج"
+    },
+    "placeholders": {
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور"
+    },
+    "empty": {
+      "noMatches": "لا توجد نتائج",
+      "noListings": "لا توجد إعلانات",
+      "noChats": "لا توجد محادثات"
+    }
+  },
+  "categories": {
+    "all": "الكل",
+    "allCategories": "جميع الفئات",
+    "electronics": "إلكترونيات",
+    "fashion": "أزياء",
+    "home": "منزل",
+    "sports": "رياضة",
+    "toys": "ألعاب"
+  },
+  "navigation": {
+    "settings": "الإعدادات",
+    "modalTitle": "نافذة منبثقة",
+    "tabs": {
+      "home": "الرئيسية",
+      "favorites": "المفضلة",
+      "addListing": "إضافة إعلان",
+      "chats": "المحادثات",
+      "me": "حسابي"
+    }
+  },
+  "home": {
+    "searchPlaceholder": "ابحث عن المنتجات أو العلامات التجارية أو الفئات",
+    "categoriesTitle": "الفئات",
+    "recommendedTitle": "مقترحات لك",
+    "emptySubtitle": "جرّب فئة أخرى أو عدّل البحث.",
+    "heroCards": {
+      "hero-1": {
+        "title": "تجديد الأثاث",
+        "action": "تسوق الآن"
+      },
+      "hero-2": {
+        "title": "أساسيات الهواء الطلق",
+        "action": "شاهد العروض"
+      }
+    }
+  },
+  "favorites": {
+    "title": "المفضلة",
+    "subtitle": "تابع انخفاض الأسعار وأعد زيارة العناصر التي تحبها.",
+    "segments": {
+      "all": "كل العناصر",
+      "price": "انخفاضات السعر",
+      "new": "جديد هذا الأسبوع"
+    },
+    "emptyTitle": "لا توجد نتائج الآن",
+    "emptySubtitle": "عدّل عوامل التصفية أو استكشف السوق لحفظ الإعلانات التي تهمك.",
+    "emptyAction": "استكشف الإعلانات"
+  },
+  "favoritesCard": {
+    "newBadge": "جديد",
+    "updated": "تم التحديث {{time}}"
+  },
+  "addListing": {
+    "title": "أنشئ إعلاناً",
+    "subtitle": "أضف التفاصيل ليعثر الناس على منتجك ويشترونه.",
+    "photos": {
+      "title": "الصور",
+      "hint": "أضف حتى 5 صور",
+      "add": "إضافة"
+    },
+    "fields": {
+      "title": "عنوان الإعلان",
+      "titlePlaceholder": "مثال: جهاز تسجيل قديم",
+      "price": "السعر",
+      "pricePlaceholder": "$120",
+      "location": "الموقع",
+      "locationPlaceholder": "المدينة، الدولة",
+      "description": "الوصف",
+      "descriptionPlaceholder": "أضف التفاصيل المهمة للمشتري",
+      "category": "الفئة",
+      "condition": "الحالة",
+      "currency": "العملة"
+    },
+    "conditions": {
+      "new": "جديد",
+      "like_new": "شبه جديد",
+      "good": "جيد",
+      "fair": "مقبول"
+    }
+  },
+  "chats": {
+    "title": "المحادثات",
+    "searchPlaceholder": "ابحث في المحادثات",
+    "emptyTitle": "لا توجد محادثات",
+    "emptySubtitle": "ابدأ محادثة من إعلان أو عدّل البحث."
+  },
+  "profile": {
+    "title": "حسابي",
+    "welcomeBack": "مرحباً بعودتك",
+    "authSubtitle": "سجّل الدخول أو أنشئ حساباً لإدارة إعلاناتك.",
+    "myListings": "إعلاناتي",
+    "emptyListingsSubtitle": "ابدأ بنشر أول عنصر للبيع."
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "items": {
+      "profile": "معلومات الحساب",
+      "account": "إعدادات الحساب",
+      "payments": "طرق الدفع",
+      "notifications": "الإشعارات",
+      "theme": "المظهر",
+      "language": "اللغة",
+      "about": "حول Sbay",
+      "help": "مساعدة"
+    },
+    "placeholderBody": "هنا يمكنك ضبط {{section}}. استبدل هذا النص بالمحتوى أو النماذج الخاصة بهذا القسم.",
+    "language": {
+      "title": "اللغة",
+      "subtitle": "اختر لغة العرض. تُطبق التغييرات فوراً.",
+      "rtlNote": "قد تحتاج بعض تغييرات الاتجاه إلى إعادة تشغيل التطبيق."
+    }
+  },
+  "modal": {
+    "title": "هذه نافذة منبثقة",
+    "cta": "الذهاب إلى الشاشة الرئيسية"
+  }
+}

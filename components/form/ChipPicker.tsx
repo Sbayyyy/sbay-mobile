@@ -6,6 +6,8 @@ import {
   ViewStyle,
 } from "react-native";
 
+import { useAppTheme } from "@/hooks/use-app-theme";
+
 type Option<T extends string> = {
   id: T;
   label: string;
@@ -26,20 +28,36 @@ export function ChipPicker<T extends string>({
   onChange,
   style,
 }: ChipPickerProps<T>) {
+  const theme = useAppTheme();
+
   return (
     <View style={[styles.container, style]}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: theme.text }]}>{label}</Text>
       <View style={styles.row}>
         {options.map((option) => {
           const isActive = value === option.id;
           return (
             <TouchableOpacity
               key={option.id}
-              style={[styles.chip, isActive && styles.chipActive]}
+              style={[
+                styles.chip,
+                {
+                  borderColor: theme.chipBorder,
+                  backgroundColor: theme.chipBackground,
+                },
+                isActive && {
+                  backgroundColor: theme.chipActiveBackground,
+                  borderColor: theme.primary,
+                },
+              ]}
               onPress={() => onChange(option.id)}
             >
               <Text
-                style={[styles.chipLabel, isActive && styles.chipLabelActive]}
+                style={[
+                  styles.chipLabel,
+                  { color: theme.textSecondary },
+                  isActive && { color: theme.chipActiveText },
+                ]}
               >
                 {option.label}
               </Text>
@@ -58,7 +76,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#111827",
   },
   row: {
     flexDirection: "row",
@@ -70,19 +87,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#fff",
-  },
-  chipActive: {
-    backgroundColor: "#dbeafe",
-    borderColor: "#2563eb",
   },
   chipLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#374151",
-  },
-  chipLabelActive: {
-    color: "#1d4ed8",
   },
 });

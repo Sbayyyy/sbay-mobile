@@ -1,15 +1,21 @@
 import { StyleSheet, Text, View } from "react-native";
 
+import { useAppTheme } from "@/hooks/use-app-theme";
+
 type ScreenMessageProps = {
   title: string;
   subtitle?: string;
 };
 
 export function ScreenMessage({ title, subtitle }: ScreenMessageProps) {
+  const theme = useAppTheme();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+      {subtitle ? (
+        <Text style={[styles.subtitle, { color: theme.textMuted }]}>{subtitle}</Text>
+      ) : null}
     </View>
   );
 }
@@ -24,13 +30,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#111827",
     marginBottom: 6,
     textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
-    color: "#6b7280",
     textAlign: "center",
   },
 });

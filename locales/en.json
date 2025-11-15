@@ -1,0 +1,142 @@
+{
+  "common": {
+    "search": "Search",
+    "actions": {
+      "seeAll": "See all",
+      "exploreMore": "Explore more",
+      "exploreListings": "Explore listings",
+      "publishListing": "Publish listing",
+      "publishing": "Publishing...",
+      "edit": "Edit",
+      "message": "Message",
+      "logIn": "Log in",
+      "createAccount": "Create account",
+      "logout": "Log out"
+    },
+    "placeholders": {
+      "email": "Email address",
+      "password": "Password"
+    },
+    "empty": {
+      "noMatches": "No matches",
+      "noListings": "No listings yet",
+      "noChats": "No chats found"
+    }
+  },
+  "categories": {
+    "all": "All",
+    "allCategories": "All categories",
+    "electronics": "Electronics",
+    "fashion": "Fashion",
+    "home": "Home",
+    "sports": "Sports",
+    "toys": "Toys"
+  },
+  "navigation": {
+    "settings": "Settings",
+    "modalTitle": "Modal",
+    "tabs": {
+      "home": "Home",
+      "favorites": "Favorites",
+      "addListing": "Add Listing",
+      "chats": "Chats",
+      "me": "Me"
+    }
+  },
+  "home": {
+    "searchPlaceholder": "Search products, brands, or categories",
+    "categoriesTitle": "Categories",
+    "recommendedTitle": "Recommended for you",
+    "emptySubtitle": "Try another category or adjust your search.",
+    "heroCards": {
+      "hero-1": {
+        "title": "Furniture refresh",
+        "action": "Shop now"
+      },
+      "hero-2": {
+        "title": "Outdoor must-haves",
+        "action": "See deals"
+      }
+    }
+  },
+  "favorites": {
+    "title": "Favorites",
+    "subtitle": "Track price drops and revisit items you love.",
+    "segments": {
+      "all": "All items",
+      "price": "Price drops",
+      "new": "New this week"
+    },
+    "emptyTitle": "No matches right now",
+    "emptySubtitle": "Adjust your filters or explore the marketplace to save listings you care about.",
+    "emptyAction": "Explore listings"
+  },
+  "favoritesCard": {
+    "newBadge": "New",
+    "updated": "Updated {{time}}"
+  },
+  "addListing": {
+    "title": "Create a listing",
+    "subtitle": "Add details so people can find and buy your item.",
+    "photos": {
+      "title": "Photos",
+      "hint": "Add up to 5 photos",
+      "add": "Add"
+    },
+    "fields": {
+      "title": "Listing title",
+      "titlePlaceholder": "e.g. Vintage record player",
+      "price": "Price",
+      "pricePlaceholder": "$120",
+      "location": "Location",
+      "locationPlaceholder": "City, Country",
+      "description": "Description",
+      "descriptionPlaceholder": "Add details buyers should know",
+      "category": "Category",
+      "condition": "Condition",
+      "currency": "Currency"
+    },
+    "conditions": {
+      "new": "New",
+      "like_new": "Like new",
+      "good": "Good",
+      "fair": "Fair"
+    }
+  },
+  "chats": {
+    "title": "Chats",
+    "searchPlaceholder": "Search conversations",
+    "emptyTitle": "No chats found",
+    "emptySubtitle": "Start a conversation from a listing or adjust your search."
+  },
+  "profile": {
+    "title": "My Profile",
+    "welcomeBack": "Welcome back",
+    "authSubtitle": "Log in or create an account to manage your listings.",
+    "myListings": "My listings",
+    "emptyListingsSubtitle": "Start by posting your first item for sale."
+  },
+  "settings": {
+    "title": "Settings",
+    "items": {
+      "profile": "Profile Info",
+      "account": "Account Settings",
+      "payments": "Payment methods",
+      "notifications": "Notifications",
+      "theme": "Theme",
+      "language": "Language",
+      "about": "About Sbay",
+      "help": "Help"
+    },
+    "placeholderBody": "This is where you can configure {{section}}. Replace this placeholder with the actual form or content for this section.",
+    "language": {
+      "title": "Language",
+      "subtitle": "Choose how Sbay appears. Changes apply instantly.",
+      "rtlNote": "Some layout updates may require restarting the app."
+    }
+  },
+  "modal": {
+    "title": "This is a modal",
+    "cta": "Go to home screen"
+  }
+}

@@ -7,6 +7,8 @@ import {
 } from "react-native";
 import { memo } from "react";
 
+import { useAppTheme } from "@/hooks/use-app-theme";
+
 export type FilterChipOption = {
   id: string;
   label: string;
@@ -26,6 +28,8 @@ function HorizontalFilterChipsComponent({
   onSelect,
   style,
 }: HorizontalFilterChipsProps) {
+  const theme = useAppTheme();
+
   return (
     <ScrollView
       horizontal
@@ -37,14 +41,28 @@ function HorizontalFilterChipsComponent({
         return (
           <TouchableOpacity
             key={option.id}
-            style={[styles.chip, isActive && styles.chipActive]}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: theme.chipBackground,
+                borderColor: theme.chipBorder,
+              },
+              isActive && {
+                backgroundColor: theme.chipActiveBackground,
+                borderColor: theme.primary,
+              },
+            ]}
             onPress={() => onSelect(option.id)}
           >
             {option.emoji ? (
               <Text style={styles.emoji}>{option.emoji}</Text>
             ) : null}
             <Text
-              style={[styles.label, isActive && styles.labelActive]}
+              style={[
+                styles.label,
+                { color: theme.text },
+                isActive && { color: theme.chipActiveText },
+              ]}
               numberOfLines={1}
             >
               {option.label}
@@ -69,13 +87,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginHorizontal: 8,
     borderRadius: 16,
-    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  chipActive: {
-    backgroundColor: "#1d4ed8",
-    borderColor: "#1d4ed8",
   },
   emoji: {
     fontSize: 16,
@@ -84,9 +96,5 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#111827",
-  },
-  labelActive: {
-    color: "#fff",
   },
 });

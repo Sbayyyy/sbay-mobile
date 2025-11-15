@@ -1,32 +1,31 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
+
+import { useAppTheme } from "@/hooks/use-app-theme";
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = 60 + insets.bottom;
+  const theme = useAppTheme();
+  const { t } = useTranslation();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarActiveTintColor: "#2563eb",
-        tabBarInactiveTintColor: "#9ca3af",
+        tabBarActiveTintColor: theme.tabIconSelected,
+        tabBarInactiveTintColor: theme.tabIconDefault,
         tabBarStyle: {
           borderTopWidth: 0,
           elevation: 5,
-          backgroundColor: "#ffffff",
+          backgroundColor: theme.navigationBackground,
+          borderTopColor: theme.navigationBorder,
           height: tabBarHeight,
-          paddingBottom: Math.max(insets.bottom, 10),
-          paddingTop: 6,
-          borderRadius: 0,
-          marginHorizontal: 0,
-          marginBottom: 0,
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
+          paddingBottom: Math.max(insets.bottom, 0),
+          paddingTop: 4,
         },
         tabBarLabelStyle: {
           fontSize: 11,
@@ -36,11 +35,10 @@ export default function TabsLayout() {
         },
       }}
     >
-
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: t("navigation.tabs.home"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -50,7 +48,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="favorites"
         options={{
-          title: "Favorites",
+          title: t("navigation.tabs.favorites"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="heart-outline" size={size} color={color} />
           ),
@@ -60,7 +58,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="add_listing"
         options={{
-          title: "Add Listing",
+          title: t("navigation.tabs.addListing"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="add-circle-outline" size={size} color={color} />
           ),
@@ -70,7 +68,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="chats"
         options={{
-          title: "Chats",
+          title: t("navigation.tabs.chats"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubble-outline" size={size} color={color} />
           ),
@@ -80,13 +78,12 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="me"
         options={{
-          title: "Me",
+          title: t("navigation.tabs.me"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />
-
     </Tabs>
   );
 }
