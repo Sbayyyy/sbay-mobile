@@ -15,12 +15,14 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 
 type FavoriteListingCardProps = {
   listing: FavoriteListing;
+  onPress?: (listing: FavoriteListing) => void;
   onMessage?: (listing: FavoriteListing) => void;
   onMore?: (listing: FavoriteListing) => void;
 };
 
 export function FavoriteListingCard({
   listing,
+  onPress,
   onMessage,
   onMore,
 }: FavoriteListingCardProps) {
@@ -35,7 +37,7 @@ export function FavoriteListingCard({
     .toUpperCase();
 
   return (
-    <Card style={styles.card} mode="elevated">
+    <Card style={styles.card} mode="elevated" onPress={() => onPress?.(listing)}>
       <Card.Cover source={{ uri: listing.image }} style={styles.cardImage} />
       <Card.Content style={styles.cardBody}>
         <View style={styles.cardHeader}>

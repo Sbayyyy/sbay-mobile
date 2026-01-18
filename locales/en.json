@@ -43,6 +43,14 @@
       "me": "Me"
     }
   },
+  "listings": {
+    "title": "Listings",
+    "searchPlaceholder": "Search listings",
+    "emptyTitle": "No listings yet",
+    "emptySubtitle": "Try adjusting your search or filters.",
+    "errorTitle": "Unable to load listings",
+    "errorSubtitle": "Please try again."
+  },
   "home": {
     "searchPlaceholder": "Search products, brands, or categories",
     "categoriesTitle": "Categories",
