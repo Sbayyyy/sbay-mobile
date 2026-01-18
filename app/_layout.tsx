@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
 import { useEffect, useMemo } from "react";
+import { LogBox } from "react-native";
 import { MD3LightTheme, PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
 import { useTranslation } from "react-i18next";
@@ -11,8 +12,30 @@ import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { LocalizationProvider } from "../providers/LocalizationProvider";
 
+const ignoredPromiseErrors = [
+  "Unable to activate keep awake",
+  "Unable to activate on awake",
+  "VirtualizedLists should never be nested",
+];
+
+const rejectionTracking = require("promise/setimmediate/rejection-tracking");
+rejectionTracking.disable();
+rejectionTracking.enable({
+  allRejections: true,
+  onUnhandled: (id: number, error: unknown) => {
+    const message = String((error as { message?: string })?.message ?? error);
+    if (ignoredPromiseErrors.some((text) => message.includes(text))) {
+      return;
+    }
+    console.warn(`Unhandled promise rejection (${id})`, error);
+  },
+  onHandled: () => {},
+});
+
+LogBox.ignoreLogs(ignoredPromiseErrors);
+
 export const unstable_settings = {
-  anchor: "(tabs)",
+  anchor: "sign-in",
 };
 
 export default function RootLayout() {
@@ -64,16 +87,17 @@ function RootLayoutContent() {
   return (
     <PaperProvider theme={paperTheme}>
       <ThemeProvider value={navigationTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="modal"
-            options={{
-              presentation: "modal",
-              title: t("navigation.modalTitle"),
-            }}
-          />
-        </Stack>
+<Stack screenOptions={{ headerShown: false }}>
+  <Stack.Screen name="sign-in" />
+  <Stack.Screen name="(tabs)" />
+  <Stack.Screen
+    name="modal"
+    options={{
+      presentation: "modal",
+      title: t("navigation.modalTitle"),
+    }}
+  />
+</Stack>
         <StatusBar style={statusStyle} translucent backgroundColor="transparent" />
       </ThemeProvider>
     </PaperProvider>

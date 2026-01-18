@@ -8,9 +8,10 @@ type SearchBarProps = {
   value: string;
   onChange: (text: string) => void;
   placeholder?: string;
+  onSubmit?: () => void;
 };
 
-export function SearchBar({ value, onChange, placeholder }: SearchBarProps) {
+export function SearchBar({ value, onChange, placeholder, onSubmit }: SearchBarProps) {
   const theme = useAppTheme();
   const { t } = useTranslation();
   const resolvedPlaceholder = placeholder ?? t("common.search");
@@ -33,6 +34,8 @@ export function SearchBar({ value, onChange, placeholder }: SearchBarProps) {
           placeholderTextColor={theme.inputPlaceholder}
           value={value}
           onChangeText={onChange}
+          returnKeyType="search"
+          onSubmitEditing={onSubmit}
         />
         {value.length > 0 ? (
           <TouchableOpacity onPress={() => onChange("")}>
