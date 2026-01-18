@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { Chip, Surface, Text as PaperText } from "react-native-paper";
 import { useTranslation } from "react-i18next";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -21,14 +27,19 @@ export default function FavoritesScreen() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [favorites, setFavorites] = useState<ApiListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
   const handlePlaceholder = () => {};
 
-  const loadFavorites = useCallback(() => {
+  const loadFavorites = useCallback((mode: "initial" | "refresh" = "initial") => {
     let isMounted = true;
-    setLoading(true);
+    if (mode === "refresh") {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     getStoredToken()
       .then((token) => {
@@ -36,6 +47,7 @@ export default function FavoritesScreen() {
           if (!isMounted) return;
           setFavorites([]);
           setLoading(false);
+          setRefreshing(false);
           return;
         }
         return getFavorites()
@@ -52,12 +64,14 @@ export default function FavoritesScreen() {
           .finally(() => {
             if (!isMounted) return;
             setLoading(false);
+            setRefreshing(false);
           });
       })
       .catch(() => {
         if (!isMounted) return;
         setFavorites([]);
         setLoading(false);
+        setRefreshing(false);
       });
     return () => {
       isMounted = false;
@@ -110,17 +124,19 @@ export default function FavoritesScreen() {
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadFavorites("refresh")}
+            tintColor={theme.primary}
+          />
+        }
       >
         <View style={styles.header}>
           <View>
             <PaperText style={styles.title}>{t("favorites.title")}</PaperText>
             <PaperText style={styles.subtitle}>{t("favorites.subtitle")}</PaperText>
           </View>
-          <Surface style={styles.countPill} elevation={3}>
-            <PaperText style={styles.countLabel}>
-              {favorites.length}
-            </PaperText>
-          </Surface>
         </View>
 
         <ScrollView

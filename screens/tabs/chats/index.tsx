@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,7 +11,7 @@ import {
 } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useTranslation } from "react-i18next";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { AppScreen } from "@/components/layout/AppScreen";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -32,6 +33,7 @@ export default function ChatsScreen() {
   const [search, setSearch] = useState("");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const theme = useAppTheme();
   const { t } = useTranslation();
@@ -55,12 +57,16 @@ export default function ChatsScreen() {
     return date.toLocaleDateString();
   };
 
-  useEffect(() => {
+  const loadChats = useCallback((mode: "initial" | "refresh" = "initial") => {
     let isMounted = true;
 
-    const loadChats = async () => {
+    const run = async () => {
       try {
-        setLoading(true);
+        if (mode === "refresh") {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
         setError(null);
 
         const profile = await getMyProfile();
@@ -102,13 +108,13 @@ export default function ChatsScreen() {
           }),
         );
 
-        const lastMessages = await Promise.all(
+        const chatMessageSets = await Promise.all(
           chats.map(async (chat) => {
             try {
-              const messages = await getMessages(chat.id, 1);
-              return messages[0] ?? null;
+              const messages = await getMessages(chat.id, 50);
+              return { chatId: chat.id, messages };
             } catch {
-              return null;
+              return { chatId: chat.id, messages: [] };
             }
           }),
         );
@@ -117,7 +123,16 @@ export default function ChatsScreen() {
           const otherUserId =
             chat.buyerId === profile.id ? chat.sellerId : chat.buyerId;
 
-          const lastMessage = lastMessages[index];
+          const messageSet = chatMessageSets.find((item) => item.chatId === chat.id);
+          const messages = messageSet?.messages ?? [];
+          const lastMessage =
+            messages.reduce<typeof messages[number] | null>((latest, msg) => {
+              if (!latest) return msg;
+              return new Date(msg.createdAt) > new Date(latest.createdAt) ? msg : latest;
+            }, null) ?? null;
+          const unread = messages.filter(
+            (msg) => msg.receiverId === profile.id && !msg.isRead,
+          ).length;
 
           const timestamp =
             lastMessage?.createdAt ??
@@ -135,7 +150,7 @@ export default function ChatsScreen() {
               lastMessage?.content ??
               t("chats.noMessages", { defaultValue: "No messages yet." }),
             timestamp: formatRelativeTime(timestamp),
-            unread: 0,
+            unread,
           };
         });
 
@@ -147,14 +162,31 @@ export default function ChatsScreen() {
       } finally {
         if (!isMounted) return;
         setLoading(false);
+        setRefreshing(false);
       }
     };
 
-    void loadChats();
+    void run();
     return () => {
       isMounted = false;
     };
   }, [t]);
+
+  useEffect(() => {
+    const cleanup = loadChats("initial");
+    return () => {
+      cleanup?.();
+    };
+  }, [loadChats]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const cleanup = loadChats("refresh");
+      return () => {
+        cleanup?.();
+      };
+    }, [loadChats]),
+  );
 
   const list = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -187,35 +219,80 @@ export default function ChatsScreen() {
         </View>
 
         {loading ? (
-          <View style={styles.loadingState}>
+          <ScrollView
+            contentContainerStyle={styles.loadingState}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => loadChats("refresh")}
+                tintColor={theme.primary}
+              />
+            }
+          >
             <ActivityIndicator size="small" color={theme.primary} />
-          </View>
+          </ScrollView>
         ) : error ? (
-          <View style={styles.emptyState}>
+          <ScrollView
+            contentContainerStyle={styles.emptyState}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => loadChats("refresh")}
+                tintColor={theme.primary}
+              />
+            }
+          >
             <Text style={styles.emptyTitle}>Unable to load chats</Text>
             <Text style={styles.emptySubtitle}>{error}</Text>
-          </View>
+          </ScrollView>
         ) : list.length === 0 ? (
-          <View style={styles.emptyState}>
+          <ScrollView
+            contentContainerStyle={styles.emptyState}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => loadChats("refresh")}
+                tintColor={theme.primary}
+              />
+            }
+          >
             <Text style={styles.emptyTitle}>{t("chats.emptyTitle")}</Text>
             <Text style={styles.emptySubtitle}>{t("chats.emptySubtitle")}</Text>
-          </View>
+          </ScrollView>
         ) : (
-          <ScrollView contentContainerStyle={styles.listContent}>
+          <ScrollView
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => loadChats("refresh")}
+                tintColor={theme.primary}
+              />
+            }
+          >
             {list.map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={styles.threadCard}
                 onPress={() => router.push(`/chats/thread/${item.id}`)}
               >
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarLabel}>
-                    {item.name
-                      .split(" ")
-                      .map((part) => part[0])
-                      .join("")
-                      .toUpperCase()}
-                  </Text>
+                <View style={styles.avatarWrapper}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarLabel}>
+                      {item.name
+                        .split(" ")
+                        .map((part) => part[0])
+                        .join("")
+                        .toUpperCase()}
+                    </Text>
+                  </View>
+                  {item.unread > 0 ? (
+                    <View style={styles.unreadBadge}>
+                      <Text style={styles.unreadLabel}>
+                        {item.unread > 99 ? "99+" : String(item.unread)}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
 
                 <View style={styles.threadBody}>
@@ -229,17 +306,11 @@ export default function ChatsScreen() {
                   </Text>
                 </View>
 
-                {item.unread > 0 ? (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeLabel}>{item.unread}</Text>
-                  </View>
-                ) : (
-                  <FontAwesome
-                    name="chevron-right"
-                    size={14}
-                    color={theme.textSubtle}
-                  />
-                )}
+                <FontAwesome
+                  name="chevron-right"
+                  size={14}
+                  color={theme.textSubtle}
+                />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -311,6 +382,11 @@ const createStyles = (theme: ThemeColors) =>
       alignItems: "center",
       justifyContent: "center",
     },
+    avatarWrapper: {
+      width: 48,
+      height: 48,
+      position: "relative",
+    },
     avatarLabel: {
       fontSize: 16,
       fontWeight: "700",
@@ -343,18 +419,24 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 14,
       color: theme.textSecondary,
     },
-    badge: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: theme.primary,
-      justifyContent: "center",
+    unreadBadge: {
+      position: "absolute",
+      top: -4,
+      right: -4,
+      minWidth: 20,
+      height: 20,
+      paddingHorizontal: 6,
+      borderRadius: 10,
+      backgroundColor: "#E53935",
       alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 2,
+      borderColor: theme.surface,
     },
-    badgeLabel: {
-      color: theme.primaryForeground,
-      fontWeight: "600",
-      fontSize: 13,
+    unreadLabel: {
+      color: "#fff",
+      fontWeight: "700",
+      fontSize: 10,
     },
     emptyState: {
       flex: 1,

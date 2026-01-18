@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -6,6 +6,7 @@ import {
   Modal,
   PanResponder,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -69,6 +70,7 @@ export default function MeScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     displayName: "",
@@ -133,7 +135,7 @@ export default function MeScreen() {
   const [listingsError, setListingsError] = useState<string | null>(null);
   const [listingsLoading, setListingsLoading] = useState(true);
 
-  useEffect(() => {
+  const loadProfile = useCallback(() => {
     let isMounted = true;
     setProfileLoading(true);
     getMyProfile()
@@ -158,6 +160,11 @@ export default function MeScreen() {
   }, []);
 
   useEffect(() => {
+    const cleanup = loadProfile();
+    return () => cleanup?.();
+  }, [loadProfile]);
+
+  useEffect(() => {
     if (!profile) return;
     setFormData({
       displayName: profile.displayName ?? "",
@@ -168,7 +175,7 @@ export default function MeScreen() {
     });
   }, [profile]);
 
-  useEffect(() => {
+  const loadListings = useCallback(() => {
     let isMounted = true;
     setListingsLoading(true);
     getMyListings()
@@ -191,6 +198,42 @@ export default function MeScreen() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const cleanup = loadListings();
+    return () => cleanup?.();
+  }, [loadListings]);
+
+  const handleRefresh = useCallback(() => {
+    if (isEditing) {
+      setRefreshing(false);
+      return;
+    }
+    let isMounted = true;
+    setRefreshing(true);
+    Promise.all([getMyProfile(), getMyListings()])
+      .then(([profileData, listingsData]) => {
+        if (!isMounted) return;
+        setProfile(profileData);
+        setProfileError(null);
+        setListings(listingsData);
+        setListingsError(null);
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        const message =
+          error instanceof Error ? error.message : "Unable to refresh data.";
+        setProfileError(message);
+        setListingsError(message);
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setRefreshing(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [isEditing]);
 
   if (profileLoading) {
     return (
@@ -363,6 +406,13 @@ export default function MeScreen() {
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={theme.primary}
+          />
+        }
       >
         <View style={styles.toolbar}>
           <Text style={styles.screenTitle}>{t("profile.title")}</Text>

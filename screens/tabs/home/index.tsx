@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Image,
   Modal,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -45,6 +46,7 @@ export default function HomeScreen() {
   const [listings, setListings] = useState<ApiListing[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const theme = useAppTheme();
   const { t } = useTranslation();
@@ -60,32 +62,52 @@ export default function HomeScreen() {
     }));
   }, [t]);
 
-  useEffect(() => {
-    let isMounted = true;
-    setLoading(true);
-    setError(null);
-
-    const handle = setTimeout(async () => {
-      try {
-        const data = await searchListings({
-          category: activeCategory === "all" ? undefined : activeCategory,
-        });
-        if (!isMounted) return;
-        setListings(data);
-      } catch (err) {
-        if (!isMounted) return;
-        setError(err instanceof Error ? err.message : t("listings.errorSubtitle"));
-      } finally {
-        if (!isMounted) return;
-        setLoading(false);
+  const loadListings = useCallback(
+    (mode: "initial" | "refresh" = "initial") => {
+      let isMounted = true;
+      if (mode === "refresh") {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
-    }, 300);
+      setError(null);
 
-    return () => {
-      isMounted = false;
-      clearTimeout(handle);
-    };
-  }, [activeCategory, t]);
+      const run = async () => {
+        try {
+          const data = await searchListings({
+            category: activeCategory === "all" ? undefined : activeCategory,
+          });
+          if (!isMounted) return;
+          setListings(data);
+        } catch (err) {
+          if (!isMounted) return;
+          setError(
+            err instanceof Error ? err.message : t("listings.errorSubtitle"),
+          );
+        } finally {
+          if (!isMounted) return;
+          setLoading(false);
+          setRefreshing(false);
+        }
+      };
+
+      const handle = mode === "refresh" ? null : setTimeout(run, 300);
+      if (mode === "refresh") {
+        void run();
+      }
+
+      return () => {
+        isMounted = false;
+        if (handle) clearTimeout(handle);
+      };
+    },
+    [activeCategory, t],
+  );
+
+  useEffect(() => {
+    const cleanup = loadListings("initial");
+    return () => cleanup?.();
+  }, [loadListings]);
 
   const displayListings = useMemo(() => {
     return listings.map((listing) => ({
@@ -120,6 +142,13 @@ export default function HomeScreen() {
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadListings("refresh")}
+              tintColor={theme.primary}
+            />
+          }
         >
           <SectionHeader
             title={t("home.categoriesTitle")}

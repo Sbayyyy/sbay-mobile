@@ -1,6 +1,7 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 
 import { apiRequest } from "@/services/api";
+import { getAuthToken, setAuthToken } from "@/services/auth-session";
 
 export type AuthUser = {
   id: string;
@@ -38,7 +39,7 @@ export async function login(payload: LoginPayload): Promise<AuthResponse> {
     method: "POST",
     body: JSON.stringify(payload),
   });
-  await AsyncStorage.setItem(TOKEN_STORAGE_KEY, response.token);
+  await storeToken(response.token);
   return response;
 }
 
@@ -47,14 +48,28 @@ export async function register(payload: RegisterPayload): Promise<AuthResponse> 
     method: "POST",
     body: JSON.stringify(payload),
   });
-  await AsyncStorage.setItem(TOKEN_STORAGE_KEY, response.token);
+  await storeToken(response.token);
   return response;
 }
 
+export async function storeToken(token: string): Promise<void> {
+  await SecureStore.setItemAsync(TOKEN_STORAGE_KEY, token);
+  setAuthToken(token);
+}
+
 export async function getStoredToken(): Promise<string | null> {
-  return AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+  const cached = getAuthToken();
+  if (cached) return cached;
+  const token = await SecureStore.getItemAsync(TOKEN_STORAGE_KEY);
+  if (token) setAuthToken(token);
+  return token;
 }
 
 export async function logout(): Promise<void> {
-  await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+  await clearStoredToken();
+}
+
+export async function clearStoredToken(): Promise<void> {
+  await SecureStore.deleteItemAsync(TOKEN_STORAGE_KEY);
+  setAuthToken(null);
 }

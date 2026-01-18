@@ -6,6 +6,7 @@ import {
   Image,
   Modal,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -85,6 +86,7 @@ export default function AddListingScreen() {
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [validation, setValidation] = useState({
     title: true,
@@ -188,70 +190,91 @@ export default function AddListingScreen() {
     priceValidator,
   ]);
 
-  useEffect(() => {
-    let isMounted = true;
-    if (!id) return;
-    setIsLoading(true);
-    getListing(id)
-      .then((listing) => {
-        if (!isMounted) return;
-        const nextTitle = listing.title ?? "";
-        const nextDescription = listing.description ?? "";
-        const nextPrice = String(listing.priceAmount ?? "");
-        const nextCategory = listing.categoryPath ?? ADD_LISTING_CATEGORIES[0].id;
-        const matchedDistrict =
-          districtOptions.find(
-            (item) => item.id === listing.region || item.label === listing.region,
-          ) ?? null;
-        const nextLocation = matchedDistrict?.id ?? "";
-        const nextCurrency = listing.priceCurrency ?? currencyOptions[0].id;
-        const nextCondition =
-          conditionFromApi[listing.condition ?? ""] ?? LISTING_CONDITIONS[0];
-        const nextPhotos = Array(PHOTO_SLOTS.length).fill(null) as Array<
-          string | null
-        >;
-        listing.imageUrls?.slice(0, PHOTO_SLOTS.length).forEach((url, index) => {
-          nextPhotos[index] = url;
+  const loadListing = useCallback(
+    (mode: "initial" | "refresh" = "initial") => {
+      let isMounted = true;
+      if (!id) {
+        if (mode === "refresh") setRefreshing(false);
+        return () => {
+          isMounted = false;
+        };
+      }
+
+      if (mode === "refresh") {
+        setRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      getListing(id)
+        .then((listing) => {
+          if (!isMounted) return;
+          const nextTitle = listing.title ?? "";
+          const nextDescription = listing.description ?? "";
+          const nextPrice = String(listing.priceAmount ?? "");
+          const nextCategory = listing.categoryPath ?? ADD_LISTING_CATEGORIES[0].id;
+          const matchedDistrict =
+            districtOptions.find(
+              (item) => item.id === listing.region || item.label === listing.region,
+            ) ?? null;
+          const nextLocation = matchedDistrict?.id ?? "";
+          const nextCurrency = listing.priceCurrency ?? currencyOptions[0].id;
+          const nextCondition =
+            conditionFromApi[listing.condition ?? ""] ?? LISTING_CONDITIONS[0];
+          const nextPhotos = Array(PHOTO_SLOTS.length).fill(null) as Array<
+            string | null
+          >;
+          listing.imageUrls?.slice(0, PHOTO_SLOTS.length).forEach((url, index) => {
+            nextPhotos[index] = url;
+          });
+
+          setTitle(nextTitle);
+          setDescription(nextDescription);
+          setPrice(nextPrice);
+          setCategory(nextCategory);
+          setLocation(nextLocation);
+          setCurrency(nextCurrency);
+          setCondition(nextCondition);
+          setPhotos(nextPhotos);
+          setInitialForm({
+            title: nextTitle,
+            description: nextDescription,
+            price: nextPrice,
+            category: nextCategory,
+            condition: nextCondition,
+            location: nextLocation,
+            currency: nextCurrency,
+            photos: nextPhotos,
+          });
+        })
+        .catch((error) => {
+          if (!isMounted) return;
+          Alert.alert(
+            t("common.errors.title", { defaultValue: "Something went wrong" }),
+            error instanceof Error
+              ? error.message
+              : t("addListing.error", {
+                  defaultValue: "Unable to load listing.",
+                }),
+          );
+        })
+        .finally(() => {
+          if (!isMounted) return;
+          setIsLoading(false);
+          setRefreshing(false);
         });
 
-        setTitle(nextTitle);
-        setDescription(nextDescription);
-        setPrice(nextPrice);
-        setCategory(nextCategory);
-        setLocation(nextLocation);
-        setCurrency(nextCurrency);
-        setCondition(nextCondition);
-        setPhotos(nextPhotos);
-        setInitialForm({
-          title: nextTitle,
-          description: nextDescription,
-          price: nextPrice,
-          category: nextCategory,
-          condition: nextCondition,
-          location: nextLocation,
-          currency: nextCurrency,
-          photos: nextPhotos,
-        });
-      })
-      .catch((error) => {
-        if (!isMounted) return;
-        Alert.alert(
-          t("common.errors.title", { defaultValue: "Something went wrong" }),
-          error instanceof Error
-            ? error.message
-            : t("addListing.error", {
-                defaultValue: "Unable to load listing.",
-              }),
-        );
-      })
-      .finally(() => {
-        if (!isMounted) return;
-        setIsLoading(false);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [id, t]);
+      return () => {
+        isMounted = false;
+      };
+    },
+    [id, t],
+  );
+
+  useEffect(() => {
+    const cleanup = loadListing("initial");
+    return () => cleanup?.();
+  }, [loadListing]);
 
   useEffect(() => {
     setValidation((prev) => ({ ...prev, location: location.trim().length > 0 }));
@@ -424,6 +447,13 @@ export default function AddListingScreen() {
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadListing("refresh")}
+              tintColor={theme.primary}
+            />
+          }
         >
           <View style={styles.header}>
             <Text style={styles.title}>{t("addListing.title")}</Text>

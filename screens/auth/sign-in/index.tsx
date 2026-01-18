@@ -20,7 +20,7 @@ import {
   type ValidationResult,
 } from "@/validation";
 import { login } from "@/services/auth";
-import { getMyProfile } from "@/services/user";
+import { useAuth } from "@/providers/AuthProvider";
 
 const requiredValidator: TextValidator = {
   validate: (value, context) => {
@@ -85,6 +85,7 @@ export default function SignInScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const router = useRouter();
+  const { signIn } = useAuth();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -135,9 +136,8 @@ export default function SignInScreen() {
 
     setIsSubmitting(true);
     try {
-      await login({ email, password });
-      await getMyProfile();
-      router.replace("/(tabs)");
+      const response = await login({ email, password });
+      await signIn(response.token);
     } catch (error) {
       setApiError(
         error instanceof Error ? error.message : "Unable to sign in. Try again.",
@@ -153,7 +153,7 @@ export default function SignInScreen() {
     password,
     passwordContext,
     passwordValidators,
-    router,
+    signIn,
   ]);
 
   const canSubmit = !isSubmitting;

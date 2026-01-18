@@ -18,6 +18,7 @@ import { AppScreen } from "@/components/layout/AppScreen";
 import { ValidatedInput } from "@/components/ValidatedInput";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { register } from "@/services/auth";
+import { useAuth } from "@/providers/AuthProvider";
 import {
   type TextValidator,
   type ValidationContext,
@@ -134,6 +135,7 @@ export default function SignUpScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const router = useRouter();
+  const { signIn } = useAuth();
   const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -262,14 +264,14 @@ export default function SignUpScreen() {
 
     setIsSubmitting(true);
     try {
-      await register({
+      const response = await register({
         email,
         password,
         name,
         phone,
         city: district || undefined,
       });
-      router.replace("/(tabs)");
+      await signIn(response.token);
     } catch (error) {
       setApiError(
         error instanceof Error ? error.message : "Unable to sign up. Try again.",
@@ -297,7 +299,7 @@ export default function SignUpScreen() {
     password,
     passwordContext,
     passwordValidators,
-    router,
+    signIn,
   ]);
 
   const canSubmit =

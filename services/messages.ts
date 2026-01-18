@@ -84,6 +84,25 @@ export async function markAsRead(
   });
 }
 
+export async function updateMessage(messageId: string, content: string): Promise<Message> {
+  return apiRequest<Message>(`/api/messages/${messageId}`, {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(await authHeader()),
+    },
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function deleteMessage(messageId: string): Promise<void> {
+  await apiRequest<void>(`/api/messages/${messageId}`, {
+    method: "DELETE",
+    headers: await authHeader(),
+  });
+}
+
 export async function openChat(payload: OpenChatPayload): Promise<OpenChatResponse> {
   const headers = {
     Accept: "application/json",
@@ -100,4 +119,11 @@ export async function openChat(payload: OpenChatPayload): Promise<OpenChatRespon
     headers,
     body: JSON.stringify(payload),
   });
+}
+
+export async function getUnreadCount(): Promise<number> {
+  const response = await apiRequest<{ total: number }>("/api/messages/unread-count", {
+    headers: await authHeader(),
+  });
+  return response.total ?? 0;
 }

@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/hooks/use-localization";
-import { logout } from "@/services/auth";
+import { useAuth } from "@/providers/AuthProvider";
 
 const settingsItems = [
   { id: "profile", labelKey: "settings.items.profile" },
@@ -33,6 +33,7 @@ export default function SettingsHome() {
   const { isRTL } = useLocalization();
   const backIcon = isRTL ? ">" : "<";
   const forwardIcon = isRTL ? "<" : ">";
+  const { signOut } = useAuth();
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
@@ -68,8 +69,7 @@ export default function SettingsHome() {
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={async () => {
-            await logout();
-            router.replace("/sign-in");
+            await signOut();
           }}
         >
           <Text style={styles.logoutLabel}>{t("common.actions.logout")}</Text>

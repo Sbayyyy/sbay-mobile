@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { notifyUnauthorized } from "@/services/auth-session";
 
 const fallbackBaseUrl = "http://localhost:8080";
 
@@ -27,6 +28,10 @@ export async function apiRequest<T>(
     ...options,
     headers,
   });
+
+  if (response.status === 401) {
+    notifyUnauthorized();
+  }
 
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
