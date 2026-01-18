@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import {
@@ -10,21 +11,17 @@ import { ListingCard } from "@/components/listings/ListingCard";
 import { SearchBar } from "@/components/common/SearchBar";
 import { HOME_CATEGORIES, HOME_LISTINGS } from "@/constants/mockData";
 import { Listing } from "@/types/listing";
+import { useAppTheme } from "@/hooks/use-app-theme";
+import { type ThemeColors } from "@/constants/theme";
 
-const heroCards: Listing[] = [
+const heroCards: Pick<Listing, "id" | "image">[] = [
   {
     id: "hero-1",
-    title: "Furniture refresh",
-    price: "Shop now",
-    category: "home",
     image:
       "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=1200&q=80",
   },
   {
     id: "hero-2",
-    title: "Outdoor must-haves",
-    price: "See deals",
-    category: "sports",
     image:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
   },
@@ -33,6 +30,18 @@ const heroCards: Listing[] = [
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const theme = useAppTheme();
+  const { t } = useTranslation();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const categories = useMemo(() => {
+    return HOME_CATEGORIES.map((category) => ({
+      ...category,
+      label: t(category.translationKey ?? `categories.${category.id}`, {
+        defaultValue: category.label,
+      }),
+    }));
+  }, [t]);
 
   const displayListings = useMemo(() => {
     return HOME_LISTINGS.filter((listing) => {
@@ -46,56 +55,76 @@ export default function HomeScreen() {
   }, [activeCategory, search]);
 
   return (
-    <AppScreen backgroundColor="#f9fafb">
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Search products, brands, or categories"
-        />
-
-        <SectionHeader title="Categories" actionLabel="See all" />
-
-        <HorizontalFilterChips
-          options={HOME_CATEGORIES as FilterChipOption[]}
-          activeId={activeCategory}
-          onSelect={setActiveCategory}
-        />
-
-        <View style={styles.heroRow}>
-          {heroCards.map((card) => (
-            <View key={card.id} style={styles.heroCard}>
-              <Text style={styles.heroLabel}>{card.title}</Text>
-              <Text style={styles.heroAction}>{card.price}</Text>
-            </View>
-          ))}
+    <AppScreen>
+      <View style={styles.screen}>
+        <View style={styles.searchWrapper}>
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder={t("home.searchPlaceholder")}
+          />
         </View>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <SectionHeader
+            title={t("home.categoriesTitle")}
+            actionLabel={t("common.actions.seeAll")}
+          />
 
-        <SectionHeader title="Recommended for you" actionLabel="Explore more" />
+          <HorizontalFilterChips
+            options={categories as FilterChipOption[]}
+            activeId={activeCategory}
+            onSelect={setActiveCategory}
+          />
 
-        {displayListings.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No matches</Text>
-            <Text style={styles.emptySubtitle}>
-              Try another category or adjust your search.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.grid}>
-            {displayListings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
+          <View style={styles.heroRow}>
+            {heroCards.map((card) => (
+              <View key={card.id} style={styles.heroCard}>
+                <Text style={styles.heroLabel}>
+                  {t(`home.heroCards.${card.id}.title`)}
+                </Text>
+                <Text style={styles.heroAction}>
+                  {t(`home.heroCards.${card.id}.action`)}
+                </Text>
+              </View>
             ))}
           </View>
-        )}
-      </ScrollView>
+
+          <SectionHeader
+            title={t("home.recommendedTitle")}
+            actionLabel={t("common.actions.exploreMore")}
+          />
+
+          {displayListings.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>{t("common.empty.noMatches")}</Text>
+              <Text style={styles.emptySubtitle}>{t("home.emptySubtitle")}</Text>
+            </View>
+          ) : (
+            <View style={styles.grid}>
+              {displayListings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </View>
     </AppScreen>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+    },
+    searchWrapper: {
+      paddingTop: 12,
+      paddingBottom: 8,
+      backgroundColor: theme.background,
+    },
   content: {
     paddingBottom: 40,
     paddingTop: 12,
@@ -110,20 +139,20 @@ const styles = StyleSheet.create({
   heroCard: {
     flex: 1,
     borderRadius: 18,
-    backgroundColor: "#1d4ed8",
+    backgroundColor: theme.primary,
     padding: 18,
-    shadowColor: "#1d4ed8",
-    shadowOpacity: 0.15,
+    shadowColor: theme.primary,
+    shadowOpacity: 0.18,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
   },
   heroLabel: {
-    color: "#fff",
+    color: theme.primaryForeground,
     fontSize: 16,
     fontWeight: "700",
   },
   heroAction: {
-    color: "#bfdbfe",
+    color: theme.primarySoftText,
     marginTop: 6,
     fontWeight: "600",
   },
@@ -143,10 +172,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#111827",
+    color: theme.text,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: "#6b7280",
+    color: theme.textMuted,
   },
 });

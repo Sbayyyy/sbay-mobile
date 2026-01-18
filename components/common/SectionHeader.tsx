@@ -1,5 +1,7 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { useAppTheme } from "@/hooks/use-app-theme";
+
 type SectionHeaderProps = {
   title: string;
   actionLabel?: string;
@@ -11,12 +13,14 @@ export function SectionHeader({
   actionLabel,
   onActionPress,
 }: SectionHeaderProps) {
+  const theme = useAppTheme();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
       {actionLabel ? (
         <TouchableOpacity onPress={onActionPress}>
-          <Text style={styles.action}>{actionLabel}</Text>
+          <Text style={[styles.action, { color: theme.primary }]}>{actionLabel}</Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -35,11 +39,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#111827",
   },
   action: {
     fontSize: 14,
-    color: "#2563eb",
     fontWeight: "500",
   },
 });

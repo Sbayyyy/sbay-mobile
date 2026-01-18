@@ -2,6 +2,7 @@ export type ListingCategory = {
   id: string;
   label: string;
   emoji?: string;
+  translationKey?: string;
 };
 
 export type Listing = {

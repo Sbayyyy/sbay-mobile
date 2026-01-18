@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { useAppTheme } from "@/hooks/use-app-theme";
+
 type EmptyPlaceholderProps = {
   icon?: ReactNode;
   title: string;
@@ -16,14 +18,42 @@ export function EmptyPlaceholder({
   actionLabel,
   onActionPress,
 }: EmptyPlaceholderProps) {
+  const theme = useAppTheme();
+
   return (
-    <View style={styles.container}>
-      {icon ? <View style={styles.icon}>{icon}</View> : null}
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.surface,
+          shadowColor: theme.shadow,
+        },
+      ]}
+    >
+      {icon ? (
+        <View
+          style={[
+            styles.icon,
+            {
+              backgroundColor: theme.primaryMuted,
+            },
+          ]}
+        >
+          {icon}
+        </View>
+      ) : null}
+      <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+      {subtitle ? (
+        <Text style={[styles.subtitle, { color: theme.textMuted }]}>{subtitle}</Text>
+      ) : null}
       {actionLabel ? (
-        <TouchableOpacity style={styles.button} onPress={onActionPress}>
-          <Text style={styles.buttonLabel}>{actionLabel}</Text>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: theme.primary }]}
+          onPress={onActionPress}
+        >
+          <Text style={[styles.buttonLabel, { color: theme.primaryForeground }]}>
+            {actionLabel}
+          </Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -32,12 +62,10 @@ export function EmptyPlaceholder({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
     borderRadius: 18,
     alignItems: "center",
     padding: 28,
     gap: 12,
-    shadowColor: "#111827",
     shadowOpacity: 0.04,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -47,19 +75,16 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#eff6ff",
     justifyContent: "center",
     alignItems: "center",
   },
   title: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#111827",
     textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
-    color: "#6b7280",
     textAlign: "center",
     lineHeight: 20,
   },
@@ -68,10 +93,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 16,
-    backgroundColor: "#1d4ed8",
   },
   buttonLabel: {
-    color: "#fff",
     fontWeight: "600",
   },
 });
