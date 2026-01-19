@@ -49,6 +49,7 @@ export default function FeaturedScreen() {
       title: listing.title,
       price: `${listing.priceCurrency} ${listing.priceAmount}`,
       category: listing.categoryPath ?? "other",
+      location: listing.region ?? listing.seller?.city ?? undefined,
       image:
         listing.thumbnailUrl ??
         listing.imageUrls?.[0] ??

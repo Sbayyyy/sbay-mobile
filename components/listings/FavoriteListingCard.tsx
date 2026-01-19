@@ -116,6 +116,8 @@ const createStyles = (theme: ThemeColors) =>
       borderRadius: 18,
       overflow: "hidden",
       backgroundColor: theme.surface,
+      borderWidth: 2,
+      borderColor: theme.border,
     },
     cardImage: {
       height: 170,
@@ -152,7 +154,7 @@ const createStyles = (theme: ThemeColors) =>
     cardPrice: {
       fontSize: 18,
       fontWeight: "700",
-      color: theme.primary,
+      color: theme.success,
     },
     badge: {
       borderRadius: 999,

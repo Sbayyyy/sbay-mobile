@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { clearStoredToken, getStoredToken, storeToken } from "@/services/auth";
 import { getMyProfile } from "@/services/user";
 import { setAuthToken, setUnauthorizedHandler } from "@/services/auth-session";
+import { syncPushToken, unregisterPushToken } from "@/services/push-notifications";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
 
   const signOut = useCallback(async () => {
+    await unregisterPushToken();
     await clearStoredToken();
     setAuthToken(null);
     setToken(null);
@@ -78,6 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUnauthorizedHandler(null);
     };
   }, [signOut]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    void syncPushToken();
+  }, [status]);
 
   const value = useMemo<AuthContextValue>(
     () => ({ status, token, signIn, signOut }),

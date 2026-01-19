@@ -613,7 +613,7 @@ const createStyles = (theme: ThemeColors) =>
     price: {
       fontSize: 20,
       fontWeight: "700",
-      color: theme.primary,
+      color: theme.success,
     },
     actionRow: {
       flexDirection: "row",
@@ -627,6 +627,8 @@ const createStyles = (theme: ThemeColors) =>
       paddingHorizontal: 14,
       paddingVertical: 10,
       backgroundColor: theme.surfaceMuted,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     actionLabel: {
       fontSize: 14,
@@ -677,6 +679,8 @@ const createStyles = (theme: ThemeColors) =>
       borderRadius: 12,
       padding: 12,
       gap: 4,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     detailLabel: {
       fontSize: 12,

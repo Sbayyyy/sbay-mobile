@@ -117,6 +117,8 @@ const createStyles = (theme: ThemeColors) =>
       borderRadius: 18,
       backgroundColor: theme.surface,
       overflow: "hidden",
+      borderWidth: 1,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
       shadowOpacity: 0.08,
       shadowRadius: 12,

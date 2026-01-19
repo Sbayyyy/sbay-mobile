@@ -1,5 +1,6 @@
-import { Theme, type ThemeColors } from '@/constants/theme';
+import { type ThemeColors } from '@/constants/theme';
+import { useThemeContext } from '@/providers/ThemeProvider';
 
 export function useAppTheme(): ThemeColors {
-  return Theme.colors;
+  return useThemeContext().colors;
 }
