@@ -27,6 +27,7 @@ export function EmptyPlaceholder({
         {
           backgroundColor: theme.surface,
           shadowColor: theme.shadow,
+          borderColor: theme.border,
         },
       ]}
     >
@@ -48,7 +49,10 @@ export function EmptyPlaceholder({
       ) : null}
       {actionLabel ? (
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: theme.primary }]}
+          style={[
+            styles.button,
+            { backgroundColor: theme.primary, borderColor: theme.border },
+          ]}
           onPress={onActionPress}
         >
           <Text style={[styles.buttonLabel, { color: theme.primaryForeground }]}>
@@ -66,6 +70,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 28,
     gap: 12,
+    borderWidth: 1,
     shadowOpacity: 0.04,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -93,6 +98,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 16,
+    borderWidth: 1,
   },
   buttonLabel: {
     fontWeight: "600",

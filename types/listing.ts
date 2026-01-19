@@ -11,6 +11,7 @@ export type Listing = {
   price: string;
   category: string;
   image: string;
+  location?: string;
 };
 
 export type FavoriteListing = Listing & {

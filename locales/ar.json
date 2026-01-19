@@ -44,17 +44,18 @@
     }
   },
   "listings": {
-    "title": "?????????",
-    "searchPlaceholder": "???? ?? ?????????",
-    "emptyTitle": "?? ???? ??????? ???",
-    "emptySubtitle": "???? ????? ????? ?? ???????.",
-    "errorTitle": "???? ????? ?????????",
-    "errorSubtitle": "???? ???????? ??? ????."
+    "title": "العنوان",
+    "searchPlaceholder": "ابحث عن الإعلانات",
+    "emptyTitle": "لا توجد إعلانات",
+    "emptySubtitle": "جرّب فئة أخرى أو عدّل البحث.",
+    "errorTitle": "حدث خطأ",
+    "errorSubtitle": "حدث خطأ أثناء تحميل الإعلانات."
   },
   "home": {
-    "searchPlaceholder": "ابحث عن المنتجات أو العلامات التجارية أو الفئات",
+    "searchPlaceholder": "ابحث عن الإعلانات",
     "categoriesTitle": "الفئات",
     "recommendedTitle": "مقترحات لك",
+    "featuredTitle": "مميز",
     "emptySubtitle": "جرّب فئة أخرى أو عدّل البحث.",
     "heroCards": {
       "hero-1": {
@@ -122,7 +123,81 @@
     "welcomeBack": "مرحباً بعودتك",
     "authSubtitle": "سجّل الدخول أو أنشئ حساباً لإدارة إعلاناتك.",
     "myListings": "إعلاناتي",
-    "emptyListingsSubtitle": "ابدأ بنشر أول عنصر للبيع."
+    "emptyListingsSubtitle": "ابدأ بنشر أول عنصر للبيع.",
+    "cityUnknown": "المدينة غير معروفة",
+    "stats": {
+      "totalOrders": "إجمالي الطلبات",
+      "pendingOrders": "الطلبات المعلقة",
+      "reviews": "المراجعات",
+      "rating": "التقييم",
+      "revenue": "الإيرادات"
+    },
+    "fields": {
+      "city": "المدينة"
+    },
+    "placeholders": {
+      "displayName": "الاسم الكامل",
+      "phone": "رقم الهاتف",
+      "city": "المدينة"
+    },
+    "validation": {
+      "displayNameRequired": "الاسم الكامل مطلوب",
+      "phoneInvalid": "رقم الهاتف غير صحيح",
+      "cityTooLong": "المدينة طويلة جداً"
+    },
+    "errors": {
+      "loadTitle": "حدث خطأ أثناء التحميل",
+      "loadSubtitle": "حدث خطأ أثناء تحميل البيانات.",
+      "load": "حدث خطأ أثناء التحميل.",
+      "listings": "حدث خطأ أثناء تحميل الإعلانات.",
+      "listingsTitle": "حدث خطأ في الإعلانات",
+      "refresh": "حدث خطأ أثناء تحديث البيانات.",
+      "save": "حدث خطأ أثناء حفظ البيانات.",
+      "uploadAvatar": "حدث خطأ أثناء رفع الصورة.",
+      "processAvatar": "حدث خطأ أثناء معالجة الصورة.",
+      "photoPermission": "حدث خطأ أثناء الحصول على إذن الوصول إلى الصور."
+    },
+    "actions": {
+      "save": "حفظ",
+      "saving": "جاري الحفظ...",
+      "cancel": "إلغاء",
+      "changePhoto": "تغيير الصورة",
+      "uploading": "جاري الرفع...",
+      "usePhoto": "استخدام الصورة"
+    },
+    "tabs": {
+      "overview": "نظرة عامة",
+      "listings": "إعلاناتي"
+    },
+    "activity": {
+      "title": "نشاطي",
+      "last7Days": "آخر 7 أيام",
+      "emptyTitle": "لا توجد أنشطة",
+      "emptySubtitle": "ابدأ بنشاطك في السوق.",
+      "listingPublished": "تم نشر الإعلان",
+      "justNow": "الآن"
+    },
+    "modal": {
+      "cropTitle": "اقتطاع الصورة",
+      "cropSubtitle": "اقتطاع الصورة إلى الحجم المطلوب."
+    },
+    "cities": {
+      "damascus": "دمشق",
+      "rifDimashq": "ريف دمشق",
+      "aleppo": "حلب",
+      "homs": "حمص",
+      "hama": "حماة",
+      "latakia": "اللاذقية",
+      "tartus": "طرطوس",
+      "idlib": "إدلب",
+      "deirEzZor": "دير الزور",
+      "raqqa": "الرقة",
+      "hasakah": "الحسكة",
+      "daraa": "درعا",
+      "asSuwayda": "السويداء",
+      "quneitra": "القنيطرة",
+      "other": "أخرى"
+    }
   },
   "settings": {
     "title": "الإعدادات",
@@ -141,10 +216,62 @@
       "title": "اللغة",
       "subtitle": "اختر لغة العرض. تُطبق التغييرات فوراً.",
       "rtlNote": "قد تحتاج بعض تغييرات الاتجاه إلى إعادة تشغيل التطبيق."
+    },
+    "theme": {
+      "title": "المظهر",
+      "subtitle": "اختر مظهر التطبيق. تُطبق التغييرات فوراً.",
+      "light": "فاتح",
+      "dark": "داكن",
+      "neon": "نيون",
+      "starlight": "ضوء النجمة",
+      "test": "اختبار"
     }
   },
   "modal": {
     "title": "هذه نافذة منبثقة",
     "cta": "الذهاب إلى الشاشة الرئيسية"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "emptyTitle": "لا توجد إشعارات",
+    "emptySubtitle": "ابدأ بنشاطك في السوق."
+  },
+  "sellerProfile": {
+    "errors": {
+      "load": "حدث خطأ أثناء التحميل.",
+      "unavailableTitle": "البائع غير متاح",
+      "unavailableSubtitle": "البائع غير متاح حالياً."
+    },
+    "actions": {
+      "goBack": "العودة",
+      "back": "العودة",
+      "contactSeller": "اتصل بالبائع",
+      "reportSeller": "ابلغ عن البائع",
+      "report": "ابلغ"
+    },
+    "messages": {
+      "messagingUnavailable": "الرسائل غير متوفرة حالياً.",
+      "reportingUnavailable": "الابلاغ غير متوفر حالياً."
+    },
+    "reviewsCount": "{{count}} مراجعات",
+    "stats": {
+      "itemsSold": "العناصر المباعة",
+      "memberSince": "عضو منذ",
+      "positive": "إيجابي"
+    },
+    "tabs": {
+      "listings": "إعلاناتي ({{count}})",
+      "reviews": "مراجعاتي ({{count}})"
+    },
+    "listings": {
+      "emptyTitle": "لا توجد إعلانات",
+      "emptySubtitle": "ابدأ بإعلاناتك في السوق."
+    },
+    "reviews": {
+      "breakdown": "تحليل المراجعات",
+      "starLabel": "{{star}} نجوم",
+      "emptyTitle": "لا توجد مراجعات",
+      "emptySubtitle": "ابدأ بمراجعاتك في السوق."
+    }
   }
 }

@@ -55,6 +55,7 @@
     "searchPlaceholder": "Search products, brands, or categories",
     "categoriesTitle": "Categories",
     "recommendedTitle": "Recommended for you",
+    "featuredTitle": "Featured",
     "emptySubtitle": "Try another category or adjust your search.",
     "heroCards": {
       "hero-1": {
@@ -122,7 +123,81 @@
     "welcomeBack": "Welcome back",
     "authSubtitle": "Log in or create an account to manage your listings.",
     "myListings": "My listings",
-    "emptyListingsSubtitle": "Start by posting your first item for sale."
+    "emptyListingsSubtitle": "Start by posting your first item for sale.",
+    "cityUnknown": "Unknown city",
+    "stats": {
+      "totalOrders": "Total orders",
+      "pendingOrders": "Pending orders",
+      "reviews": "Reviews",
+      "rating": "Rating",
+      "revenue": "Revenue"
+    },
+    "fields": {
+      "city": "City"
+    },
+    "placeholders": {
+      "displayName": "User name",
+      "phone": "Phone number",
+      "city": "Select a city"
+    },
+    "validation": {
+      "displayNameRequired": "User name is required",
+      "phoneInvalid": "Enter a valid phone number",
+      "cityTooLong": "City name is too long"
+    },
+    "errors": {
+      "loadTitle": "Unable to load profile",
+      "loadSubtitle": "Please try again.",
+      "load": "Unable to load profile.",
+      "listings": "Unable to load listings.",
+      "listingsTitle": "Unable to load listings",
+      "refresh": "Unable to refresh data.",
+      "save": "Unable to save profile.",
+      "uploadAvatar": "Unable to upload avatar.",
+      "processAvatar": "Unable to process the selected photo.",
+      "photoPermission": "Photo library access is required."
+    },
+    "actions": {
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "changePhoto": "Change photo",
+      "uploading": "Uploading...",
+      "usePhoto": "Use photo"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "listings": "Listings"
+    },
+    "activity": {
+      "title": "Recent activity",
+      "last7Days": "Last 7 days",
+      "emptyTitle": "No activity yet",
+      "emptySubtitle": "Create your first listing to get started.",
+      "listingPublished": "Listing published",
+      "justNow": "Just now"
+    },
+    "modal": {
+      "cropTitle": "Crop avatar",
+      "cropSubtitle": "Preview how your photo will appear."
+    },
+    "cities": {
+      "damascus": "Damascus",
+      "rifDimashq": "Rif Dimashq",
+      "aleppo": "Aleppo",
+      "homs": "Homs",
+      "hama": "Hama",
+      "latakia": "Latakia",
+      "tartus": "Tartus",
+      "idlib": "Idlib",
+      "deirEzZor": "Deir ez-Zor",
+      "raqqa": "Raqqa",
+      "hasakah": "Hasakah",
+      "daraa": "Daraa",
+      "asSuwayda": "As-Suwayda",
+      "quneitra": "Quneitra",
+      "other": "Other"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -141,10 +216,62 @@
       "title": "Language",
       "subtitle": "Choose how Sbay appears. Changes apply instantly.",
       "rtlNote": "Some layout updates may require restarting the app."
+    },
+    "theme": {
+      "title": "Theme",
+      "subtitle": "Choose between light and dark appearance.",
+      "light": "Light",
+      "dark": "Dark",
+      "neon": "Neon",
+      "coffee": "Coffee",
+      "test": "Test"
+    }
+  },
+  "sellerProfile": {
+    "errors": {
+      "load": "Unable to load seller.",
+      "unavailableTitle": "Seller unavailable",
+      "unavailableSubtitle": "Please try again."
+    },
+    "actions": {
+      "goBack": "Go back",
+      "back": "Back",
+      "contactSeller": "Contact seller",
+      "reportSeller": "Report seller",
+      "report": "Report"
+    },
+    "messages": {
+      "messagingUnavailable": "Messaging is not available yet.",
+      "reportingUnavailable": "Reporting is not available yet."
+    },
+    "reviewsCount": "{{count}} reviews",
+    "stats": {
+      "itemsSold": "Items sold",
+      "memberSince": "Member since",
+      "positive": "Positive"
+    },
+    "tabs": {
+      "listings": "Listings ({{count}})",
+      "reviews": "Reviews ({{count}})"
+    },
+    "listings": {
+      "emptyTitle": "No listings yet",
+      "emptySubtitle": "This seller has no active listings."
+    },
+    "reviews": {
+      "breakdown": "Rating breakdown",
+      "starLabel": "{{star}}★",
+      "emptyTitle": "No reviews yet",
+      "emptySubtitle": "This seller has not received reviews yet."
     }
   },
   "modal": {
     "title": "This is a modal",
     "cta": "Go to home screen"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "emptyTitle": "No notifications yet",
+    "emptySubtitle": "When notifications arrive, you will see them here."
   }
 }

@@ -1,17 +1,19 @@
-import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { DarkTheme as NavigationDarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
 import { useEffect, useMemo } from "react";
 import { ActivityIndicator, LogBox, View } from "react-native";
-import { MD3LightTheme, PaperProvider } from "react-native-paper";
+import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
+import * as Notifications from "expo-notifications";
 import { useTranslation } from "react-i18next";
 
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { LocalizationProvider } from "../providers/LocalizationProvider";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
+import { ThemeProvider as AppThemeProvider, useThemeContext } from "@/providers/ThemeProvider";
 
 const ignoredPromiseErrors = [
   "Unable to activate keep awake",
@@ -35,6 +37,14 @@ rejectionTracking.enable({
 
 LogBox.ignoreLogs(ignoredPromiseErrors);
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 export const unstable_settings = {
   anchor: "sign-in",
 };
@@ -42,26 +52,30 @@ export const unstable_settings = {
 export default function RootLayout() {
   return (
     <LocalizationProvider>
-      <AuthProvider>
-        <RootLayoutContent />
-      </AuthProvider>
+      <AppThemeProvider>
+        <AuthProvider>
+          <RootLayoutContent />
+        </AuthProvider>
+      </AppThemeProvider>
     </LocalizationProvider>
   );
 }
 
 function RootLayoutContent() {
   const colors: ThemeColors = useAppTheme();
-  const statusStyle: "light" | "dark" = "dark";
+  const { isDark } = useThemeContext();
+  const statusStyle: "light" | "dark" = isDark ? "light" : "dark";
   const { t } = useTranslation();
   const { status } = useAuth();
   const router = useRouter();
   const segments = useSegments();
 
   const paperTheme = useMemo(() => {
+    const base = isDark ? MD3DarkTheme : MD3LightTheme;
     return {
-      ...MD3LightTheme,
+      ...base,
       colors: {
-        ...MD3LightTheme.colors,
+        ...base.colors,
         primary: colors.primary,
         background: colors.background,
         surface: colors.surface,
@@ -69,26 +83,42 @@ function RootLayoutContent() {
         outline: colors.border,
       },
     };
-  }, [colors]);
+  }, [colors, isDark]);
 
   const navigationTheme = useMemo(() => {
+    const base = isDark ? NavigationDarkTheme : DefaultTheme;
     return {
-      ...DefaultTheme,
+      ...base,
       colors: {
-        ...DefaultTheme.colors,
+        ...base.colors,
         primary: colors.primary,
         background: colors.background,
         card: colors.navigationBackground,
         border: colors.navigationBorder,
         text: colors.text,
       },
+      dark: isDark,
     };
-  }, [colors]);
+  }, [colors, isDark]);
 
   useEffect(() => {
     NavigationBar.setBackgroundColorAsync(colors.navigationBackground).catch(() => {});
-    NavigationBar.setButtonStyleAsync("dark").catch(() => {});
-  }, [colors.navigationBackground]);
+    NavigationBar.setButtonStyleAsync(isDark ? "light" : "dark").catch(() => {});
+  }, [colors.navigationBackground, isDark]);
+
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as {
+        chatId?: string;
+      };
+      if (data?.chatId) {
+        router.push(`/chats/thread/${data.chatId}`);
+      }
+    });
+    return () => {
+      sub.remove();
+    };
+  }, [router]);
 
   useEffect(() => {
     if (status === "loading") return;

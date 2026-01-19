@@ -26,6 +26,11 @@ export function ListingCard({ listing, onPress }: ListingCardProps) {
           {listing.title}
         </Text>
         <Text style={styles.price}>{listing.price}</Text>
+        {listing.location ? (
+          <Text style={styles.location} numberOfLines={1}>
+            {listing.location}
+          </Text>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
@@ -38,6 +43,8 @@ const createStyles = (theme: ThemeColors) =>
       backgroundColor: theme.surface,
       borderRadius: 18,
       overflow: "hidden",
+      borderWidth: 2,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
       shadowOpacity: 0.15,
       shadowRadius: 12,
@@ -60,6 +67,10 @@ const createStyles = (theme: ThemeColors) =>
     price: {
       fontSize: 15,
       fontWeight: "700",
-      color: theme.primary,
+      color: theme.success,
+    },
+    location: {
+      fontSize: 12,
+      color: theme.textMuted,
     },
   });

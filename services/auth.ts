@@ -73,3 +73,24 @@ export async function clearStoredToken(): Promise<void> {
   await SecureStore.deleteItemAsync(TOKEN_STORAGE_KEY);
   setAuthToken(null);
 }
+
+async function authHeader() {
+  const token = await getStoredToken();
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await apiRequest<void>("/api/auth/change-password", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(await authHeader()),
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}

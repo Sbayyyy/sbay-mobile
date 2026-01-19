@@ -119,7 +119,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: theme.tabIconSelected,
         tabBarInactiveTintColor: theme.tabIconDefault,
         tabBarStyle: {
-          borderTopWidth: 0,
+          borderTopWidth: 1,
           elevation: 5,
           backgroundColor: theme.navigationBackground,
           borderTopColor: theme.navigationBorder,

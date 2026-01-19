@@ -27,19 +27,6 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
 import { searchListings, type Listing as ApiListing } from "@/services/listings";
 
-const heroCards: Pick<Listing, "id" | "image">[] = [
-  {
-    id: "hero-1",
-    image:
-      "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "hero-2",
-    image:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
-  },
-];
-
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
@@ -115,6 +102,7 @@ export default function HomeScreen() {
       title: listing.title,
       price: `${listing.priceCurrency} ${listing.priceAmount}`,
       category: listing.categoryPath ?? "other",
+      location: listing.region ?? listing.seller?.city ?? undefined,
       image:
         listing.thumbnailUrl ??
         listing.imageUrls?.[0] ??
@@ -166,19 +154,6 @@ export default function HomeScreen() {
               }
             }}
           />
-
-          <View style={styles.heroRow}>
-            {heroCards.map((card) => (
-              <View key={card.id} style={styles.heroCard}>
-                <Text style={styles.heroLabel}>
-                  {t(`home.heroCards.${card.id}.title`)}
-                </Text>
-                <Text style={styles.heroAction}>
-                  {t(`home.heroCards.${card.id}.action`)}
-                </Text>
-              </View>
-            ))}
-          </View>
 
           {featuredListings.length > 0 ? (
             <>
@@ -304,32 +279,6 @@ const createStyles = (theme: ThemeColors) =>
     paddingTop: 12,
     gap: 12,
   },
-  heroRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    gap: 12,
-  },
-  heroCard: {
-    flex: 1,
-    borderRadius: 18,
-    backgroundColor: theme.primary,
-    padding: 18,
-    shadowColor: theme.primary,
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-  },
-  heroLabel: {
-    color: theme.primaryForeground,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  heroAction: {
-    color: theme.primarySoftText,
-    marginTop: 6,
-    fontWeight: "600",
-  },
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.4)",
@@ -397,7 +346,7 @@ const createStyles = (theme: ThemeColors) =>
   featuredPrice: {
     fontSize: 13,
     fontWeight: "700",
-    color: theme.primary,
+    color: theme.success,
   },
   loading: {
     paddingVertical: 24,

@@ -167,6 +167,7 @@ export default function SearchScreen() {
         title: listing.title,
         price: `${listing.priceCurrency} ${listing.priceAmount}`,
         category: listing.categoryPath ?? "other",
+        location: listing.region ?? listing.seller?.city ?? undefined,
         image:
           listing.thumbnailUrl ??
           listing.imageUrls?.[0] ??
@@ -393,6 +394,8 @@ const createStyles = (theme: ThemeColors) =>
       paddingVertical: 8,
       borderRadius: 999,
       backgroundColor: theme.surfaceMuted,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     filterButtonLabel: {
       color: theme.primary,
@@ -439,6 +442,8 @@ const createStyles = (theme: ThemeColors) =>
       borderRadius: 18,
       padding: 18,
       maxHeight: "85%",
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     modalContent: {
       gap: 16,
@@ -481,9 +486,12 @@ const createStyles = (theme: ThemeColors) =>
       paddingVertical: 10,
       borderRadius: 12,
       backgroundColor: theme.surfaceMuted,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     modalButtonPrimary: {
       backgroundColor: theme.primary,
+      borderColor: theme.primary,
     },
     modalButtonText: {
       fontWeight: "600",

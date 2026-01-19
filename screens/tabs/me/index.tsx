@@ -33,21 +33,21 @@ import { uploadImageAsync } from "@/services/uploads";
 const tabs = ["overview", "listings"] as const;
 
 const cityOptions = [
-  "Damascus",
-  "Rif Dimashq",
-  "Aleppo",
-  "Homs",
-  "Hama",
-  "Latakia",
-  "Tartus",
-  "Idlib",
-  "Deir ez-Zor",
-  "Raqqa",
-  "Hasakah",
-  "Daraa",
-  "As-Suwayda",
-  "Quneitra",
-  "Other",
+  { value: "Damascus", labelKey: "profile.cities.damascus" },
+  { value: "Rif Dimashq", labelKey: "profile.cities.rifDimashq" },
+  { value: "Aleppo", labelKey: "profile.cities.aleppo" },
+  { value: "Homs", labelKey: "profile.cities.homs" },
+  { value: "Hama", labelKey: "profile.cities.hama" },
+  { value: "Latakia", labelKey: "profile.cities.latakia" },
+  { value: "Tartus", labelKey: "profile.cities.tartus" },
+  { value: "Idlib", labelKey: "profile.cities.idlib" },
+  { value: "Deir ez-Zor", labelKey: "profile.cities.deirEzZor" },
+  { value: "Raqqa", labelKey: "profile.cities.raqqa" },
+  { value: "Hasakah", labelKey: "profile.cities.hasakah" },
+  { value: "Daraa", labelKey: "profile.cities.daraa" },
+  { value: "As-Suwayda", labelKey: "profile.cities.asSuwayda" },
+  { value: "Quneitra", labelKey: "profile.cities.quneitra" },
+  { value: "Other", labelKey: "profile.cities.other" },
 ];
 
 const CROP_SIZE = 220;
@@ -147,7 +147,11 @@ export default function MeScreen() {
       .catch((error) => {
         if (!isMounted) return;
         setProfileError(
-          error instanceof Error ? error.message : "Unable to load profile.",
+          error instanceof Error
+            ? error.message
+            : t("profile.errors.load", {
+                defaultValue: "Unable to load profile.",
+              }),
         );
       })
       .finally(() => {
@@ -157,7 +161,7 @@ export default function MeScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const cleanup = loadProfile();
@@ -187,7 +191,11 @@ export default function MeScreen() {
       .catch((error) => {
         if (!isMounted) return;
         setListingsError(
-          error instanceof Error ? error.message : "Unable to load listings.",
+          error instanceof Error
+            ? error.message
+            : t("profile.errors.listings", {
+                defaultValue: "Unable to load listings.",
+              }),
         );
       })
       .finally(() => {
@@ -197,7 +205,7 @@ export default function MeScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const cleanup = loadListings();
@@ -222,7 +230,11 @@ export default function MeScreen() {
       .catch((error) => {
         if (!isMounted) return;
         const message =
-          error instanceof Error ? error.message : "Unable to refresh data.";
+          error instanceof Error
+            ? error.message
+            : t("profile.errors.refresh", {
+                defaultValue: "Unable to refresh data.",
+              });
         setProfileError(message);
         setListingsError(message);
       })
@@ -233,7 +245,7 @@ export default function MeScreen() {
     return () => {
       isMounted = false;
     };
-  }, [isEditing]);
+  }, [isEditing, t]);
 
   if (profileLoading) {
     return (
@@ -249,8 +261,11 @@ export default function MeScreen() {
     return (
       <AppScreen>
         <ScreenMessage
-          title="Unable to load profile"
-          subtitle={profileError ?? "Please try again."}
+          title={t("profile.errors.loadTitle", { defaultValue: "Unable to load profile" })}
+          subtitle={
+            profileError ??
+            t("profile.errors.loadSubtitle", { defaultValue: "Please try again." })
+          }
         />
       </AppScreen>
     );
@@ -263,14 +278,37 @@ export default function MeScreen() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-  const cityLabel = profile.city ?? "Unknown city";
+  const cityLabel = (() => {
+    if (!profile.city) {
+      return t("profile.cityUnknown", { defaultValue: "Unknown city" });
+    }
+    const option = cityOptions.find((item) => item.value === profile.city);
+    return option
+      ? t(option.labelKey, { defaultValue: option.value })
+      : profile.city;
+  })();
 
   const stats: StatEntry[] = [
-    { label: "Total orders", value: profile.totalOrders },
-    { label: "Pending orders", value: profile.pendingOrders },
-    { label: "Reviews", value: profile.reviewCount },
-    { label: "Rating", value: profile.rating.toFixed(1) },
-    { label: "Revenue", value: profile.totalRevenue },
+    {
+      label: t("profile.stats.totalOrders", { defaultValue: "Total orders" }),
+      value: profile.totalOrders,
+    },
+    {
+      label: t("profile.stats.pendingOrders", { defaultValue: "Pending orders" }),
+      value: profile.pendingOrders,
+    },
+    {
+      label: t("profile.stats.reviews", { defaultValue: "Reviews" }),
+      value: profile.reviewCount,
+    },
+    {
+      label: t("profile.stats.rating", { defaultValue: "Rating" }),
+      value: profile.rating.toFixed(1),
+    },
+    {
+      label: t("profile.stats.revenue", { defaultValue: "Revenue" }),
+      value: profile.totalRevenue,
+    },
   ];
 
   const validateProfile = () => {
@@ -280,18 +318,24 @@ export default function MeScreen() {
     const cityValue = formData.city.trim();
 
     if (!nameValue) {
-      nextErrors.displayName = "User name is required";
+      nextErrors.displayName = t("profile.validation.displayNameRequired", {
+        defaultValue: "User name is required",
+      });
     }
 
     if (phoneValue) {
       const digits = phoneValue.replace(/[^0-9]/g, "");
       if (digits.length < 7 || digits.length > 15) {
-        nextErrors.phone = "Enter a valid phone number";
+        nextErrors.phone = t("profile.validation.phoneInvalid", {
+          defaultValue: "Enter a valid phone number",
+        });
       }
     }
 
     if (cityValue.length > 100) {
-      nextErrors.city = "City name is too long";
+      nextErrors.city = t("profile.validation.cityTooLong", {
+        defaultValue: "City name is too long",
+      });
     }
 
     setProfileErrors(nextErrors);
@@ -313,7 +357,11 @@ export default function MeScreen() {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        throw new Error("Photo library access is required.");
+        throw new Error(
+          t("profile.errors.photoPermission", {
+            defaultValue: "Photo library access is required.",
+          }),
+        );
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -340,7 +388,9 @@ export default function MeScreen() {
       setSaveError(
         error instanceof Error
           ? error.message
-          : "Unable to upload avatar.",
+          : t("profile.errors.uploadAvatar", {
+              defaultValue: "Unable to upload avatar.",
+            }),
       );
     } finally {
       setAvatarUploading(false);
@@ -375,7 +425,11 @@ export default function MeScreen() {
       }
 
       if (!viewShotRef.current) {
-        throw new Error("Unable to process the selected photo.");
+        throw new Error(
+          t("profile.errors.processAvatar", {
+            defaultValue: "Unable to process the selected photo.",
+          }),
+        );
       }
 
       const capturedUri = await captureRef(viewShotRef.current, {
@@ -394,7 +448,9 @@ export default function MeScreen() {
       setSaveError(
         error instanceof Error
           ? error.message
-          : "Unable to upload avatar.",
+          : t("profile.errors.uploadAvatar", {
+              defaultValue: "Unable to upload avatar.",
+            }),
       );
     } finally {
       setAvatarUploading(false);
@@ -406,6 +462,7 @@ export default function MeScreen() {
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={!formData.cityMenuOpen}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -448,7 +505,9 @@ export default function MeScreen() {
                 disabled={avatarUploading}
               >
                 <Text style={styles.avatarButtonLabel}>
-                  {avatarUploading ? "Uploading..." : "Change photo"}
+                  {avatarUploading
+                    ? t("profile.actions.uploading", { defaultValue: "Uploading..." })
+                    : t("profile.actions.changePhoto", { defaultValue: "Change photo" })}
                 </Text>
               </TouchableOpacity>
             ) : null}
@@ -462,7 +521,9 @@ export default function MeScreen() {
                   onChangeText={(value) =>
                     handleProfileFieldChange("displayName", value)
                   }
-                  placeholder="User name"
+                  placeholder={t("profile.placeholders.displayName", {
+                    defaultValue: "User name",
+                  })}
                   placeholderTextColor={theme.inputPlaceholder}
                 />
                 {profileErrors.displayName ? (
@@ -472,7 +533,9 @@ export default function MeScreen() {
                   style={styles.input}
                   value={formData.phone}
                   onChangeText={(value) => handleProfileFieldChange("phone", value)}
-                  placeholder="Phone number"
+                  placeholder={t("profile.placeholders.phone", {
+                    defaultValue: "Phone number",
+                  })}
                   placeholderTextColor={theme.inputPlaceholder}
                   keyboardType="phone-pad"
                 />
@@ -480,7 +543,9 @@ export default function MeScreen() {
                   <Text style={styles.errorText}>{profileErrors.phone}</Text>
                 ) : null}
                 <View style={styles.menuField}>
-                  <Text style={styles.inputLabel}>City</Text>
+                  <Text style={styles.inputLabel}>
+                    {t("profile.fields.city", { defaultValue: "City" })}
+                  </Text>
                   <TouchableOpacity
                     activeOpacity={0.9}
                     onPress={() =>
@@ -492,7 +557,15 @@ export default function MeScreen() {
                     style={styles.menuButton}
                   >
                     <Text style={styles.menuButtonLabel}>
-                      {formData.city || "Select a city"}
+                      {formData.city
+                        ? t(
+                            cityOptions.find((item) => item.value === formData.city)
+                              ?.labelKey ?? "profile.cities.other",
+                            { defaultValue: formData.city },
+                          )
+                        : t("profile.placeholders.city", {
+                            defaultValue: "Select a city",
+                          })}
                     </Text>
                     <Text style={styles.menuChevron}>
                       {formData.cityMenuOpen ? "^" : "v"}
@@ -500,17 +573,21 @@ export default function MeScreen() {
                   </TouchableOpacity>
                   {formData.cityMenuOpen ? (
                     <View style={styles.menuDropdown}>
-                      <ScrollView style={styles.menuList}>
+                      <ScrollView
+                        style={styles.menuList}
+                        nestedScrollEnabled
+                        showsVerticalScrollIndicator
+                      >
                         {cityOptions.map((option) => {
-                          const isActive = option === formData.city;
+                          const isActive = option.value === formData.city;
                           return (
                             <TouchableOpacity
-                              key={option}
+                              key={option.value}
                               onPress={() => {
-                                handleProfileFieldChange("city", option);
+                                handleProfileFieldChange("city", option.value);
                                 setFormData((prev) => ({
                                   ...prev,
-                                  city: option,
+                                  city: option.value,
                                   cityMenuOpen: false,
                                 }));
                               }}
@@ -525,7 +602,7 @@ export default function MeScreen() {
                                   isActive && styles.menuItemLabelActive,
                                 ]}
                               >
-                                {option}
+                                {t(option.labelKey, { defaultValue: option.value })}
                               </Text>
                             </TouchableOpacity>
                           );
@@ -571,7 +648,9 @@ export default function MeScreen() {
                     setSaveError(
                       error instanceof Error
                         ? error.message
-                        : "Unable to save profile.",
+                        : t("profile.errors.save", {
+                            defaultValue: "Unable to save profile.",
+                          }),
                     );
                   } finally {
                     setIsSaving(false);
@@ -579,7 +658,9 @@ export default function MeScreen() {
                 }}
               >
                 <Text style={styles.editButtonLabel}>
-                  {isSaving ? "Saving..." : "Save"}
+                  {isSaving
+                    ? t("profile.actions.saving", { defaultValue: "Saving..." })
+                    : t("profile.actions.save", { defaultValue: "Save" })}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -596,7 +677,9 @@ export default function MeScreen() {
                   });
                 }}
               >
-                <Text style={styles.cancelLabel}>Cancel</Text>
+                <Text style={styles.cancelLabel}>
+                  {t("profile.actions.cancel", { defaultValue: "Cancel" })}
+                </Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -633,7 +716,9 @@ export default function MeScreen() {
                     isActive && styles.tabLabelActive,
                   ]}
                 >
-                  {tab === "overview" ? "Overview" : "Listings"}
+                  {tab === "overview"
+                    ? t("profile.tabs.overview", { defaultValue: "Overview" })
+                    : t("profile.tabs.listings", { defaultValue: "Listings" })}
                 </Text>
               </TouchableOpacity>
             );
@@ -643,14 +728,22 @@ export default function MeScreen() {
         {activeTab === "overview" ? (
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Recent activity</Text>
-              <Text style={styles.sectionMeta}>Last 7 days</Text>
+              <Text style={styles.sectionTitle}>
+                {t("profile.activity.title", { defaultValue: "Recent activity" })}
+              </Text>
+              <Text style={styles.sectionMeta}>
+                {t("profile.activity.last7Days", { defaultValue: "Last 7 days" })}
+              </Text>
             </View>
             {listings.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyTitle}>No activity yet</Text>
+                <Text style={styles.emptyTitle}>
+                  {t("profile.activity.emptyTitle", { defaultValue: "No activity yet" })}
+                </Text>
                 <Text style={styles.emptySubtitle}>
-                  Create your first listing to get started.
+                  {t("profile.activity.emptySubtitle", {
+                    defaultValue: "Create your first listing to get started.",
+                  })}
                 </Text>
               </View>
             ) : (
@@ -659,12 +752,18 @@ export default function MeScreen() {
                   <FontAwesome name="tag" size={16} color={theme.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.activityTitle}>Listing published</Text>
+                  <Text style={styles.activityTitle}>
+                    {t("profile.activity.listingPublished", {
+                      defaultValue: "Listing published",
+                    })}
+                  </Text>
                   <Text style={styles.activitySubtitle}>
                     {listings[0].title}
                   </Text>
                 </View>
-                <Text style={styles.activityMeta}>Just now</Text>
+                <Text style={styles.activityMeta}>
+                  {t("profile.activity.justNow", { defaultValue: "Just now" })}
+                </Text>
               </View>
             )}
           </View>
@@ -682,7 +781,11 @@ export default function MeScreen() {
               </View>
             ) : listingsError ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyTitle}>Unable to load listings</Text>
+                <Text style={styles.emptyTitle}>
+                  {t("profile.errors.listingsTitle", {
+                    defaultValue: "Unable to load listings",
+                  })}
+                </Text>
                 <Text style={styles.emptySubtitle}>{listingsError}</Text>
               </View>
             ) : listings.length === 0 ? (
@@ -695,16 +798,17 @@ export default function MeScreen() {
             ) : (
               <View style={styles.grid}>
                 {listings.map((item) => (
-                  <ListingCard
-                    key={item.id}
-                    listing={{
-                      id: item.id,
-                      title: item.title,
-                      price: `${item.priceCurrency} ${item.priceAmount}`,
-                      category: item.categoryPath ?? "other",
-                      image: item.thumbnailUrl ?? item.imageUrls[0] ?? "",
-                    }}
-                  />
+                    <ListingCard
+                      key={item.id}
+                      listing={{
+                        id: item.id,
+                        title: item.title,
+                        price: `${item.priceCurrency} ${item.priceAmount}`,
+                        category: item.categoryPath ?? "other",
+                        location: item.region ?? item.seller?.city ?? undefined,
+                        image: item.thumbnailUrl ?? item.imageUrls[0] ?? "",
+                      }}
+                    />
                 ))}
               </View>
             )}
@@ -724,9 +828,13 @@ export default function MeScreen() {
       >
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Crop avatar</Text>
+            <Text style={styles.modalTitle}>
+              {t("profile.modal.cropTitle", { defaultValue: "Crop avatar" })}
+            </Text>
             <Text style={styles.modalSubtitle}>
-              Preview how your photo will appear.
+              {t("profile.modal.cropSubtitle", {
+                defaultValue: "Preview how your photo will appear.",
+              })}
             </Text>
             <View style={styles.cropFrame}>
               <CropShot {...(cropShotProps as any)}>
@@ -759,7 +867,9 @@ export default function MeScreen() {
                   setPendingAvatar(null);
                 }}
               >
-                <Text style={styles.cancelLabel}>Cancel</Text>
+                <Text style={styles.cancelLabel}>
+                  {t("profile.actions.cancel", { defaultValue: "Cancel" })}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -770,7 +880,9 @@ export default function MeScreen() {
                 disabled={avatarUploading}
               >
                 <Text style={styles.editButtonLabel}>
-                  {avatarUploading ? "Uploading..." : "Use photo"}
+                  {avatarUploading
+                    ? t("profile.actions.uploading", { defaultValue: "Uploading..." })
+                    : t("profile.actions.usePhoto", { defaultValue: "Use photo" })}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -824,6 +936,8 @@ const createStyles = (theme: ThemeColors) =>
       padding: 16,
       borderRadius: 18,
       backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
       shadowOpacity: 0.08,
       shadowRadius: 10,
@@ -857,6 +971,8 @@ const createStyles = (theme: ThemeColors) =>
       paddingVertical: 6,
       borderRadius: 999,
       backgroundColor: theme.surfaceMuted,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     avatarButtonLabel: {
       fontSize: 11,
@@ -982,6 +1098,8 @@ const createStyles = (theme: ThemeColors) =>
       backgroundColor: theme.surface,
       borderRadius: 14,
       padding: 12,
+      borderWidth: 1,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
       shadowOpacity: 0.08,
       shadowRadius: 8,
@@ -1026,6 +1144,8 @@ const createStyles = (theme: ThemeColors) =>
       backgroundColor: theme.surface,
       borderRadius: 18,
       padding: 16,
+      borderWidth: 1,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
       shadowOpacity: 0.08,
       shadowRadius: 10,
