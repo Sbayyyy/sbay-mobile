@@ -44,6 +44,7 @@
     },
     "plugins": [
       "expo-router",
+      "sentry-expo",
       [
         "expo-splash-screen",
         {

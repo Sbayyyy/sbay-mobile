@@ -37,6 +37,7 @@
     "expo-web-browser": "~15.0.9",
     "expo-secure-store": "~13.0.2",
     "expo-clipboard": "~6.0.1",
+    "sentry-expo": "~8.7.0",
     "i18next": "^25.6.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
