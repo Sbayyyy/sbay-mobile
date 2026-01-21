@@ -15,8 +15,10 @@ import {
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
+import { ReportModal } from "@/components/reports/ReportModal";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import {
@@ -38,6 +40,7 @@ export default function ListingDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const theme = useAppTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [listing, setListing] = useState<ApiListing | null>(null);
@@ -50,6 +53,7 @@ export default function ListingDetailScreen() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [openingChat, setOpeningChat] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -343,6 +347,17 @@ const handleContactSeller = async () => {
             <Ionicons name="share-social-outline" size={18} color={theme.primary} />
             <Text style={styles.actionLabel}>Share</Text>
           </TouchableOpacity>
+          {!isOwnListing ? (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => setReportOpen(true)}
+            >
+              <Ionicons name="flag-outline" size={18} color={theme.danger} />
+              <Text style={styles.actionLabel}>
+                {t("report.actions.report", { defaultValue: "Report" })}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         <View style={styles.metaRow}>
@@ -519,6 +534,14 @@ const handleContactSeller = async () => {
           </View>
         </View>
       </Modal>
+      {listing?.id ? (
+        <ReportModal
+          visible={reportOpen}
+          targetType="Listing"
+          targetId={listing.id}
+          onClose={() => setReportOpen(false)}
+        />
+      ) : null}
     </AppScreen>
   );
 }

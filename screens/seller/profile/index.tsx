@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -15,6 +14,7 @@ import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ListingCard } from "@/components/listings/ListingCard";
+import { ReportModal } from "@/components/reports/ReportModal";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { getSellerListings, type Listing as ApiListing } from "@/services/listings";
@@ -37,6 +37,7 @@ export default function SellerProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabId>("listings");
   const [error, setError] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -195,16 +196,7 @@ export default function SellerProfileScreen() {
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={[styles.primaryButton, styles.outlineButton]}
-            onPress={() =>
-              Alert.alert(
-                t("sellerProfile.actions.reportSeller", {
-                  defaultValue: "Report seller",
-                }),
-                t("sellerProfile.messages.reportingUnavailable", {
-                  defaultValue: "Reporting is not available yet.",
-                }),
-              )
-            }
+            onPress={() => setReportOpen(true)}
           >
             <Ionicons name="flag-outline" size={18} color={theme.danger} />
             <Text style={styles.outlineButtonLabel}>
@@ -379,6 +371,14 @@ export default function SellerProfileScreen() {
           </View>
         )}
       </ScrollView>
+      {profile?.id ? (
+        <ReportModal
+          visible={reportOpen}
+          targetType="UserProfile"
+          targetId={profile.id}
+          onClose={() => setReportOpen(false)}
+        />
+      ) : null}
     </AppScreen>
   );
 }

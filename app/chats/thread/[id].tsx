@@ -22,6 +22,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppScreen } from "@/components/layout/AppScreen";
+import { ReportModal } from "@/components/reports/ReportModal";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { getListing } from "@/services/listings";
@@ -109,6 +110,8 @@ export default function ChatThreadScreen() {
   const [selectedMessage, setSelectedMessage] = useState<
     Awaited<ReturnType<typeof getMessages>>[number] | null
   >(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportTargetId, setReportTargetId] = useState<string | null>(null);
   const [isSwiping, setIsSwiping] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -428,6 +431,21 @@ export default function ChatThreadScreen() {
     ]);
   };
 
+  const handleReportSelected = () => {
+    if (!selectedMessage || !myUserId || selectedMessage.senderId === myUserId) return;
+    setReportTargetId(selectedMessage.id);
+    setReportOpen(true);
+    setSelectedMessage(null);
+  };
+
+  const handleReportMessage = (
+    message: Awaited<ReturnType<typeof getMessages>>[number],
+  ) => {
+    if (!myUserId || message.senderId === myUserId) return;
+    setReportTargetId(message.id);
+    setReportOpen(true);
+  };
+
   const touchStartRef = useRef(new Map<string, { x: number; y: number }>());
   const touchMoveRef = useRef(new Map<string, { x: number; y: number }>());
   const swipeAnimRef = useRef(new Map<string, Animated.Value>());
@@ -556,6 +574,11 @@ export default function ChatThreadScreen() {
                 <TouchableOpacity onPress={handleCopySelected} style={styles.headerActionButton}>
                   <Ionicons name="copy-outline" size={18} color={theme.text} />
                 </TouchableOpacity>
+                {myUserId && selectedMessage.senderId !== myUserId ? (
+                  <TouchableOpacity onPress={handleReportSelected} style={styles.headerActionButton}>
+                    <Ionicons name="flag-outline" size={18} color={theme.danger} />
+                  </TouchableOpacity>
+                ) : null}
                 <TouchableOpacity
                   onPress={handleEditSelected}
                   disabled={!canModify(selectedMessage)}
@@ -710,6 +733,14 @@ export default function ChatThreadScreen() {
                         minute: "2-digit",
                       })}
                     </Text>
+                    {!isMine ? (
+                      <TouchableOpacity
+                        style={styles.reportInlineButton}
+                        onPress={() => handleReportMessage(message)}
+                      >
+                        <Ionicons name="flag-outline" size={14} color={theme.danger} />
+                      </TouchableOpacity>
+                    ) : null}
                     {readStatus ? (
                       <Ionicons
                         name={readStatus === "read" ? "checkmark-done" : "checkmark"}
@@ -788,6 +819,17 @@ export default function ChatThreadScreen() {
 
           {androidKeyboardSpacer > 0 ? <View style={{ height: androidKeyboardSpacer }} /> : null}
         </KeyboardAvoidingView>
+        {reportTargetId ? (
+          <ReportModal
+            visible={reportOpen}
+            targetType="Message"
+            targetId={reportTargetId}
+            onClose={() => {
+              setReportOpen(false);
+              setReportTargetId(null);
+            }}
+          />
+        ) : null}
       </View>
     </AppScreen>
   );
@@ -922,6 +964,12 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: "flex-end",
       gap: 6,
       marginTop: 4,
+    },
+    reportInlineButton: {
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderRadius: 8,
+      backgroundColor: theme.surfaceMuted,
     },
     readIcon: {
       alignSelf: "flex-end",
