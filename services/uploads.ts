@@ -36,11 +36,12 @@ export async function uploadImageAsync(
   uri: string,
   fileName?: string,
   mimeType?: string,
-  options?: UploadOptions,
+  options?: UploadOptions & { endpoint?: "images" | "avatar" },
 ): Promise<string> {
   const token = await getStoredToken();
   const name = fileName ?? `avatar-${Date.now()}.jpg`;
   const type = mimeType ?? "image/jpeg";
+  const endpoint = options?.endpoint ?? "images";
 
   if (Platform.OS === "web") {
     const response = await fetch(uri);
@@ -102,13 +103,16 @@ export async function uploadImageAsync(
       });
       const outputName = name.replace(/\.[^/.]+$/, ".png");
       formData.append(
-        "files",
+        endpoint === "avatar" ? "file" : "files",
         new File([canvasBlob], outputName, { type: "image/png" }),
       );
     } else {
-      formData.append("files", new File([blob], name, { type }));
+      formData.append(
+        endpoint === "avatar" ? "file" : "files",
+        new File([blob], name, { type }),
+      );
     }
-    const upload = await fetch(`${API_BASE_URL}/api/uploads/images`, {
+    const upload = await fetch(`${API_BASE_URL}/api/uploads/${endpoint}`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       body: formData,
@@ -124,11 +128,11 @@ export async function uploadImageAsync(
   }
 
   const result = await FileSystem.uploadAsync(
-    `${API_BASE_URL}/api/uploads/images`,
+    `${API_BASE_URL}/api/uploads/${endpoint}`,
     uri,
     {
       uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-      fieldName: "files",
+      fieldName: endpoint === "avatar" ? "file" : "files",
       mimeType: type,
       httpMethod: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,

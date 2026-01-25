@@ -416,6 +416,7 @@ export default function MeScreen() {
             offsetY,
             cropSize: CROP_SIZE,
             previewImageSize: PREVIEW_IMAGE_SIZE,
+            endpoint: "avatar",
           },
         );
         setFormData((prev) => ({ ...prev, avatar: url }));
@@ -440,7 +441,9 @@ export default function MeScreen() {
       const fileName = pendingAvatar.fileName
         ? pendingAvatar.fileName.replace(/\.[^/.]+$/, ".png")
         : `avatar-${Date.now()}.png`;
-      const url = await uploadImageAsync(capturedUri, fileName, "image/png");
+      const url = await uploadImageAsync(capturedUri, fileName, "image/png", {
+        endpoint: "avatar",
+      });
       setFormData((prev) => ({ ...prev, avatar: url }));
       setAvatarModalOpen(false);
       setPendingAvatar(null);

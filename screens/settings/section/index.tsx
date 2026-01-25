@@ -128,7 +128,9 @@ export default function SettingsDetail() {
 
       const asset = result.assets[0];
       const fileName = asset.fileName ?? `avatar-${Date.now()}.jpg`;
-      const url = await uploadImageAsync(asset.uri, fileName, asset.mimeType ?? "image/jpeg");
+      const url = await uploadImageAsync(asset.uri, fileName, asset.mimeType ?? "image/jpeg", {
+        endpoint: "avatar",
+      });
       setFormData((prev) => ({ ...prev, avatar: url }));
     } catch (error) {
       setProfileError(error instanceof Error ? error.message : "Unable to upload avatar");
