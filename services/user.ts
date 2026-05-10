@@ -31,7 +31,7 @@ export type UpdateProfilePayload = {
   avatar?: string | null;
 };
 
-async function authHeader() {
+async function authHeader(): Promise<Record<string, string>> {
   const token = await getStoredToken();
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };

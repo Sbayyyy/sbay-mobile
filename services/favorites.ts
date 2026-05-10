@@ -2,7 +2,7 @@ import { apiRequest } from "@/services/api";
 import { getStoredToken } from "@/services/auth";
 import { type Listing } from "@/services/listings";
 
-async function authHeader() {
+async function authHeader(): Promise<Record<string, string>> {
   const token = await getStoredToken();
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };

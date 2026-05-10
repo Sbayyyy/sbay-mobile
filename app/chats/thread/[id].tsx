@@ -14,8 +14,6 @@ import {
   View,
   Image,
   Pressable,
-  type NativeSyntheticEvent,
-  type TextInputFocusEventData,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -382,7 +380,7 @@ export default function ChatThreadScreen() {
     }
   };
 
-  const handleInputFocus = (_e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleInputFocus = () => {
     scrollToBottom(true, 0);
     scrollToBottom(true, 80);
     scrollToBottom(true, 160);

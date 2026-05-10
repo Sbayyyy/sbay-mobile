@@ -32,7 +32,7 @@ export type OpenChatResponse = {
   chatId: string;
 };
 
-async function authHeader() {
+async function authHeader(): Promise<Record<string, string>> {
   const token = await getStoredToken();
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };
@@ -104,13 +104,13 @@ export async function deleteMessage(messageId: string): Promise<void> {
 }
 
 export async function openChat(payload: OpenChatPayload): Promise<OpenChatResponse> {
-  const headers = {
+  const headers: Record<string, string> = {
     Accept: "application/json",
     "Content-Type": "application/json",
     ...(await authHeader()),
   };
 
-  if (!("Authorization" in headers)) {
+  if (!headers.Authorization) {
     throw new Error("Missing auth token (Authorization header not set).");
   }
 

@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { notifyUnauthorized } from "@/services/auth-session";
 
-const fallbackBaseUrl = "http://localhost:8080";
+const fallbackBaseUrl = "https://api.syrian-bay.com";
 
 const extraBaseUrl =
   (Constants.expoConfig as { extra?: { apiBaseUrl?: string } } | null)?.extra

@@ -7,7 +7,6 @@ import { ActivityIndicator, LogBox, View } from "react-native";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
 import * as Notifications from "expo-notifications";
-import * as Sentry from "sentry-expo";
 import { useTranslation } from "react-i18next";
 
 import { type ThemeColors } from "@/constants/theme";
@@ -38,18 +37,11 @@ rejectionTracking.enable({
 
 LogBox.ignoreLogs(ignoredPromiseErrors);
 
-const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
-if (sentryDsn) {
-  Sentry.init({
-    dsn: sentryDsn,
-    enableInExpoDevelopment: true,
-    tracesSampleRate: 0.1,
-  });
-}
-
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),

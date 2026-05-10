@@ -658,10 +658,5 @@ const createStyles = (theme: ReturnType<typeof useAppTheme>) =>
     modalList: {
       maxHeight: 360,
     },
-    errorText: {
-      fontSize: 12,
-      color: theme.danger,
-      marginTop: -8,
-    },
   });
 
