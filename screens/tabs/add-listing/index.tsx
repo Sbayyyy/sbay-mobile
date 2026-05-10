@@ -38,6 +38,7 @@ const currencyOptions = Array.from(CURRENCY_OPTIONS).map((item) => ({
   id: item,
   label: item,
 }));
+type CurrencyId = (typeof CURRENCY_OPTIONS)[number];
 
 type ConditionId = (typeof LISTING_CONDITIONS)[number];
 const SYRIA_DISTRICTS = [
@@ -72,7 +73,7 @@ export default function AddListingScreen() {
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState<DistrictId>("");
   const [districtMenuVisible, setDistrictMenuVisible] = useState(false);
-  const [currency, setCurrency] = useState(currencyOptions[0].id);
+  const [currency, setCurrency] = useState<CurrencyId>(currencyOptions[0].id);
   const [photos, setPhotos] = useState<(string | null)[]>(
     Array(PHOTO_SLOTS.length).fill(null),
   );
@@ -83,7 +84,7 @@ export default function AddListingScreen() {
     category: string;
     condition: ConditionId;
     location: DistrictId;
-    currency: string;
+    currency: CurrencyId;
     photos: (string | null)[];
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -220,7 +221,7 @@ export default function AddListingScreen() {
               (item) => item.id === listing.region || item.label === listing.region,
             ) ?? null;
           const nextLocation = matchedDistrict?.id ?? "";
-          const nextCurrency = listing.priceCurrency ?? currencyOptions[0].id;
+          const nextCurrency = (listing.priceCurrency ?? currencyOptions[0].id) as CurrencyId;
           const nextCondition =
             conditionFromApi[listing.condition ?? ""] ?? LISTING_CONDITIONS[0];
           const nextPhotos = Array(PHOTO_SLOTS.length).fill(null) as Array<
@@ -986,5 +987,10 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 16,
       fontWeight: "600",
       color: theme.primaryForeground,
+    },
+    errorText: {
+      color: theme.danger,
+      fontSize: 12,
+      lineHeight: 16,
     },
   });

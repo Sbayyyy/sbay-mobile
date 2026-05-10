@@ -16,6 +16,28 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
+## API configuration
+
+The app is configured to use the deployed SBay services by default:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=https://api.syrian-bay.com
+EXPO_PUBLIC_WEB_BASE_URL=https://syrian-bay.com
+```
+
+Override these in `.env` only when testing against a local backend.
+
+## Jenkins Android release
+
+`Jenkinsfile` builds and submits the Android production AAB through EAS.
+
+Required Jenkins credentials:
+
+- `expo-token`: Secret text containing an Expo access token.
+- `google-play-service-account-json`: Secret file containing the Google Play service account JSON with release access.
+
+The pipeline runs `npm ci`, TypeScript, lint, Expo Doctor, high-severity audit, EAS Android production build, Google Play Internal Track submit, and archives the downloaded AAB.
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)

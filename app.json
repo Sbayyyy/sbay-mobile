@@ -1,20 +1,24 @@
 {
   "expo": {
-    "name": "sbay-mobile",
-    "slug": "sbay-mobile",
+    "name": "SBay",
+    "slug": "sbay",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sbaymobile",
+    "scheme": "sbay",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "TODO.com.sbay.app",
-      "associatedDomains": ["applinks:TODO_DOMAIN"]
+      "bundleIdentifier": "com.syrianbay.app",
+      "associatedDomains": [
+        "applinks:syrian-bay.com",
+        "applinks:www.syrian-bay.com"
+      ]
     },
     "android": {
-      "package": "TODO.com.sbay.app",
+      "package": "com.syrianbay.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -27,11 +31,19 @@
           "data": [
             {
               "scheme": "https",
-              "host": "TODO_DOMAIN",
-              "pathPrefix": "/listings/"
+              "host": "syrian-bay.com",
+              "pathPrefix": "/listing/"
+            },
+            {
+              "scheme": "https",
+              "host": "www.syrian-bay.com",
+              "pathPrefix": "/listing/"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "edgeToEdgeEnabled": true,
@@ -44,7 +56,6 @@
     },
     "plugins": [
       "expo-router",
-      "sentry-expo",
       [
         "expo-splash-screen",
         {
@@ -56,11 +67,23 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-localization",
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "apiBaseUrl": "https://api.syrian-bay.com",
+      "webBaseUrl": "https://syrian-bay.com",
+      "router": {},
+      "eas": {
+        "projectId": "f0878952-8fa0-487b-9bed-72315aa0823c"
+      }
+    },
+    "owner": "sbay-organization"
   }
 }

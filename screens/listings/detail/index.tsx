@@ -30,11 +30,10 @@ import { getStoredToken } from "@/services/auth";
 import { getMyProfile } from "@/services/user";
 import { addFavorite, getFavorites, removeFavorite } from "@/services/favorites";
 import { openChat } from "@/services/messages";
+import { WEB_BASE_URL } from "@/services/config";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80";
-// TODO: Replace with real domain when universal links are set up.
-const SHARE_BASE_URL = "https://TODO_DOMAIN";
 
 export default function ListingDetailScreen() {
   const router = useRouter();
@@ -333,7 +332,7 @@ const handleContactSeller = async () => {
             style={styles.actionButton}
             onPress={async () => {
               try {
-                const shareUrl = `${SHARE_BASE_URL}/listings/${listing.id}`;
+                const shareUrl = `${WEB_BASE_URL}/listing/${listing.id}`;
                 const message = `Check out what I found on SBAY, ${listing.title}:\n${shareUrl}`;
                 await Share.share({
                   title: listing.title,

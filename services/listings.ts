@@ -61,7 +61,7 @@ export type CreateListingPayload = {
 
 export type UpdateListingPayload = Partial<CreateListingPayload>;
 
-async function authHeader() {
+async function authHeader(): Promise<Record<string, string>> {
   const token = await getStoredToken();
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };

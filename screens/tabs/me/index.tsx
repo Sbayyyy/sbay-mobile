@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -96,7 +96,7 @@ export default function MeScreen() {
   const viewShotRef = useRef<any>(null);
   const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const isWeb = Platform.OS === "web";
-  const CropShot = isWeb ? View : ViewShot;
+  const CropShot = (isWeb ? View : ViewShot) as ComponentType<any>;
   const cropShotProps = isWeb
     ? {}
     : {

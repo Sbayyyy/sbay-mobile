@@ -304,7 +304,7 @@ export default function SearchScreen() {
               <ChipPicker
                 label={t("listings.location", { defaultValue: "Location" })}
                 value={location}
-                onChange={setLocation}
+                onChange={(id) => setLocation(id as LocationId)}
                 options={locationOptions}
               />
               <View style={styles.priceRow}>
