@@ -7,13 +7,7 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '10'))
     }
 
-    parameters {
-        booleanParam(name: 'SUBMIT_INTERNAL', defaultValue: true, description: 'Upload the signed Android AAB to the Google Play Internal Track')
-    }
-
     environment {
-        EXPO_TOKEN = credentials('expo-token')
-        GOOGLE_PLAY_SERVICE_ACCOUNT_JSON = credentials('google-play-service-account-json')
         EXPO_NO_TELEMETRY = '1'
         CI = '1'
         AAB_PATH = 'artifacts/SBay-android-production.aab'
@@ -53,64 +47,53 @@ pipeline {
             }
         }
 
-        stage('Build Signed AAB') {
+        stage('Generate Android Project') {
             steps {
                 dir(env.MOBILE_DIR) {
-                    sh '''
-                        set -eu
-                        mkdir -p artifacts
-                        npx eas-cli build --platform android --profile production --non-interactive --wait --json > artifacts/eas-build.json
-                        node <<'NODE'
-const fs = require('fs');
-const https = require('https');
-const data = JSON.parse(fs.readFileSync('artifacts/eas-build.json', 'utf8'));
-const build = Array.isArray(data) ? data[0] : data;
-const url = build?.artifacts?.buildUrl || build?.artifactUrl || build?.artifacts?.applicationArchiveUrl;
-if (!url) {
-  console.error('Could not find EAS Android artifact URL in artifacts/eas-build.json');
-  process.exit(1);
-}
-function download(source, target, redirects = 0) {
-  if (redirects > 5) {
-    console.error('Too many redirects while downloading AAB');
-    process.exit(1);
-  }
-  https.get(source, response => {
-    if ([301, 302, 303, 307, 308].includes(response.statusCode)) {
-      download(response.headers.location, target, redirects + 1);
-      return;
-    }
-    if (response.statusCode !== 200) {
-      console.error(`AAB download failed with HTTP ${response.statusCode}`);
-      process.exit(1);
-    }
-    const file = fs.createWriteStream(target);
-    response.pipe(file);
-    file.on('finish', () => file.close());
-  }).on('error', error => {
-    console.error(error);
-    process.exit(1);
-  });
-}
-download(url, process.env.AAB_PATH);
-NODE
-                        test -s "$AAB_PATH"
-                    '''
+                    sh 'npx expo prebuild --platform android --clean --non-interactive'
                 }
             }
         }
 
-        stage('Upload Internal Track') {
-            when {
-                expression { return params.SUBMIT_INTERNAL }
+        stage('Build Signed AAB') {
+            steps {
+                dir(env.MOBILE_DIR) {
+                    withCredentials([
+                        file(credentialsId: 'android-upload-keystore', variable: 'ANDROID_UPLOAD_KEYSTORE'),
+                        string(credentialsId: 'android-keystore-password', variable: 'ANDROID_KEYSTORE_PASSWORD'),
+                        string(credentialsId: 'android-key-alias', variable: 'ANDROID_KEY_ALIAS'),
+                        string(credentialsId: 'android-key-password', variable: 'ANDROID_KEY_PASSWORD')
+                    ]) {
+                        sh '''
+                            set -eu
+                            mkdir -p artifacts android/app
+                            cp "$ANDROID_UPLOAD_KEYSTORE" android/app/upload-keystore.jks
+                            trap 'rm -f android/app/upload-keystore.jks' EXIT
+                            cd android
+                            chmod +x ./gradlew
+                            ./gradlew bundleRelease \
+                                -Pandroid.injected.signing.store.file="$PWD/app/upload-keystore.jks" \
+                                -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
+                                -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
+                                -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+                            cd ..
+                            cp android/app/build/outputs/bundle/release/app-release.aab "$AAB_PATH"
+                            test -s "$AAB_PATH"
+                        '''
+                    }
+                }
             }
+        }
+
+        stage('Verify AAB') {
             steps {
                 dir(env.MOBILE_DIR) {
                     sh '''
                         set -eu
-                        cp "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" google-play-service-account.json
-                        npx eas-cli submit --platform android --profile production --path "$AAB_PATH" --non-interactive --wait
-                        rm -f google-play-service-account.json
+                        unzip -t "$AAB_PATH" >/dev/null
+                        if command -v jarsigner >/dev/null 2>&1; then
+                            jarsigner -verify "$AAB_PATH"
+                        fi
                     '''
                 }
             }
@@ -118,21 +101,14 @@ NODE
 
         stage('Archive Artifact') {
             steps {
-                archiveArtifacts artifacts: "${env.ARTIFACT_PREFIX}artifacts/*.aab, ${env.ARTIFACT_PREFIX}artifacts/eas-build.json", fingerprint: true
+                archiveArtifacts artifacts: "${env.ARTIFACT_PREFIX}artifacts/*.aab", fingerprint: true
             }
         }
     }
 
     post {
         always {
-            script {
-                def mobileDir = env.MOBILE_DIR ?: '.'
-                def artifactPrefix = mobileDir == '.' ? '' : "${mobileDir}/"
-                dir(mobileDir) {
-                    sh 'rm -f google-play-service-account.json || true'
-                }
-                archiveArtifacts artifacts: "${artifactPrefix}artifacts/*.aab, ${artifactPrefix}artifacts/eas-build.json", allowEmptyArchive: true, fingerprint: true
-            }
+            echo 'Mobile AAB pipeline finished.'
         }
     }
 }

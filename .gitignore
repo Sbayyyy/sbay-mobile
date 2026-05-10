@@ -36,7 +36,6 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 artifacts/
-google-play-service-account.json
 
 app-example
 
