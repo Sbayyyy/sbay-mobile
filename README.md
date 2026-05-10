@@ -29,14 +29,16 @@ Override these in `.env` only when testing against a local backend.
 
 ## Jenkins Android release
 
-`Jenkinsfile` builds and submits the Android production AAB through EAS.
+`Jenkinsfile` builds a signed Android production AAB that can be uploaded manually to Google Play Console.
 
 Required Jenkins credentials:
 
-- `expo-token`: Secret text containing an Expo access token.
-- `google-play-service-account-json`: Secret file containing the Google Play service account JSON with release access.
+- `android-upload-keystore`: Secret file containing the Android upload keystore.
+- `android-keystore-password`: Secret text containing the keystore password.
+- `android-key-alias`: Secret text containing the upload key alias.
+- `android-key-password`: Secret text containing the upload key password.
 
-The pipeline runs `npm ci`, TypeScript, lint, Expo Doctor, high-severity audit, EAS Android production build, Google Play Internal Track submit, and archives the downloaded AAB.
+The pipeline runs `npm ci`, TypeScript, lint, Expo Doctor, high-severity audit, generates the Android project with Expo prebuild, builds `bundleRelease` locally with Gradle, verifies the AAB, and archives it.
 
 In the output, you'll find options to open the app in a
 
