@@ -31,6 +31,7 @@ import { getMyProfile } from "@/services/user";
 import { addFavorite, getFavorites, removeFavorite } from "@/services/favorites";
 import { openChat } from "@/services/messages";
 import { WEB_BASE_URL } from "@/services/config";
+import {SafeAreaView} from "react-native-safe-area-context";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80";
@@ -216,7 +217,8 @@ const handleContactSeller = async () => {
   }
 };
   return (
-    <AppScreen>
+  <AppScreen>
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <ScrollView contentContainerStyle={styles.container}>
         <TouchableOpacity style={styles.backButtonInline} onPress={() => router.back()}>
           <Text style={styles.backButtonLabel}>Back</Text>
@@ -533,7 +535,7 @@ const handleContactSeller = async () => {
           </View>
         </View>
       </Modal>
-      {listing?.id ? (
+{listing?.id ? (
         <ReportModal
           visible={reportOpen}
           targetType="Listing"
@@ -541,12 +543,16 @@ const handleContactSeller = async () => {
           onClose={() => setReportOpen(false)}
         />
       ) : null}
-    </AppScreen>
-  );
+    </SafeAreaView>
+  </AppScreen>
+);
 }
 
 const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
+    safeArea: {
+      flex: 1,
+    },
     container: {
       padding: 20,
       gap: 16,
