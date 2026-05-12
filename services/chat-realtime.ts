@@ -138,3 +138,21 @@ export function onMessageDeleted(
     if (data) handler(data);
   });
 }
+
+export function onNotificationNew(
+  connection: HubConnection,
+  handler: () => void,
+) {
+  connection.on("notification:new", () => {
+    handler();
+  });
+}
+
+export function onNotificationRead(
+  connection: HubConnection,
+  handler: () => void,
+) {
+  connection.on("notification:read", () => {
+    handler();
+  });
+}

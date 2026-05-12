@@ -14,6 +14,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { LocalizationProvider } from "../providers/LocalizationProvider";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { ThemeProvider as AppThemeProvider, useThemeContext } from "@/providers/ThemeProvider";
+import { NotificationProvider } from "@/providers/NotificationProvider";
 
 const ignoredPromiseErrors = [
   "Unable to activate keep awake",
@@ -56,7 +57,9 @@ export default function RootLayout() {
     <LocalizationProvider>
       <AppThemeProvider>
         <AuthProvider>
-          <RootLayoutContent />
+          <NotificationProvider>
+            <RootLayoutContent />
+          </NotificationProvider>
         </AuthProvider>
       </AppThemeProvider>
     </LocalizationProvider>
@@ -121,6 +124,25 @@ function RootLayoutContent() {
       sub.remove();
     };
   }, [router]);
+
+  // Handle push notifications received while app is in foreground
+  useEffect(() => {
+    const sub = Notifications.addNotificationReceivedListener((notification) => {
+      const data = notification.request.content.data as {
+        type?: string;
+        chatId?: string;
+      } | undefined;
+      
+      // If it's a notification type, trigger a refresh of the notification badge
+      if (data?.type === "notification" || !data?.chatId) {
+        // Import and call the refresh function from NotificationContext
+        // This will be handled by the NotificationProvider at the component level
+      }
+    });
+    return () => {
+      sub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (status === "loading") return;
