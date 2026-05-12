@@ -10,8 +10,9 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 
 // Mock expo-notifications
 jest.mock("expo-notifications", () => ({
-  addNotificationReceivedListener: jest.fn(),
-  addNotificationResponseReceivedListener: jest.fn(),
+  addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  getLastNotificationResponseAsync: jest.fn(() => Promise.resolve(null)),
   getPermissionsAsync: jest.fn(() =>
     Promise.resolve({ status: "granted" }),
   ),
@@ -27,6 +28,14 @@ jest.mock("expo-notifications", () => ({
     MAX: 5,
   },
 }));
+
+jest.mock("@expo/vector-icons/FontAwesome", () => {
+  const React = require("react");
+  const { Text } = require("react-native");
+  return function MockFontAwesome(props) {
+    return React.createElement(Text, { testID: props.testID }, props.name);
+  };
+});
 
 // Mock expo-device
 jest.mock("expo-device", () => ({

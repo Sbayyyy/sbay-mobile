@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { AppState } from "react-native";
 import { getStoredToken } from "@/services/auth";
 import { getUnreadNotificationCount } from "@/services/notifications";
 import { usePushNotificationListener } from "@/hooks/use-push-notifications";
@@ -33,16 +34,24 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       setUnreadCount(count);
     } catch (error) {
       console.error("Error refreshing notification count:", error);
-      setUnreadCount(0);
     }
   }, []);
 
-  // Load initial count on mount
   useEffect(() => {
     void refreshUnreadCount();
   }, [refreshUnreadCount]);
 
-  // Listen for push notifications and refresh badge
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        void refreshUnreadCount();
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [refreshUnreadCount]);
+
   usePushNotificationListener(() => {
     void refreshUnreadCount();
   });

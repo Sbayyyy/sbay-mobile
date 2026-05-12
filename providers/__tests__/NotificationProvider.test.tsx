@@ -55,7 +55,7 @@ describe("NotificationProvider", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestID("unread-count")).toHaveTextContent("5");
+      expect(screen.getByTestId("unread-count")).toHaveTextContent("5");
     });
   });
 
@@ -101,7 +101,7 @@ describe("NotificationProvider", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestID("unread-count")).toHaveTextContent("0");
+      expect(screen.getByTestId("unread-count")).toHaveTextContent("0");
     });
   });
 
@@ -124,7 +124,7 @@ describe("NotificationProvider", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestID("unread-count")).toHaveTextContent("0");
+      expect(screen.getByTestId("unread-count")).toHaveTextContent("0");
     });
 
     (notificationsService.getUnreadNotificationCount as jest.Mock).mockResolvedValue(

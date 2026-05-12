@@ -46,9 +46,6 @@ export async function syncPushToken(): Promise<void> {
   const token = await registerForPushNotifications();
   if (!token) return;
 
-  const stored = await AsyncStorage.getItem(STORAGE_KEY);
-  if (stored === token) return;
-
   const authToken = await getStoredToken();
   if (!authToken) return;
 
@@ -72,13 +69,14 @@ export async function unregisterPushToken(): Promise<void> {
   if (!stored) return;
   try {
     const authToken = await getStoredToken();
-    if (!authToken) return;
-    await apiRequest(`/api/notifications/push-token?token=${encodeURIComponent(stored)}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
+    if (authToken) {
+      await apiRequest(`/api/notifications/push-token?token=${encodeURIComponent(stored)}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+    }
   } finally {
     await AsyncStorage.removeItem(STORAGE_KEY);
   }

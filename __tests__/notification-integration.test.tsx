@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react-native";
 import { Text } from "react-native";
 import * as Notifications from "expo-notifications";
-import { NotificationProvider, useNotificationContext } from "../../providers/NotificationProvider";
+import { NotificationProvider, useNotificationContext } from "@/providers/NotificationProvider";
 import * as notificationsService from "@/services/notifications";
 import * as authService from "@/services/auth";
 
@@ -47,7 +47,7 @@ describe("Notification System Integration", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestID("notification-count")).toHaveTextContent("0");
+        expect(screen.getByTestId("notification-count")).toHaveTextContent("0");
       });
 
       // Simulate new notification arrives
@@ -86,7 +86,7 @@ describe("Notification System Integration", () => {
       });
 
       // Verify initial count
-      expect(screen.getByTestID("notification-count")).toBeTruthy();
+      expect(screen.getByTestId("notification-count")).toBeTruthy();
     });
 
     it("should handle API errors during notification update", async () => {
@@ -101,7 +101,7 @@ describe("Notification System Integration", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestID("notification-count")).toHaveTextContent("2");
+        expect(screen.getByTestId("notification-count")).toHaveTextContent("2");
       });
 
       // Simulate API error on next call
@@ -120,7 +120,7 @@ describe("Notification System Integration", () => {
 
       // Count should remain from previous successful call
       await waitFor(() => {
-        expect(screen.getByTestID("notification-count")).toHaveTextContent("2");
+        expect(screen.getByTestId("notification-count")).toHaveTextContent("2");
       });
     });
 
@@ -134,7 +134,7 @@ describe("Notification System Integration", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestID("notification-count")).toHaveTextContent("0");
+        expect(screen.getByTestId("notification-count")).toHaveTextContent("0");
       });
 
       expect(notificationsService.getUnreadNotificationCount).not.toHaveBeenCalled();
@@ -173,7 +173,7 @@ describe("Notification System Integration", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestID("notification-count")).toHaveTextContent("1");
+        expect(screen.getByTestId("notification-count")).toHaveTextContent("1");
       });
 
       // Update count
@@ -209,7 +209,7 @@ describe("Notification System Integration", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestID("notification-count")).toHaveTextContent("1");
+        expect(screen.getByTestId("notification-count")).toHaveTextContent("1");
       });
     });
 
@@ -225,7 +225,7 @@ describe("Notification System Integration", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestID("notification-count")).toHaveTextContent("150");
+        expect(screen.getByTestId("notification-count")).toHaveTextContent("150");
       });
     });
 
@@ -241,7 +241,7 @@ describe("Notification System Integration", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestID("notification-count")).toHaveTextContent("0");
+        expect(screen.getByTestId("notification-count")).toHaveTextContent("0");
       });
     });
   });

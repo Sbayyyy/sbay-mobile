@@ -1,12 +1,19 @@
 import { getNotifications, getUnreadNotificationCount } from "../notifications";
-import * as authSession from "@/services/auth-session";
+import * as api from "@/services/api";
+import * as auth from "@/services/auth";
 
-// Mock the auth-session module
-jest.mock("@/services/auth-session");
+jest.mock("@/services/api", () => ({
+  apiRequest: jest.fn(),
+}));
+
+jest.mock("@/services/auth", () => ({
+  getStoredToken: jest.fn(),
+}));
 
 describe("Notifications Service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (auth.getStoredToken as jest.Mock).mockResolvedValue("token");
   });
 
   describe("getUnreadNotificationCount", () => {
@@ -14,15 +21,12 @@ describe("Notifications Service", () => {
       const mockCount = 5;
       const mockResponse = { total: mockCount };
 
-      (authSession.apiRequest as jest.Mock).mockResolvedValue(mockResponse);
-      (authSession.authHeader as jest.Mock).mockResolvedValue({
-        Authorization: "Bearer token",
-      });
+      (api.apiRequest as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await getUnreadNotificationCount();
 
       expect(result).toBe(mockCount);
-      expect(authSession.apiRequest).toHaveBeenCalledWith(
+      expect(api.apiRequest).toHaveBeenCalledWith(
         "/api/notifications/unread-count",
         {
           headers: { Authorization: "Bearer token" },
@@ -31,8 +35,8 @@ describe("Notifications Service", () => {
     });
 
     it("should return 0 when API response has no total", async () => {
-      (authSession.apiRequest as jest.Mock).mockResolvedValue({});
-      (authSession.authHeader as jest.Mock).mockResolvedValue({});
+      (api.apiRequest as jest.Mock).mockResolvedValue({});
+      (auth.getStoredToken as jest.Mock).mockResolvedValue(null);
 
       const result = await getUnreadNotificationCount();
 
@@ -40,18 +44,16 @@ describe("Notifications Service", () => {
     });
 
     it("should handle API errors gracefully", async () => {
-      (authSession.apiRequest as jest.Mock).mockRejectedValue(
+      (api.apiRequest as jest.Mock).mockRejectedValue(
         new Error("API Error"),
       );
-      (authSession.authHeader as jest.Mock).mockResolvedValue({});
 
       await expect(getUnreadNotificationCount()).rejects.toThrow("API Error");
     });
 
     it("should cap the count at 99+", async () => {
       const mockResponse = { total: 150 };
-      (authSession.apiRequest as jest.Mock).mockResolvedValue(mockResponse);
-      (authSession.authHeader as jest.Mock).mockResolvedValue({});
+      (api.apiRequest as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await getUnreadNotificationCount();
 
@@ -72,13 +74,13 @@ describe("Notifications Service", () => {
       ];
       const mockResponse = { notifications: mockNotifications };
 
-      (authSession.apiRequest as jest.Mock).mockResolvedValue(mockResponse);
-      (authSession.authHeader as jest.Mock).mockResolvedValue({});
+      (api.apiRequest as jest.Mock).mockResolvedValue(mockResponse);
+      (auth.getStoredToken as jest.Mock).mockResolvedValue(null);
 
       const result = await getNotifications();
 
       expect(result).toEqual(mockNotifications);
-      expect(authSession.apiRequest).toHaveBeenCalledWith(
+      expect(api.apiRequest).toHaveBeenCalledWith(
         "/api/notifications",
         {
           headers: {},
@@ -87,8 +89,8 @@ describe("Notifications Service", () => {
     });
 
     it("should return empty array when API response has no notifications", async () => {
-      (authSession.apiRequest as jest.Mock).mockResolvedValue({});
-      (authSession.authHeader as jest.Mock).mockResolvedValue({});
+      (api.apiRequest as jest.Mock).mockResolvedValue({});
+      (auth.getStoredToken as jest.Mock).mockResolvedValue(null);
 
       const result = await getNotifications();
 
@@ -96,10 +98,9 @@ describe("Notifications Service", () => {
     });
 
     it("should handle API errors", async () => {
-      (authSession.apiRequest as jest.Mock).mockRejectedValue(
+      (api.apiRequest as jest.Mock).mockRejectedValue(
         new Error("Network error"),
       );
-      (authSession.authHeader as jest.Mock).mockResolvedValue({});
 
       await expect(getNotifications()).rejects.toThrow("Network error");
     });
@@ -117,8 +118,8 @@ describe("Notifications Service", () => {
       ];
       const mockResponse = { notifications: mockNotifications };
 
-      (authSession.apiRequest as jest.Mock).mockResolvedValue(mockResponse);
-      (authSession.authHeader as jest.Mock).mockResolvedValue({});
+      (api.apiRequest as jest.Mock).mockResolvedValue(mockResponse);
+      (auth.getStoredToken as jest.Mock).mockResolvedValue(null);
 
       const result = await getNotifications();
 
