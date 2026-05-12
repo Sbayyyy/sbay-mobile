@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import {
@@ -26,6 +26,7 @@ import { Listing } from "@/types/listing";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
 import { searchListings, type Listing as ApiListing } from "@/services/listings";
+import { useNotificationContext } from "@/providers/NotificationProvider";
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
@@ -39,6 +40,13 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { unreadCount, refreshUnreadCount } = useNotificationContext();
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshUnreadCount();
+    }, [refreshUnreadCount]),
+  );
 
   const categories = useMemo(() => {
     return HOME_CATEGORIES.map((category) => ({
@@ -125,6 +133,7 @@ export default function HomeScreen() {
               if (!trimmed) return;
               router.push(`/search?query=${encodeURIComponent(trimmed)}`);
             }}
+            notificationCount={unreadCount}
           />
         </View>
         <ScrollView

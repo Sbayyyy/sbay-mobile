@@ -8,13 +8,18 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { type Href, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
-import { getNotifications, type AppNotification } from "@/services/notifications";
+import {
+  getNotifications,
+  markNotificationsRead,
+  type AppNotification,
+} from "@/services/notifications";
+import { useNotificationContext } from "@/providers/NotificationProvider";
 
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -23,6 +28,7 @@ export default function NotificationsScreen() {
   const theme = useAppTheme();
   const { t } = useTranslation();
   const router = useRouter();
+  const { refreshUnreadCount } = useNotificationContext();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const formatRelativeTime = (dateString: string) => {
@@ -52,11 +58,15 @@ export default function NotificationsScreen() {
     try {
       const data = await getNotifications();
       setNotifications(data);
+      if (data.some((item) => !item.read)) {
+        await markNotificationsRead();
+        await refreshUnreadCount();
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [refreshUnreadCount]);
 
   useEffect(() => {
     void loadNotifications("initial");
@@ -102,7 +112,7 @@ export default function NotificationsScreen() {
                 style={styles.card}
                 onPress={() => {
                   if (item.href) {
-                    router.push(item.href);
+                    router.push(item.href as Href);
                   }
                 }}
                 activeOpacity={0.85}

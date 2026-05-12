@@ -1,8 +1,8 @@
 import { DarkTheme as NavigationDarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { type Href, Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { ActivityIndicator, LogBox, View } from "react-native";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
@@ -14,6 +14,8 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { LocalizationProvider } from "../providers/LocalizationProvider";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { ThemeProvider as AppThemeProvider, useThemeContext } from "@/providers/ThemeProvider";
+import { NotificationProvider } from "@/providers/NotificationProvider";
+import { type PushNotificationData } from "@/types/notifications";
 
 const ignoredPromiseErrors = [
   "Unable to activate keep awake",
@@ -37,6 +39,16 @@ rejectionTracking.enable({
 
 LogBox.ignoreLogs(ignoredPromiseErrors);
 
+function getNotificationHref(data?: PushNotificationData | null): Href | null {
+  if (data?.chatId) {
+    return `/chats/thread/${data.chatId}` as Href;
+  }
+  if (data?.href) {
+    return data.href as Href;
+  }
+  return null;
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -56,7 +68,9 @@ export default function RootLayout() {
     <LocalizationProvider>
       <AppThemeProvider>
         <AuthProvider>
-          <RootLayoutContent />
+          <NotificationProvider>
+            <RootLayoutContent />
+          </NotificationProvider>
         </AuthProvider>
       </AppThemeProvider>
     </LocalizationProvider>
@@ -108,19 +122,41 @@ function RootLayoutContent() {
     NavigationBar.setButtonStyleAsync(isDark ? "light" : "dark").catch(() => {});
   }, [colors.navigationBackground, isDark]);
 
+  const openNotificationTarget = useCallback(
+    (data?: PushNotificationData | null) => {
+      const href = getNotificationHref(data);
+      if (href) {
+        router.push(href);
+      }
+    },
+    [router],
+  );
+
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data as {
-        chatId?: string;
-      };
-      if (data?.chatId) {
-        router.push(`/chats/thread/${data.chatId}`);
-      }
+      openNotificationTarget(
+        response.notification.request.content.data as PushNotificationData | undefined,
+      );
     });
     return () => {
       sub.remove();
     };
-  }, [router]);
+  }, [openNotificationTarget]);
+
+  useEffect(() => {
+    let active = true;
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (!active || !response) return;
+        openNotificationTarget(
+          response.notification.request.content.data as PushNotificationData | undefined,
+        );
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [openNotificationTarget]);
 
   useEffect(() => {
     if (status === "loading") return;

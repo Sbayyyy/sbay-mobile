@@ -6,8 +6,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { getStoredToken } from "@/services/auth";
-import { createChatConnection, onMessageNew, onMessageRead } from "@/services/chat-realtime";
+import {
+  createChatConnection,
+  onMessageNew,
+  onMessageRead,
+  onNotificationNew,
+  onNotificationRead,
+} from "@/services/chat-realtime";
 import { getChats, getUnreadCount } from "@/services/messages";
+import { useNotificationContext } from "@/providers/NotificationProvider";
 import { type HubConnection } from "@microsoft/signalr";
 
 export default function TabsLayout() {
@@ -19,6 +26,7 @@ export default function TabsLayout() {
   const requestIdRef = useRef(0);
   const connectionRef = useRef<HubConnection | null>(null);
   const joinedChatsRef = useRef<string[]>([]);
+  const { refreshUnreadCount } = useNotificationContext();
 
   const loadUnread = useCallback(() => {
     let isMounted = true;
@@ -70,6 +78,12 @@ export default function TabsLayout() {
         });
         onMessageRead(connection, () => {
           loadUnread();
+        });
+        onNotificationNew(connection, () => {
+          void refreshUnreadCount();
+        });
+        onNotificationRead(connection, () => {
+          void refreshUnreadCount();
         });
 
         await connection.start();
