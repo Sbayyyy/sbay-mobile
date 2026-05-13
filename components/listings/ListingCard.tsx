@@ -1,5 +1,13 @@
 import { useMemo } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native";
 import { Listing } from "@/types/listing";
 
 import { type ThemeColors } from "@/constants/theme";
@@ -8,15 +16,16 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 type ListingCardProps = {
   listing: Listing;
   onPress?: (listing: Listing) => void;
+  style?: StyleProp<ViewStyle>;
 };
 
-export function ListingCard({ listing, onPress }: ListingCardProps) {
+export function ListingCard({ listing, onPress, style }: ListingCardProps) {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, style]}
       activeOpacity={0.9}
       onPress={() => onPress?.(listing)}
     >

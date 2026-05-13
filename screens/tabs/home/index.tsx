@@ -32,6 +32,7 @@ export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [listings, setListings] = useState<ApiListing[]>([]);
+  const [featuredListings, setFeaturedListings] = useState<ApiListing[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -69,11 +70,18 @@ export default function HomeScreen() {
 
       const run = async () => {
         try {
-          const data = await searchListings({
-            category: activeCategory === "all" ? undefined : activeCategory,
-          });
+          const [data, featured] = await Promise.all([
+            searchListings({
+              category: activeCategory === "all" ? undefined : activeCategory,
+            }),
+            searchListings({
+              featured: true,
+              pageSize: 8,
+            }),
+          ]);
           if (!isMounted) return;
           setListings(data);
+          setFeaturedListings(featured.filter((listing) => listing.isBoosted === true));
         } catch (err) {
           if (!isMounted) return;
           setError(
@@ -118,7 +126,19 @@ export default function HomeScreen() {
     }));
   }, [listings]);
 
-  const featuredListings = useMemo(() => displayListings.slice(0, 8), [displayListings]);
+  const displayFeaturedListings = useMemo(() => {
+    return featuredListings.filter((listing) => listing.isBoosted === true).map((listing) => ({
+      id: listing.id,
+      title: listing.title,
+      price: `${listing.priceCurrency} ${listing.priceAmount}`,
+      category: listing.categoryPath ?? "other",
+      location: listing.region ?? listing.seller?.city ?? undefined,
+      image:
+        listing.thumbnailUrl ??
+        listing.imageUrls?.[0] ??
+        "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=60",
+    }));
+  }, [featuredListings]);
 
   return (
     <AppScreen>
@@ -164,12 +184,12 @@ export default function HomeScreen() {
             }}
           />
 
-          {featuredListings.length > 0 ? (
+          {displayFeaturedListings.length > 0 ? (
             <>
               <SectionHeader
                 title={t("home.featuredTitle", { defaultValue: "Featured" })}
                 actionLabel={t("common.actions.seeAll")}
-                onActionPress={() => router.push("/featured")}
+                onActionPress={() => router.push("/search?featured=true")}
               />
               <View style={styles.featuredWrapper}>
                 <ScrollView
@@ -177,7 +197,7 @@ export default function HomeScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.featuredRow}
                 >
-                  {featuredListings.map((listing) => (
+                  {displayFeaturedListings.map((listing) => (
                     <TouchableOpacity
                       key={listing.id}
                       style={styles.featuredCard}
@@ -201,6 +221,7 @@ export default function HomeScreen() {
           <SectionHeader
             title={t("home.recommendedTitle")}
             actionLabel={t("common.actions.exploreMore")}
+            onActionPress={() => router.push("/search?reset=true")}
           />
 
           {loading ? (

@@ -34,6 +34,8 @@ export type Listing = {
   images: ListingImage[];
   imageUrls: string[];
   seller?: SellerSummary | null;
+  boostedUntil?: string | null;
+  isBoosted?: boolean;
 };
 
 export type ListingQuery = {
@@ -45,6 +47,7 @@ export type ListingQuery = {
   maxPrice?: number;
   region?: string;
   condition?: string;
+  featured?: boolean;
 };
 
 export type CreateListingPayload = {
@@ -77,6 +80,7 @@ function buildQuery(params: ListingQuery): string {
   if (params.maxPrice != null) query.append("maxPrice", String(params.maxPrice));
   if (params.region) query.append("region", params.region);
   if (params.condition) query.append("condition", params.condition);
+  if (params.featured != null) query.append("featured", String(params.featured));
   const qs = query.toString();
   return qs ? `?${qs}` : "";
 }
