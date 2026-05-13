@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -20,12 +21,15 @@ import { FavoriteListing, ListingCategory } from "@/types/listing";
 import { getFavorites } from "@/services/favorites";
 import { type Listing as ApiListing } from "@/services/listings";
 import { getStoredToken } from "@/services/auth";
+import { openChat } from "@/services/messages";
+import { getMyProfile } from "@/services/user";
 
 export default function FavoritesScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [favorites, setFavorites] = useState<ApiListing[]>([]);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,14 +50,16 @@ export default function FavoritesScreen() {
         if (!token) {
           if (!isMounted) return;
           setFavorites([]);
+          setProfileId(null);
           setLoading(false);
           setRefreshing(false);
           return;
         }
-        return getFavorites()
-          .then((data) => {
+        return Promise.all([getFavorites(), getMyProfile()])
+          .then(([data, profile]) => {
             if (!isMounted) return;
             setFavorites(data);
+            setProfileId(profile.id);
           })
           .catch((err) => {
             if (!isMounted) return;
@@ -77,6 +83,33 @@ export default function FavoritesScreen() {
       isMounted = false;
     };
   }, []);
+
+  const handleMessage = useCallback(
+    async (listing: FavoriteListing) => {
+      if (!profileId) {
+        Alert.alert("Sign in required", "Please sign in to message the seller.");
+        return;
+      }
+
+      if (!listing.sellerId || listing.sellerId === profileId) {
+        return;
+      }
+
+      try {
+        const { chatId } = await openChat({
+          otherUserId: listing.sellerId,
+          listingId: listing.id,
+        });
+        router.push(`/chats/thread/${chatId}`);
+      } catch (err) {
+        Alert.alert(
+          "Unable to open chat",
+          err instanceof Error ? err.message : "Please try again later.",
+        );
+      }
+    },
+    [profileId, router],
+  );
 
   useEffect(() => loadFavorites(), [loadFavorites]);
 
@@ -109,6 +142,7 @@ export default function FavoritesScreen() {
       location: listing.region ?? "Unknown location",
       condition: listing.condition ?? "Unknown",
       seller: listing.seller?.name ?? "Seller",
+      sellerId: listing.seller?.id ?? listing.sellerId ?? null,
       updatedAt: listing.createdAt
         ? new Date(listing.createdAt).toLocaleDateString()
         : "Recently",
@@ -195,8 +229,9 @@ export default function FavoritesScreen() {
                 key={item.id}
                 listing={item}
                 onPress={() => router.push(`/listings/${item.id}`)}
-                onMessage={handlePlaceholder}
+                onMessage={handleMessage}
                 onMore={handlePlaceholder}
+                showMessage={!!profileId && !!item.sellerId && item.sellerId !== profileId}
               />
             ))
           )}

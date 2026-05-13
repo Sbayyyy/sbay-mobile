@@ -19,6 +19,7 @@ export type FavoriteListing = Listing & {
   location: string;
   condition: string;
   seller: string;
+  sellerId?: string | null;
   updatedAt: string;
   priceDrop?: string;
   isNew?: boolean;
