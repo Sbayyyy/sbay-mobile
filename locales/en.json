@@ -11,7 +11,18 @@
       "message": "Message",
       "logIn": "Log in",
       "createAccount": "Create account",
-      "logout": "Log out"
+      "logout": "Log out",
+      "all": "All",
+      "filters": "Filters",
+      "reset": "Reset",
+      "apply": "Apply",
+      "success": "Success",
+      "save": "Save changes"
+    },
+    "errors": {
+      "title": "Something went wrong",
+      "required": "This field is required.",
+      "permissionTitle": "Permission needed"
     },
     "placeholders": {
       "email": "Email address",
@@ -49,7 +60,37 @@
     "emptyTitle": "No listings yet",
     "emptySubtitle": "Try adjusting your search or filters.",
     "errorTitle": "Unable to load listings",
-    "errorSubtitle": "Please try again."
+    "errorSubtitle": "Please try again.",
+    "resultsCount": "{{count}} results",
+    "resultsTitle": "Results",
+    "sortBy": "Sort by",
+    "sortNewest": "Newest",
+    "sortPriceLowHigh": "Price: Low to High",
+    "sortPriceHighLow": "Price: High to Low",
+    "type": "Type",
+    "status": "Status",
+    "category": "Category",
+    "location": "Location",
+    "minPrice": "Min price",
+    "maxPrice": "Max price",
+    "favorite": "Favorite",
+    "favorited": "Favorited",
+    "share": "Share",
+    "back": "Back",
+    "deleteFailedTitle": "Delete failed",
+    "deleteFailedBody": "Unable to delete listing.",
+    "signInRequiredTitle": "Sign in required",
+    "signInMessageSeller": "Please sign in to message the seller.",
+    "signInFavorite": "Please sign in to favorite items.",
+    "contactSellerTitle": "Contact seller",
+    "sellerMissing": "Seller information is missing.",
+    "openChatFailedTitle": "Unable to open chat",
+    "tryAgain": "Please try again later.",
+    "favoriteFailedTitle": "Favorite failed",
+    "favoriteFailedBody": "Unable to update favorite.",
+    "shareFailedTitle": "Share failed",
+    "shareFailedBody": "Unable to share this listing.",
+    "shareMessage": "Check out what I found on SBAY, {{title}}:\n{{url}}"
   },
   "home": {
     "searchPlaceholder": "Search products, brands, or categories",
@@ -79,6 +120,9 @@
     "emptyTitle": "No matches right now",
     "emptySubtitle": "Adjust your filters or explore the marketplace to save listings you care about.",
     "emptyAction": "Explore listings"
+    ,"removeAction": "Remove from favorites",
+    "removeErrorTitle": "Unable to update favorites",
+    "removeError": "Please try again later."
   },
   "favoritesCard": {
     "newBadge": "New",
@@ -87,6 +131,30 @@
   "addListing": {
     "title": "Create a listing",
     "subtitle": "Add details so people can find and buy your item.",
+    "editTitle": "Edit listing",
+    "save": "Save changes",
+    "validation": {
+      "fieldRequired": "{{field}} is required.",
+      "priceInvalid": "Enter a valid price."
+    },
+    "errors": {
+      "loadListing": "Unable to load listing.",
+      "photoPermission": "Please allow photo access to continue.",
+      "publish": "Unable to publish listing. Please try again."
+    },
+    "messages": {
+      "boostPending": "Your listing was published and the boost payment is pending.",
+      "boostCheckout": "Your listing was published. Continue to payment to activate the boost.",
+      "updated": "Your listing has been updated.",
+      "published": "Your listing has been published."
+    },
+    "boost": {
+      "title": "Boost this listing after publishing",
+      "description": "Basic listings are free. Boosts activate only after payment confirmation.",
+      "unavailable": "Boost options are not available right now.",
+      "durationDays": "{{count}} days",
+      "submitting": "Publishing and creating payment..."
+    },
     "photos": {
       "title": "Photos",
       "hint": "Add up to 5 photos",
@@ -116,7 +184,16 @@
     "title": "Chats",
     "searchPlaceholder": "Search conversations",
     "emptyTitle": "No chats found",
-    "emptySubtitle": "Start a conversation from a listing or adjust your search."
+    "emptySubtitle": "Start a conversation from a listing or adjust your search.",
+    "generalChat": "General chat",
+    "noMessages": "No messages yet.",
+    "thread": {
+      "chatNotFound": "Chat not found.",
+      "deleteTitle": "Delete message?",
+      "deleteBody": "This action can't be undone.",
+      "deleteCancel": "Cancel",
+      "deleteConfirm": "Delete"
+    }
   },
   "profile": {
     "title": "My Profile",
@@ -224,7 +301,57 @@
       "dark": "Dark",
       "neon": "Neon",
       "coffee": "Coffee",
+      "starlight": "Starlight",
       "test": "Test"
+    },
+    "common": {
+      "saving": "Saving...",
+      "saveChanges": "Save changes",
+      "comingSoon": "Coming soon"
+    },
+    "profile": {
+      "title": "Profile settings",
+      "uploading": "Uploading...",
+      "changePhoto": "Change photo",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "username": "Username",
+      "displayNamePlaceholder": "Enter display name",
+      "phone": "Phone number",
+      "phonePlaceholder": "Add a phone number",
+      "bio": "Bio",
+      "language": "Language",
+      "comingSoon": "Coming soon",
+      "displayNameRequired": "Display name is required.",
+      "displayNameInvalid": "Display name contains disallowed content.",
+      "phoneInvalid": "Phone contains disallowed content."
+    },
+    "security": {
+      "title": "Security",
+      "current": "Current password",
+      "currentPlaceholder": "Enter current password",
+      "new": "New password",
+      "newPlaceholder": "Enter new password",
+      "confirm": "Confirm new password",
+      "confirmPlaceholder": "Confirm new password",
+      "update": "Update password",
+      "twoFactor": "Two-factor authentication",
+      "sessions": "Active sessions",
+      "rule": "Must include uppercase, lowercase, and a number.",
+      "currentRequired": "Current password is required.",
+      "newRequired": "New password is required.",
+      "passwordRule": "Password must be at least 8 characters and include uppercase, lowercase, and a number.",
+      "confirmMismatch": "Passwords do not match."
+    },
+    "notifications": {
+      "title": "Notification settings",
+      "messages": "Messages",
+      "newBids": "New bids",
+      "outbid": "Outbid alerts",
+      "wonAuction": "Won auctions",
+      "priceDrops": "Price drops",
+      "promotions": "Promotions"
     }
   },
   "sellerProfile": {
@@ -273,6 +400,21 @@
     "title": "Notifications",
     "emptyTitle": "No notifications yet",
     "emptySubtitle": "When notifications arrive, you will see them here."
+  },
+  "monetization": {
+    "alreadyBoostedTitle": "Already boosted",
+    "alreadyBoostedBody": "This listing is already promoted.",
+    "paymentPendingTitle": "Payment pending",
+    "paymentPendingBody": "Boost activates after payment confirmation.",
+    "boostErrorTitle": "Unable to boost",
+    "boostErrorBody": "Please try again.",
+    "boosted": "Boosted",
+    "creatingPayment": "Creating payment...",
+    "boostListing": "Boost listing",
+    "boost": "Boost",
+    "chooseBoost": "Choose boost length",
+    "chooseBoostSubtitle": "Pick how long this listing should stay promoted.",
+    "durationDays": "{{count}} days"
   },
   "report": {
     "title": "Report",

@@ -18,6 +18,7 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ReportModal } from "@/components/reports/ReportModal";
@@ -89,6 +90,7 @@ function useKeyboardHeight() {
 export default function ChatThreadScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
@@ -148,7 +150,7 @@ export default function ChatThreadScreen() {
 
         const chats = await getChats(200, 0);
         const chat = chats.find((c) => c.id === id);
-        if (!chat) throw new Error("Chat not found.");
+        if (!chat) throw new Error(t("chats.thread.chatNotFound"));
 
         setChatId(chat.id);
 
@@ -194,7 +196,7 @@ export default function ChatThreadScreen() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -411,10 +413,10 @@ export default function ChatThreadScreen() {
 
   const handleDeleteSelected = async () => {
     if (!selectedMessage || !canModify(selectedMessage)) return;
-    Alert.alert("Delete message?", "This action can't be undone.", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("chats.thread.deleteTitle"), t("chats.thread.deleteBody"), [
+      { text: t("chats.thread.deleteCancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("chats.thread.deleteConfirm"),
         style: "destructive",
         onPress: async () => {
           try {

@@ -88,7 +88,7 @@ export default function FavoritesScreen() {
   const handleMessage = useCallback(
     async (listing: FavoriteListing) => {
       if (!profileId) {
-        Alert.alert("Sign in required", "Please sign in to message the seller.");
+        Alert.alert(t("listings.signInRequiredTitle"), t("listings.signInMessageSeller"));
         return;
       }
 
@@ -104,12 +104,12 @@ export default function FavoritesScreen() {
         router.push(`/chats/thread/${chatId}`);
       } catch (err) {
         Alert.alert(
-          "Unable to open chat",
-          err instanceof Error ? err.message : "Please try again later.",
+          t("listings.openChatFailedTitle"),
+          err instanceof Error ? err.message : t("listings.tryAgain"),
         );
       }
     },
-    [profileId, router],
+    [profileId, router, t],
   );
 
   const handleRemoveFavorite = useCallback(async (listing: FavoriteListing) => {
