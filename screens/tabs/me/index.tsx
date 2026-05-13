@@ -2,7 +2,9 @@ import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState }
 import {
   ActivityIndicator,
   Animated,
+  Alert,
   Image,
+  Linking,
   Modal,
   PanResponder,
   Platform,
@@ -27,6 +29,11 @@ import { ListingCard } from "@/components/listings/ListingCard";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { getMyListings, type Listing as ApiListing } from "@/services/listings";
+import {
+  createBoostPayment,
+  getBoostOptions,
+  type BoostOption,
+} from "@/services/monetization";
 import { getMyProfile, updateMyProfile, type UserProfile } from "@/services/user";
 import { uploadImageAsync } from "@/services/uploads";
 
@@ -134,6 +141,9 @@ export default function MeScreen() {
   const [listings, setListings] = useState<ApiListing[]>([]);
   const [listingsError, setListingsError] = useState<string | null>(null);
   const [listingsLoading, setListingsLoading] = useState(true);
+  const [boostOptions, setBoostOptions] = useState<BoostOption[]>([]);
+  const [boostingListingId, setBoostingListingId] = useState<string | null>(null);
+  const [boostPlanListing, setBoostPlanListing] = useState<ApiListing | null>(null);
 
   const loadProfile = useCallback(() => {
     let isMounted = true;
@@ -211,6 +221,68 @@ export default function MeScreen() {
     const cleanup = loadListings();
     return () => cleanup?.();
   }, [loadListings]);
+
+  useEffect(() => {
+    let isMounted = true;
+    getBoostOptions()
+      .then((options) => {
+        if (!isMounted) return;
+        setBoostOptions(options);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setBoostOptions([]);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleBoostListing = useCallback(
+    async (listing: ApiListing, option: BoostOption) => {
+      if (boostingListingId) return;
+      if (listing.isBoosted) {
+        Alert.alert(
+          t("monetization.alreadyBoostedTitle", { defaultValue: "Already boosted" }),
+          t("monetization.alreadyBoostedSubtitle", {
+            defaultValue: "This listing is already promoted.",
+          }),
+        );
+        return;
+      }
+
+      setBoostPlanListing(null);
+      setBoostingListingId(listing.id);
+      try {
+        const transaction = await createBoostPayment(listing.id, option.id, "/me");
+        if (transaction.checkoutUrl) {
+          await Linking.openURL(transaction.checkoutUrl);
+        } else {
+          Alert.alert(
+            t("monetization.paymentPendingTitle", {
+              defaultValue: "Payment pending",
+            }),
+            t("monetization.paymentPendingSubtitle", {
+              defaultValue:
+                "Your boost will activate automatically after payment is confirmed.",
+            }),
+          );
+        }
+      } catch (error) {
+        Alert.alert(
+          t("monetization.boostErrorTitle", { defaultValue: "Unable to boost" }),
+          error instanceof Error
+            ? error.message
+            : t("monetization.boostErrorSubtitle", {
+                defaultValue: "Please try again.",
+              }),
+        );
+      } finally {
+        setBoostingListingId(null);
+      }
+    },
+    [boostingListingId, t],
+  );
 
   const handleRefresh = useCallback(() => {
     if (isEditing) {
@@ -800,9 +872,11 @@ export default function MeScreen() {
               </View>
             ) : (
               <View style={styles.grid}>
-                {listings.map((item) => (
+                {listings.map((item) => {
+                  const isBoosting = boostingListingId === item.id;
+                  return (
+                    <View key={item.id} style={styles.listingManageCard}>
                     <ListingCard
-                      key={item.id}
                       listing={{
                         id: item.id,
                         title: item.title,
@@ -811,8 +885,35 @@ export default function MeScreen() {
                         location: item.region ?? item.seller?.city ?? undefined,
                         image: item.thumbnailUrl ?? item.imageUrls[0] ?? "",
                       }}
+                      onPress={() => router.push(`/listings/${item.id}`)}
+                      style={styles.listingCardFull}
                     />
-                ))}
+                    <TouchableOpacity
+                      style={[
+                        styles.boostButton,
+                        (item.isBoosted || isBoosting || boostOptions.length === 0) &&
+                          styles.boostButtonDisabled,
+                      ]}
+                      disabled={item.isBoosted || isBoosting || boostOptions.length === 0}
+                      onPress={() => setBoostPlanListing(item)}
+                    >
+                      <Text style={styles.boostButtonLabel}>
+                        {item.isBoosted
+                          ? t("monetization.boosted", { defaultValue: "Boosted" })
+                          : isBoosting
+                            ? t("monetization.creatingPayment", {
+                                defaultValue: "Creating payment...",
+                              })
+                            : boostOptions.length > 0
+                              ? t("monetization.boostFor", {
+                                  defaultValue: "Boost listing",
+                                })
+                              : t("monetization.boost", { defaultValue: "Boost" })}
+                      </Text>
+                    </TouchableOpacity>
+                    </View>
+                  );
+                })}
               </View>
             )}
           </View>
@@ -889,6 +990,58 @@ export default function MeScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={boostPlanListing !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setBoostPlanListing(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.boostPlanModalCard}>
+            <Text style={styles.modalTitle}>
+              {t("monetization.chooseBoost", { defaultValue: "Choose boost length" })}
+            </Text>
+            <Text style={styles.modalSubtitle}>
+              {t("monetization.chooseBoostSubtitle", {
+                defaultValue:
+                  "Payment is required first. The listing is promoted only after confirmation.",
+              })}
+            </Text>
+            <View style={styles.boostPlanGrid}>
+              {boostOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.id}
+                  style={styles.boostPlanChoice}
+                  activeOpacity={0.88}
+                  onPress={() => {
+                    if (!boostPlanListing) return;
+                    void handleBoostListing(boostPlanListing, option);
+                  }}
+                >
+                  <Text style={styles.boostPlanChoiceDays}>
+                    {t("monetization.days", {
+                      defaultValue: `${option.durationDays} days`,
+                      days: option.durationDays,
+                    })}
+                  </Text>
+                  <Text style={styles.boostPlanChoicePrice}>
+                    {option.currency} {option.price}
+                  </Text>
+                  <Text style={styles.boostPlanChoiceMeta}>{option.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setBoostPlanListing(null)}
+            >
+              <Text style={styles.cancelLabel}>
+                {t("profile.actions.cancel", { defaultValue: "Cancel" })}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1201,6 +1354,68 @@ const createStyles = (theme: ThemeColors) =>
       flexWrap: "wrap",
       justifyContent: "space-between",
       rowGap: 16,
+    },
+    listingManageCard: {
+      width: "48%",
+      gap: 8,
+    },
+    listingCardFull: {
+      width: "100%",
+    },
+    boostButton: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.primary,
+      backgroundColor: theme.primary,
+      paddingHorizontal: 10,
+      paddingVertical: 9,
+      alignItems: "center",
+    },
+    boostButtonDisabled: {
+      opacity: 0.6,
+    },
+    boostButtonLabel: {
+      color: theme.primaryForeground,
+      fontSize: 12,
+      fontWeight: "700",
+      textAlign: "center",
+    },
+    boostPlanModalCard: {
+      width: "100%",
+      maxWidth: 380,
+      borderRadius: 18,
+      backgroundColor: theme.surface,
+      padding: 20,
+      gap: 12,
+    },
+    boostPlanGrid: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    boostPlanChoice: {
+      flex: 1,
+      minHeight: 104,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceMuted,
+      padding: 12,
+      gap: 5,
+    },
+    boostPlanChoiceDays: {
+      color: theme.text,
+      fontSize: 15,
+      fontWeight: "800",
+    },
+    boostPlanChoicePrice: {
+      color: theme.success,
+      fontSize: 12,
+      fontWeight: "700",
+    },
+    boostPlanChoiceMeta: {
+      color: theme.textMuted,
+      fontSize: 11,
+      lineHeight: 15,
     },
     loadingListings: {
       paddingVertical: 20,

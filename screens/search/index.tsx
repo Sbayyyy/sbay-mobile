@@ -42,6 +42,7 @@ const SYRIA_DISTRICTS = [
 
 type SortId = "newest" | "price_low" | "price_high";
 type StatusId = "all" | "new" | "used" | "renewed" | "defective";
+type FeaturedFilterId = "all" | "featured";
 type CategoryId = "all" | string;
 type LocationId = "all" | (typeof SYRIA_DISTRICTS)[number];
 
@@ -53,9 +54,11 @@ const statusToCondition: Record<Exclude<StatusId, "all">, string> = {
 };
 
 export default function SearchScreen() {
-  const { query, category: categoryParam } = useLocalSearchParams<{
+  const { query, category: categoryParam, featured: featuredParam, reset } = useLocalSearchParams<{
     query?: string;
     category?: string;
+    featured?: string;
+    reset?: string;
   }>();
   const theme = useAppTheme();
   const { t } = useTranslation();
@@ -65,6 +68,9 @@ export default function SearchScreen() {
   const [search, setSearch] = useState(query ?? "");
   const [sortBy, setSortBy] = useState<SortId>("newest");
   const [status, setStatus] = useState<StatusId>("all");
+  const [featuredFilter, setFeaturedFilter] = useState<FeaturedFilterId>(
+    featuredParam === "true" ? "featured" : "all",
+  );
   const [category, setCategory] = useState<CategoryId>(categoryParam ?? "all");
   const [location, setLocation] = useState<LocationId>("all");
   const [minPrice, setMinPrice] = useState("");
@@ -75,16 +81,25 @@ export default function SearchScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (query !== undefined) {
-      setSearch(String(query));
-    }
+    setSearch(query !== undefined ? String(query) : "");
   }, [query]);
 
   useEffect(() => {
-    if (categoryParam !== undefined) {
-      setCategory(String(categoryParam));
-    }
+    setCategory(categoryParam !== undefined ? String(categoryParam) : "all");
   }, [categoryParam]);
+
+  useEffect(() => {
+    setFeaturedFilter(featuredParam === "true" ? "featured" : "all");
+  }, [featuredParam]);
+
+  useEffect(() => {
+    if (reset !== "true") return;
+    setSortBy("newest");
+    setStatus("all");
+    setLocation("all");
+    setMinPrice("");
+    setMaxPrice("");
+  }, [reset]);
 
   const categoryOptions = useMemo(
     () => [
@@ -124,11 +139,16 @@ export default function SearchScreen() {
           category: category === "all" ? undefined : category,
           region: location === "all" ? undefined : location,
           condition: status === "all" ? undefined : statusToCondition[status],
+          featured: featuredFilter === "featured" ? true : undefined,
           minPrice: Number.isFinite(parsedMin) && parsedMin > 0 ? parsedMin : undefined,
           maxPrice: Number.isFinite(parsedMax) && parsedMax > 0 ? parsedMax : undefined,
         });
         if (!isMounted) return;
-        setListings(data);
+        setListings(
+          featuredFilter === "featured"
+            ? data.filter((listing) => listing.isBoosted === true)
+            : data,
+        );
       } catch (err) {
         if (!isMounted) return;
         setError(err instanceof Error ? err.message : t("listings.errorSubtitle"));
@@ -142,7 +162,7 @@ export default function SearchScreen() {
       isMounted = false;
       clearTimeout(handle);
     };
-  }, [category, location, maxPrice, minPrice, search, status, t]);
+  }, [category, featuredFilter, location, maxPrice, minPrice, search, status, t]);
 
   const sortedListings = useMemo(() => {
     const next = [...listings];
@@ -274,6 +294,18 @@ export default function SearchScreen() {
                 ]}
               />
               <ChipPicker
+                label={t("listings.type", { defaultValue: "Type" })}
+                value={featuredFilter}
+                onChange={setFeaturedFilter}
+                options={[
+                  { id: "all", label: t("common.actions.all", { defaultValue: "All" }) },
+                  {
+                    id: "featured",
+                    label: t("home.featuredTitle", { defaultValue: "Featured" }),
+                  },
+                ]}
+              />
+              <ChipPicker
                 label={t("listings.status", { defaultValue: "Status" })}
                 value={status}
                 onChange={setStatus}
@@ -341,6 +373,7 @@ export default function SearchScreen() {
                   onPress={() => {
                     setSortBy("newest");
                     setStatus("all");
+                    setFeaturedFilter("all");
                     setCategory("all");
                     setLocation("all");
                     setMinPrice("");

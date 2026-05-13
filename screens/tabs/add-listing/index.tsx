@@ -5,6 +5,7 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -31,6 +32,11 @@ import {
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
 import { createListing, getListing, updateListing } from "@/services/listings";
+import {
+  createBoostPayment,
+  getBoostOptions,
+  type BoostOption,
+} from "@/services/monetization";
 import { uploadImageAsync } from "@/services/uploads";
 import { type TextValidator } from "@/validation";
 
@@ -91,6 +97,9 @@ export default function AddListingScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const [boostAfterPublish, setBoostAfterPublish] = useState(false);
+  const [boostOptions, setBoostOptions] = useState<BoostOption[]>([]);
+  const [selectedBoostOptionId, setSelectedBoostOptionId] = useState<string | null>(null);
   const [validation, setValidation] = useState({
     title: true,
     price: true,
@@ -280,6 +289,25 @@ export default function AddListingScreen() {
   }, [loadListing]);
 
   useEffect(() => {
+    if (id) return;
+    let isMounted = true;
+    getBoostOptions()
+      .then((options) => {
+        if (!isMounted) return;
+        setBoostOptions(options);
+        setSelectedBoostOptionId((current) => current ?? options[0]?.id ?? null);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setBoostOptions([]);
+        setSelectedBoostOptionId(null);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
     setValidation((prev) => ({ ...prev, location: location.trim().length > 0 }));
   }, [location]);
 
@@ -297,6 +325,14 @@ export default function AddListingScreen() {
       validation.location
     );
   }, [description, price, title, validation]);
+
+  const selectedBoostOption = useMemo(
+    () =>
+      boostOptions.find((option) => option.id === selectedBoostOptionId) ??
+      boostOptions[0] ??
+      null,
+    [boostOptions, selectedBoostOptionId],
+  );
 
   const handleDistrictChange = useCallback((nextDistrict: DistrictId) => {
     setLocation(nextDistrict);
@@ -391,16 +427,38 @@ export default function AddListingScreen() {
         ? await updateListing(id, payload)
         : await createListing(payload);
 
-      Alert.alert(
-        t("common.actions.success", { defaultValue: "Success" }),
-        id
-          ? t("addListing.updated", {
-              defaultValue: "Your listing has been updated.",
-            })
-          : t("addListing.success", {
-              defaultValue: "Your listing has been published.",
+      if (!id && boostAfterPublish && selectedBoostOption) {
+        const transaction = await createBoostPayment(listing.id, selectedBoostOption.id, `/listings/${listing.id}`);
+        if (transaction.checkoutUrl) {
+          await Linking.openURL(transaction.checkoutUrl);
+          Alert.alert(
+            t("common.actions.success", { defaultValue: "Success" }),
+            t("addListing.successWithBoostCheckout", {
+              defaultValue:
+                "Your listing is published. Complete payment to activate the boost.",
             }),
-      );
+          );
+        } else {
+          Alert.alert(
+            t("common.actions.success", { defaultValue: "Success" }),
+            t("addListing.successWithBoostPending", {
+              defaultValue:
+                "Your listing is published. The boost will activate after payment is confirmed.",
+            }),
+          );
+        }
+      } else {
+        Alert.alert(
+          t("common.actions.success", { defaultValue: "Success" }),
+          id
+            ? t("addListing.updated", {
+                defaultValue: "Your listing has been updated.",
+              })
+            : t("addListing.success", {
+                defaultValue: "Your listing has been published.",
+              }),
+        );
+      }
       router.push(`/listings/${listing.id}`);
     } catch (error) {
       console.error("Error creating listing:", error);
@@ -683,6 +741,100 @@ export default function AddListingScreen() {
               }
             />
           </View>
+
+          {!id ? (
+            <View style={styles.section}>
+              <View style={styles.boostHeaderRow}>
+                <View style={styles.boostOptionCopy}>
+                <Text style={styles.boostOptionTitle}>
+                  {t("addListing.boost.title", {
+                    defaultValue: "Boost this listing after publishing",
+                  })}
+                </Text>
+                <Text style={styles.boostOptionSubtitle}>
+                  {boostOptions.length > 0
+                    ? t("addListing.boost.subtitle", {
+                        defaultValue:
+                          "Choose a promotion length. The boost activates only after payment is confirmed.",
+                      })
+                    : t("addListing.boost.unavailable", {
+                        defaultValue: "Boost options are not available right now.",
+                      })}
+                </Text>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.boostSwitch,
+                    boostAfterPublish && styles.boostSwitchActive,
+                    boostOptions.length === 0 && styles.boostSwitchDisabled,
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={() => setBoostAfterPublish((value) => !value)}
+                  disabled={boostOptions.length === 0}
+                >
+                  <View
+                    style={[
+                      styles.boostSwitchKnob,
+                      boostAfterPublish && styles.boostSwitchKnobActive,
+                    ]}
+                  />
+                </TouchableOpacity>
+              </View>
+              {boostOptions.length > 0 ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.boostPlansRow}
+                >
+                  {boostOptions.map((option) => {
+                    const selected = boostAfterPublish && selectedBoostOption?.id === option.id;
+                    return (
+                      <TouchableOpacity
+                        key={option.id}
+                        style={[
+                          styles.boostPlanCard,
+                          selected && styles.boostPlanCardActive,
+                        ]}
+                        activeOpacity={0.88}
+                        onPress={() => {
+                          setBoostAfterPublish(true);
+                          setSelectedBoostOptionId(option.id);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.boostPlanDays,
+                            selected && styles.boostPlanTextActive,
+                          ]}
+                        >
+                          {t("addListing.boost.days", {
+                            defaultValue: `${option.durationDays} days`,
+                            days: option.durationDays,
+                          })}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.boostPlanPrice,
+                            selected && styles.boostPlanTextActive,
+                          ]}
+                        >
+                          {option.currency} {option.price}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.boostPlanMeta,
+                            selected && styles.boostPlanTextActive,
+                          ]}
+                        >
+                          {option.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              ) : null}
+            </View>
+          ) : null}
         </ScrollView>
 
         <View style={styles.footer}>
@@ -705,7 +857,11 @@ export default function AddListingScreen() {
           >
             <Text style={styles.submitLabel}>
               {isSubmitting
-                ? t("common.actions.publishing")
+                ? boostAfterPublish && !id
+                  ? t("addListing.boost.creatingPayment", {
+                      defaultValue: "Publishing and creating payment...",
+                    })
+                  : t("common.actions.publishing")
                 : id
                   ? t("common.actions.save", { defaultValue: "Save changes" })
                   : t("common.actions.publishListing")}
@@ -992,5 +1148,85 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.danger,
       fontSize: 12,
       lineHeight: 16,
+    },
+    boostHeaderRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 12,
+    },
+    boostSwitch: {
+      width: 46,
+      height: 28,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceMuted,
+      padding: 3,
+      justifyContent: "center",
+    },
+    boostSwitchActive: {
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
+    },
+    boostSwitchDisabled: {
+      opacity: 0.5,
+    },
+    boostSwitchKnob: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: theme.surface,
+    },
+    boostSwitchKnobActive: {
+      alignSelf: "flex-end",
+    },
+    boostOptionCopy: {
+      flex: 1,
+      gap: 4,
+    },
+    boostOptionTitle: {
+      color: theme.text,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+    boostOptionSubtitle: {
+      color: theme.textMuted,
+      fontSize: 12,
+      lineHeight: 17,
+    },
+    boostPlansRow: {
+      gap: 10,
+      paddingTop: 2,
+    },
+    boostPlanCard: {
+      width: 128,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceMuted,
+      padding: 12,
+      gap: 5,
+    },
+    boostPlanCardActive: {
+      borderColor: theme.primary,
+      backgroundColor: theme.primary,
+    },
+    boostPlanDays: {
+      color: theme.text,
+      fontSize: 15,
+      fontWeight: "800",
+    },
+    boostPlanPrice: {
+      color: theme.success,
+      fontSize: 13,
+      fontWeight: "700",
+    },
+    boostPlanMeta: {
+      color: theme.textMuted,
+      fontSize: 11,
+      lineHeight: 15,
+    },
+    boostPlanTextActive: {
+      color: theme.primaryForeground,
     },
   });
