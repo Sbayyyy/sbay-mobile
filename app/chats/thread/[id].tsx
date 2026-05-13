@@ -41,6 +41,7 @@ import * as Clipboard from "expo-clipboard";
 type ChatHeader = { name: string; listingTitle?: string; avatar?: string | null };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const CHAT_BUBBLE_BLUE = "#2563eb";
 
 const withAlpha = (color: string, alpha: number) => {
   if (color.startsWith("#")) {
@@ -897,13 +898,13 @@ const createStyles = (theme: ThemeColors) =>
     },
     bubbleMine: {
       maxWidth: "80%",
-      backgroundColor: theme.primary,
+      backgroundColor: CHAT_BUBBLE_BLUE,
       borderRadius: 14,
       paddingHorizontal: 12,
       paddingVertical: 8,
     },
     bubbleSelectedMine: {
-      backgroundColor: withAlpha(theme.primary, 0.8),
+      backgroundColor: withAlpha(CHAT_BUBBLE_BLUE, 0.82),
     },
     bubbleSelectedOther: {
       backgroundColor: withAlpha(theme.primary, 0.12),
