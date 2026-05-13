@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   Chip,
+  IconButton,
   Text as PaperText,
 } from "react-native-paper";
 import { useTranslation } from "react-i18next";
@@ -17,16 +18,18 @@ type FavoriteListingCardProps = {
   listing: FavoriteListing;
   onPress?: (listing: FavoriteListing) => void;
   onMessage?: (listing: FavoriteListing) => void;
-  onMore?: (listing: FavoriteListing) => void;
+  onRemoveFavorite?: (listing: FavoriteListing) => void;
   showMessage?: boolean;
+  removingFavorite?: boolean;
 };
 
 export function FavoriteListingCard({
   listing,
   onPress,
   onMessage,
-  onMore,
+  onRemoveFavorite,
   showMessage = true,
+  removingFavorite = false,
 }: FavoriteListingCardProps) {
   const theme = useAppTheme();
   const { t } = useTranslation();
@@ -44,14 +47,16 @@ export function FavoriteListingCard({
       <Card.Content style={styles.cardBody}>
         <View style={styles.cardHeader}>
           <PaperText style={styles.cardTitle}>{listing.title}</PaperText>
-          <Button
-            compact
-            mode="text"
-            icon="dots-horizontal"
-            textColor={theme.textMuted}
-            onPress={() => onMore?.(listing)}
-            style={styles.overflowButton}
-          > </Button>
+          <IconButton
+            icon="heart"
+            size={20}
+            disabled={removingFavorite}
+            iconColor={theme.danger}
+            containerColor={theme.dangerBackground}
+            style={styles.favoriteButton}
+            accessibilityLabel={t("favorites.removeAction", "Remove from favorites")}
+            onPress={() => onRemoveFavorite?.(listing)}
+          />
         </View>
 
         <PaperText style={styles.cardMeta}>
@@ -136,8 +141,11 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: "space-between",
       gap: 12,
     },
-    overflowButton: {
-      marginTop: -8,
+    favoriteButton: {
+      width: 36,
+      height: 36,
+      margin: 0,
+      borderRadius: 18,
     },
     cardTitle: {
       flex: 1,

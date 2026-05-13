@@ -18,7 +18,7 @@ import { FAVORITE_CATEGORIES } from "@/constants/mockData";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { FavoriteListing, ListingCategory } from "@/types/listing";
-import { getFavorites } from "@/services/favorites";
+import { getFavorites, removeFavorite } from "@/services/favorites";
 import { type Listing as ApiListing } from "@/services/listings";
 import { getStoredToken } from "@/services/auth";
 import { openChat } from "@/services/messages";
@@ -32,6 +32,7 @@ export default function FavoritesScreen() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [removingIds, setRemovingIds] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
@@ -110,6 +111,30 @@ export default function FavoritesScreen() {
     },
     [profileId, router],
   );
+
+  const handleRemoveFavorite = useCallback(async (listing: FavoriteListing) => {
+    if (removingIds.has(listing.id)) return;
+
+    const previousFavorites = favorites;
+    setRemovingIds((current) => new Set(current).add(listing.id));
+    setFavorites((current) => current.filter((favorite) => favorite.id !== listing.id));
+
+    try {
+      await removeFavorite(listing.id);
+    } catch (err) {
+      setFavorites(previousFavorites);
+      Alert.alert(
+        t("favorites.removeErrorTitle", "Unable to update favorites"),
+        err instanceof Error ? err.message : t("favorites.removeError", "Please try again later."),
+      );
+    } finally {
+      setRemovingIds((current) => {
+        const next = new Set(current);
+        next.delete(listing.id);
+        return next;
+      });
+    }
+  }, [favorites, removingIds, t]);
 
   useEffect(() => loadFavorites(), [loadFavorites]);
 
@@ -230,7 +255,8 @@ export default function FavoritesScreen() {
                 listing={item}
                 onPress={() => router.push(`/listings/${item.id}`)}
                 onMessage={handleMessage}
-                onMore={handlePlaceholder}
+                onRemoveFavorite={handleRemoveFavorite}
+                removingFavorite={removingIds.has(item.id)}
                 showMessage={!!profileId && !!item.sellerId && item.sellerId !== profileId}
               />
             ))
