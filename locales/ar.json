@@ -11,7 +11,18 @@
       "message": "مراسلة",
       "logIn": "تسجيل الدخول",
       "createAccount": "إنشاء حساب",
-      "logout": "تسجيل الخروج"
+      "logout": "تسجيل الخروج",
+      "all": "الكل",
+      "filters": "عوامل التصفية",
+      "reset": "إعادة ضبط",
+      "apply": "تطبيق",
+      "success": "تم بنجاح",
+      "save": "حفظ التغييرات"
+    },
+    "errors": {
+      "title": "حدث خطأ",
+      "required": "هذا الحقل مطلوب.",
+      "permissionTitle": "الإذن مطلوب"
     },
     "placeholders": {
       "email": "البريد الإلكتروني",
@@ -49,7 +60,37 @@
     "emptyTitle": "لا توجد إعلانات",
     "emptySubtitle": "جرّب فئة أخرى أو عدّل البحث.",
     "errorTitle": "حدث خطأ",
-    "errorSubtitle": "حدث خطأ أثناء تحميل الإعلانات."
+    "errorSubtitle": "حدث خطأ أثناء تحميل الإعلانات.",
+    "resultsCount": "{{count}} نتيجة",
+    "resultsTitle": "النتائج",
+    "sortBy": "ترتيب حسب",
+    "sortNewest": "الأحدث",
+    "sortPriceLowHigh": "السعر: من الأقل إلى الأعلى",
+    "sortPriceHighLow": "السعر: من الأعلى إلى الأقل",
+    "type": "النوع",
+    "status": "الحالة",
+    "category": "الفئة",
+    "location": "الموقع",
+    "minPrice": "أقل سعر",
+    "maxPrice": "أعلى سعر",
+    "favorite": "إضافة للمفضلة",
+    "favorited": "في المفضلة",
+    "share": "مشاركة",
+    "back": "رجوع",
+    "deleteFailedTitle": "فشل الحذف",
+    "deleteFailedBody": "تعذر حذف الإعلان.",
+    "signInRequiredTitle": "تسجيل الدخول مطلوب",
+    "signInMessageSeller": "يرجى تسجيل الدخول لمراسلة البائع.",
+    "signInFavorite": "يرجى تسجيل الدخول لإضافة العناصر إلى المفضلة.",
+    "contactSellerTitle": "مراسلة البائع",
+    "sellerMissing": "معلومات البائع غير متوفرة.",
+    "openChatFailedTitle": "تعذر فتح المحادثة",
+    "tryAgain": "يرجى المحاولة مرة أخرى لاحقاً.",
+    "favoriteFailedTitle": "فشل تحديث المفضلة",
+    "favoriteFailedBody": "تعذر تحديث المفضلة.",
+    "shareFailedTitle": "فشل المشاركة",
+    "shareFailedBody": "تعذر مشاركة هذا الإعلان.",
+    "shareMessage": "شاهد ما وجدته على SBAY، {{title}}:\n{{url}}"
   },
   "home": {
     "searchPlaceholder": "ابحث عن الإعلانات",
@@ -78,7 +119,10 @@
     },
     "emptyTitle": "لا توجد نتائج الآن",
     "emptySubtitle": "عدّل عوامل التصفية أو استكشف السوق لحفظ الإعلانات التي تهمك.",
-    "emptyAction": "استكشف الإعلانات"
+    "emptyAction": "استكشف الإعلانات",
+    "removeAction": "إزالة من المفضلة",
+    "removeErrorTitle": "تعذر تحديث المفضلة",
+    "removeError": "يرجى المحاولة مرة أخرى لاحقاً."
   },
   "favoritesCard": {
     "newBadge": "جديد",
@@ -87,6 +131,30 @@
   "addListing": {
     "title": "أنشئ إعلاناً",
     "subtitle": "أضف التفاصيل ليعثر الناس على منتجك ويشترونه.",
+    "editTitle": "تعديل الإعلان",
+    "save": "حفظ التغييرات",
+    "validation": {
+      "fieldRequired": "{{field}} مطلوب.",
+      "priceInvalid": "أدخل سعراً صحيحاً."
+    },
+    "errors": {
+      "loadListing": "تعذر تحميل الإعلان.",
+      "photoPermission": "يرجى السماح بالوصول إلى الصور للمتابعة.",
+      "publish": "تعذر نشر الإعلان. يرجى المحاولة مرة أخرى."
+    },
+    "messages": {
+      "boostPending": "تم نشر إعلانك ودفع التعزيز قيد الانتظار.",
+      "boostCheckout": "تم نشر إعلانك. تابع إلى الدفع لتفعيل التعزيز.",
+      "updated": "تم تحديث إعلانك.",
+      "published": "تم نشر إعلانك."
+    },
+    "boost": {
+      "title": "تعزيز هذا الإعلان بعد النشر",
+      "description": "الإعلانات الأساسية مجانية. يتم تفعيل التعزيز فقط بعد تأكيد الدفع.",
+      "unavailable": "خيارات التعزيز غير متاحة حالياً.",
+      "durationDays": "{{count}} أيام",
+      "submitting": "جارٍ النشر وإنشاء الدفع..."
+    },
     "photos": {
       "title": "الصور",
       "hint": "أضف حتى 5 صور",
@@ -116,7 +184,16 @@
     "title": "المحادثات",
     "searchPlaceholder": "ابحث في المحادثات",
     "emptyTitle": "لا توجد محادثات",
-    "emptySubtitle": "ابدأ محادثة من إعلان أو عدّل البحث."
+    "emptySubtitle": "ابدأ محادثة من إعلان أو عدّل البحث.",
+    "generalChat": "محادثة عامة",
+    "noMessages": "لا توجد رسائل بعد.",
+    "thread": {
+      "chatNotFound": "لم يتم العثور على المحادثة.",
+      "deleteTitle": "حذف الرسالة؟",
+      "deleteBody": "لا يمكن التراجع عن هذا الإجراء.",
+      "deleteCancel": "إلغاء",
+      "deleteConfirm": "حذف"
+    }
   },
   "profile": {
     "title": "حسابي",
@@ -223,8 +300,58 @@
       "light": "فاتح",
       "dark": "داكن",
       "neon": "نيون",
+      "coffee": "قهوة",
       "starlight": "ضوء النجمة",
       "test": "اختبار"
+    },
+    "common": {
+      "saving": "جارٍ الحفظ...",
+      "saveChanges": "حفظ التغييرات",
+      "comingSoon": "قريباً"
+    },
+    "profile": {
+      "title": "إعدادات الملف الشخصي",
+      "uploading": "جارٍ الرفع...",
+      "changePhoto": "تغيير الصورة",
+      "firstName": "الاسم الأول",
+      "lastName": "الكنية",
+      "email": "البريد الإلكتروني",
+      "username": "اسم المستخدم",
+      "displayNamePlaceholder": "أدخل اسم العرض",
+      "phone": "رقم الهاتف",
+      "phonePlaceholder": "أضف رقم هاتف",
+      "bio": "نبذة",
+      "language": "اللغة",
+      "comingSoon": "قريباً",
+      "displayNameRequired": "اسم العرض مطلوب.",
+      "displayNameInvalid": "اسم العرض يحتوي على محتوى غير مسموح.",
+      "phoneInvalid": "رقم الهاتف يحتوي على محتوى غير مسموح."
+    },
+    "security": {
+      "title": "الأمان",
+      "current": "كلمة المرور الحالية",
+      "currentPlaceholder": "أدخل كلمة المرور الحالية",
+      "new": "كلمة المرور الجديدة",
+      "newPlaceholder": "أدخل كلمة المرور الجديدة",
+      "confirm": "تأكيد كلمة المرور الجديدة",
+      "confirmPlaceholder": "أكد كلمة المرور الجديدة",
+      "update": "تحديث كلمة المرور",
+      "twoFactor": "المصادقة الثنائية",
+      "sessions": "الجلسات النشطة",
+      "rule": "يجب أن تحتوي على حرف كبير وحرف صغير ورقم.",
+      "currentRequired": "كلمة المرور الحالية مطلوبة.",
+      "newRequired": "كلمة المرور الجديدة مطلوبة.",
+      "passwordRule": "يجب أن تكون كلمة المرور 8 أحرف على الأقل وتحتوي على حرف كبير وحرف صغير ورقم.",
+      "confirmMismatch": "كلمتا المرور غير متطابقتين."
+    },
+    "notifications": {
+      "title": "إعدادات الإشعارات",
+      "messages": "الرسائل",
+      "newBids": "مزايدات جديدة",
+      "outbid": "تنبيهات تجاوز المزايدة",
+      "wonAuction": "مزادات فزت بها",
+      "priceDrops": "انخفاض الأسعار",
+      "promotions": "العروض الترويجية"
     }
   },
   "modal": {
@@ -235,6 +362,21 @@
     "title": "الإشعارات",
     "emptyTitle": "لا توجد إشعارات",
     "emptySubtitle": "ابدأ بنشاطك في السوق."
+  },
+  "monetization": {
+    "alreadyBoostedTitle": "الإعلان معزز بالفعل",
+    "alreadyBoostedBody": "هذا الإعلان مروج حالياً.",
+    "paymentPendingTitle": "الدفع قيد الانتظار",
+    "paymentPendingBody": "يتم تفعيل التعزيز بعد تأكيد الدفع.",
+    "boostErrorTitle": "تعذر التعزيز",
+    "boostErrorBody": "يرجى المحاولة مرة أخرى.",
+    "boosted": "معزز",
+    "creatingPayment": "جارٍ إنشاء الدفع...",
+    "boostListing": "تعزيز الإعلان",
+    "boost": "تعزيز",
+    "chooseBoost": "اختر مدة التعزيز",
+    "chooseBoostSubtitle": "اختر مدة بقاء الإعلان مروجاً.",
+    "durationDays": "{{count}} أيام"
   },
   "sellerProfile": {
     "errors": {

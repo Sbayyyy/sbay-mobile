@@ -112,7 +112,7 @@ export default function SettingsDetail() {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        throw new Error("Photo library access is required.");
+        throw new Error(t("profile.errors.photoPermission"));
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -137,7 +137,7 @@ export default function SettingsDetail() {
     } finally {
       setAvatarUploading(false);
     }
-  }, [avatarUploading]);
+  }, [avatarUploading, t]);
 
   const handleProfileFieldChange = (field: "displayName" | "phone", value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

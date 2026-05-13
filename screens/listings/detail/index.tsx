@@ -176,8 +176,8 @@ export default function ListingDetailScreen() {
       router.replace("/");
     } catch (err) {
       Alert.alert(
-        "Delete failed",
-        err instanceof Error ? err.message : "Unable to delete listing.",
+        t("listings.deleteFailedTitle"),
+        err instanceof Error ? err.message : t("listings.deleteFailedBody"),
       );
     } finally {
       setDeleteLoading(false);
@@ -189,13 +189,13 @@ const handleContactSeller = async () => {
   try {
     const token = await getStoredToken();
     if (!token) {
-      Alert.alert("Sign in required", "Please sign in to message the seller.");
+      Alert.alert(t("listings.signInRequiredTitle"), t("listings.signInMessageSeller"));
       return;
     }
 
     const sellerId = sellerProfileId;
     if (!sellerId || !listing?.id) {
-      Alert.alert("Contact seller", "Seller information is missing.");
+      Alert.alert(t("listings.contactSellerTitle"), t("listings.sellerMissing"));
       return;
     }
 
@@ -209,8 +209,8 @@ const handleContactSeller = async () => {
     router.push(`/chats/thread/${chatId}`);
   } catch (err) {
     Alert.alert(
-      "Unable to open chat",
-      err instanceof Error ? err.message : "Please try again later.",
+      t("listings.openChatFailedTitle"),
+      err instanceof Error ? err.message : t("listings.tryAgain"),
     );
   } finally {
     setOpeningChat(false);
@@ -221,7 +221,7 @@ const handleContactSeller = async () => {
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <ScrollView contentContainerStyle={styles.container}>
         <TouchableOpacity style={styles.backButtonInline} onPress={() => router.back()}>
-          <Text style={styles.backButtonLabel}>Back</Text>
+          <Text style={styles.backButtonLabel}>{t("listings.back")}</Text>
         </TouchableOpacity>
 
         <View style={styles.gallery}>
@@ -295,7 +295,7 @@ const handleContactSeller = async () => {
               if (!listing?.id || favoriteLoading) return;
               const token = await getStoredToken();
               if (!token) {
-                Alert.alert("Sign in required", "Please sign in to favorite items.");
+                Alert.alert(t("listings.signInRequiredTitle"), t("listings.signInFavorite"));
                 return;
               }
               const nextValue = !isFavorite;
@@ -312,8 +312,8 @@ const handleContactSeller = async () => {
               } catch (err) {
                 setIsFavorite(!nextValue);
                 Alert.alert(
-                  "Favorite failed",
-                  err instanceof Error ? err.message : "Unable to update favorite.",
+                  t("listings.favoriteFailedTitle"),
+                  err instanceof Error ? err.message : t("listings.favoriteFailedBody"),
                 );
               } finally {
                 setFavoriteLoading(false);
@@ -327,7 +327,7 @@ const handleContactSeller = async () => {
               color={isFavorite ? theme.danger : theme.primary}
             />
             <Text style={styles.actionLabel}>
-              {isFavorite ? "Favorited" : "Favorite"}
+              {isFavorite ? t("listings.favorited") : t("listings.favorite")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -335,18 +335,21 @@ const handleContactSeller = async () => {
             onPress={async () => {
               try {
                 const shareUrl = `${WEB_BASE_URL}/listing/${listing.id}`;
-                const message = `Check out what I found on SBAY, ${listing.title}:\n${shareUrl}`;
+                const message = t("listings.shareMessage", {
+                  title: listing.title,
+                  url: shareUrl,
+                });
                 await Share.share({
                   title: listing.title,
                   message,
                 });
               } catch {
-                Alert.alert("Share failed", "Unable to share this listing.");
+                Alert.alert(t("listings.shareFailedTitle"), t("listings.shareFailedBody"));
               }
             }}
           >
             <Ionicons name="share-social-outline" size={18} color={theme.primary} />
-            <Text style={styles.actionLabel}>Share</Text>
+            <Text style={styles.actionLabel}>{t("listings.share")}</Text>
           </TouchableOpacity>
           {!isOwnListing ? (
             <TouchableOpacity
