@@ -1,4 +1,4 @@
-import { Tabs, useFocusEffect } from "expo-router";
+import { Tabs, useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -21,6 +21,7 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = 60 + insets.bottom;
   const theme = useAppTheme();
+  const router = useRouter();
   const { t } = useTranslation();
   const [unreadTotal, setUnreadTotal] = useState(0);
   const requestIdRef = useRef(0);
@@ -176,6 +177,12 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="add-circle-outline" size={size} color={color} />
           ),
+        }}
+        listeners={{
+          tabPress: (event) => {
+            event.preventDefault();
+            router.navigate("/add_listing?mode=create");
+          },
         }}
       />
 
