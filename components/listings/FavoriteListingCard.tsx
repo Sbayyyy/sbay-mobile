@@ -18,6 +18,7 @@ type FavoriteListingCardProps = {
   onPress?: (listing: FavoriteListing) => void;
   onMessage?: (listing: FavoriteListing) => void;
   onMore?: (listing: FavoriteListing) => void;
+  showMessage?: boolean;
 };
 
 export function FavoriteListingCard({
@@ -25,6 +26,7 @@ export function FavoriteListingCard({
   onPress,
   onMessage,
   onMore,
+  showMessage = true,
 }: FavoriteListingCardProps) {
   const theme = useAppTheme();
   const { t } = useTranslation();
@@ -93,17 +95,19 @@ export function FavoriteListingCard({
               {t("favoritesCard.updated", { time: listing.updatedAt })}
             </PaperText>
           </View>
-          <Button
-            mode="contained-tonal"
-            icon="message-outline"
-            compact
-            style={styles.messageButton}
-            textColor={theme.chipActiveText}
-            buttonColor={theme.chipActiveBackground}
-            onPress={() => onMessage?.(listing)}
-          >
-            {t("common.actions.message")}
-          </Button>
+          {showMessage && onMessage ? (
+            <Button
+              mode="contained-tonal"
+              icon="message-outline"
+              compact
+              style={styles.messageButton}
+              textColor={theme.chipActiveText}
+              buttonColor={theme.chipActiveBackground}
+              onPress={() => onMessage(listing)}
+            >
+              {t("common.actions.message")}
+            </Button>
+          ) : null}
         </View>
       </Card.Content>
     </Card>
