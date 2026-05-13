@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import * as ImagePicker from "expo-image-picker";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ChipPicker } from "@/components/form/ChipPicker";
@@ -71,7 +71,7 @@ const districtOptions = SYRIA_DISTRICTS.map((district) => ({
 }));
 
 export default function AddListingScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, mode } = useLocalSearchParams<{ id?: string; mode?: string }>();
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState(ADD_LISTING_CATEGORIES[0].id);
@@ -110,6 +110,36 @@ export default function AddListingScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const resetCreateForm = useCallback(() => {
+    setTitle("");
+    setPrice("");
+    setCategory(ADD_LISTING_CATEGORIES[0].id);
+    setCondition(LISTING_CONDITIONS[0]);
+    setDescription("");
+    setLocation("");
+    setDistrictMenuVisible(false);
+    setCurrency(currencyOptions[0].id);
+    setPhotos(Array(PHOTO_SLOTS.length).fill(null));
+    setInitialForm(null);
+    setShowErrors(false);
+    setBoostAfterPublish(false);
+    setSelectedBoostOptionId(null);
+    setValidation({
+      title: true,
+      price: true,
+      description: true,
+      location: false,
+    });
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (id) return undefined;
+      resetCreateForm();
+      return undefined;
+    }, [id, mode, resetCreateForm]),
+  );
 
   const categories = useMemo(() => {
     return ADD_LISTING_CATEGORIES.map((item) => ({
