@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Linking,
   Modal,
@@ -33,6 +32,7 @@ import { addFavorite, getFavorites, removeFavorite } from "@/services/favorites"
 import { openChat } from "@/services/messages";
 import { WEB_BASE_URL } from "@/services/config";
 import {SafeAreaView} from "react-native-safe-area-context";
+import { useAppPopup } from "@/providers/AppPopupProvider";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80";
@@ -42,6 +42,7 @@ export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const theme = useAppTheme();
   const { t } = useTranslation();
+  const { showError } = useAppPopup();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [listing, setListing] = useState<ApiListing | null>(null);
@@ -177,9 +178,9 @@ export default function ListingDetailScreen() {
       await deleteListing(listing.id);
       router.replace("/");
     } catch (err) {
-      Alert.alert(
-        t("listings.deleteFailedTitle"),
+      showError(
         err instanceof Error ? err.message : t("listings.deleteFailedBody"),
+        t("listings.deleteFailedTitle"),
       );
     } finally {
       setDeleteLoading(false);
@@ -191,13 +192,13 @@ const handleContactSeller = async () => {
   try {
     const token = await getStoredToken();
     if (!token) {
-      Alert.alert(t("listings.signInRequiredTitle"), t("listings.signInMessageSeller"));
+      showError(t("listings.signInMessageSeller"), t("listings.signInRequiredTitle"));
       return;
     }
 
     const sellerId = sellerProfileId;
     if (!sellerId || !listing?.id) {
-      Alert.alert(t("listings.contactSellerTitle"), t("listings.sellerMissing"));
+      showError(t("listings.sellerMissing"), t("listings.contactSellerTitle"));
       return;
     }
 
@@ -210,9 +211,9 @@ const handleContactSeller = async () => {
 
     router.push(`/chats/thread/${chatId}`);
   } catch (err) {
-    Alert.alert(
-      t("listings.openChatFailedTitle"),
+    showError(
       err instanceof Error ? err.message : t("listings.tryAgain"),
+      t("listings.openChatFailedTitle"),
     );
   } finally {
     setOpeningChat(false);
@@ -297,7 +298,7 @@ const handleContactSeller = async () => {
               if (!listing?.id || favoriteLoading) return;
               const token = await getStoredToken();
               if (!token) {
-                Alert.alert(t("listings.signInRequiredTitle"), t("listings.signInFavorite"));
+                showError(t("listings.signInFavorite"), t("listings.signInRequiredTitle"));
                 return;
               }
               const nextValue = !isFavorite;
@@ -313,9 +314,9 @@ const handleContactSeller = async () => {
                 setIsFavorite(refreshed.some((item) => item.id === listing.id));
               } catch (err) {
                 setIsFavorite(!nextValue);
-                Alert.alert(
-                  t("listings.favoriteFailedTitle"),
+                showError(
                   err instanceof Error ? err.message : t("listings.favoriteFailedBody"),
+                  t("listings.favoriteFailedTitle"),
                 );
               } finally {
                 setFavoriteLoading(false);
@@ -346,7 +347,7 @@ const handleContactSeller = async () => {
                   message,
                 });
               } catch {
-                Alert.alert(t("listings.shareFailedTitle"), t("listings.shareFailedBody"));
+                showError(t("listings.shareFailedBody"), t("listings.shareFailedTitle"));
               }
             }}
           >

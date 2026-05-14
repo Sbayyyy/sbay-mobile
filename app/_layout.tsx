@@ -15,6 +15,7 @@ import { LocalizationProvider } from "../providers/LocalizationProvider";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { ThemeProvider as AppThemeProvider, useThemeContext } from "@/providers/ThemeProvider";
 import { NotificationProvider } from "@/providers/NotificationProvider";
+import { AppPopupProvider } from "@/providers/AppPopupProvider";
 import { type PushNotificationData } from "@/types/notifications";
 
 const ignoredPromiseErrors = [
@@ -69,7 +70,9 @@ export default function RootLayout() {
       <AppThemeProvider>
         <AuthProvider>
           <NotificationProvider>
-            <RootLayoutContent />
+            <AppPopupProvider>
+              <RootLayoutContent />
+            </AppPopupProvider>
           </NotificationProvider>
         </AuthProvider>
       </AppThemeProvider>
