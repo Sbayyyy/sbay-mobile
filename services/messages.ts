@@ -12,6 +12,17 @@ export type Chat = {
   sellerArchived: boolean;
 };
 
+export type ChatSummary = {
+  chatId: string;
+  buyerId: string;
+  sellerId: string;
+  listingId?: string | null;
+  createdAt: string;
+  lastMessageAt: string;
+  unreadCount: number;
+  lastMessage?: Message | null;
+};
+
 export type Message = {
   id: string;
   chatId: string;
@@ -40,6 +51,12 @@ async function authHeader(): Promise<Record<string, string>> {
 
 export async function getChats(take = 20, skip = 0): Promise<Chat[]> {
   return apiRequest<Chat[]>(`/api/chats?take=${take}&skip=${skip}`, {
+    headers: await authHeader(),
+  });
+}
+
+export async function getChatSummaries(take = 20, skip = 0): Promise<ChatSummary[]> {
+  return apiRequest<ChatSummary[]>(`/api/chats/summary?take=${take}&skip=${skip}`, {
     headers: await authHeader(),
   });
 }
@@ -98,6 +115,13 @@ export async function updateMessage(messageId: string, content: string): Promise
 
 export async function deleteMessage(messageId: string): Promise<void> {
   await apiRequest<void>(`/api/messages/${messageId}`, {
+    method: "DELETE",
+    headers: await authHeader(),
+  });
+}
+
+export async function archiveChat(chatId: string): Promise<void> {
+  await apiRequest<void>(`/api/chats/${chatId}`, {
     method: "DELETE",
     headers: await authHeader(),
   });

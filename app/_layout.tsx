@@ -3,7 +3,7 @@ import { type Href, Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useMemo } from "react";
-import { ActivityIndicator, LogBox, View } from "react-native";
+import { ActivityIndicator, BackHandler, LogBox, Platform, ToastAndroid, View } from "react-native";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
 import * as Notifications from "expo-notifications";
@@ -126,7 +126,7 @@ function RootLayoutContent() {
     (data?: PushNotificationData | null) => {
       const href = getNotificationHref(data);
       if (href) {
-        router.push(href);
+        router.replace(href);
       }
     },
     [router],
@@ -170,6 +170,35 @@ function RootLayoutContent() {
       router.replace("/sign-in");
     }
   }, [router, segments, status]);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return undefined;
+    let lastBackPress = 0;
+
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (status !== "authenticated") return false;
+
+      const route = segments[0];
+      const isTabsRoot = route === "(tabs)" || route == null;
+      if (!isTabsRoot) {
+        router.replace("/(tabs)");
+        return true;
+      }
+
+      const now = Date.now();
+      if (now - lastBackPress < 1800) {
+        BackHandler.exitApp();
+        return true;
+      }
+      lastBackPress = now;
+      ToastAndroid.show(t("navigation.backToExit", { defaultValue: "Press back again to exit" }), ToastAndroid.SHORT);
+      return true;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [router, segments, status, t]);
 
   if (status === "loading") {
     return (

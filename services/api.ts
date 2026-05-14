@@ -1,5 +1,5 @@
 import Constants from "expo-constants";
-import { notifyUnauthorized } from "@/services/auth-session";
+import { notifyUnauthorized, refreshAuthToken } from "@/services/auth-session";
 
 const fallbackBaseUrl = "https://api.syrian-bay.com";
 
@@ -16,20 +16,38 @@ type ApiErrorPayload = {
   message?: string;
 };
 
+type ApiRequestInit = RequestInit & {
+  skipAuthRefresh?: boolean;
+};
+
 export async function apiRequest<T>(
   path: string,
-  options: RequestInit = {},
+  options: ApiRequestInit = {},
 ): Promise<T> {
+  const { skipAuthRefresh, ...requestOptions } = options;
   const headers = {
     "Content-Type": "application/json",
-    ...(options.headers ?? {}),
+    ...(requestOptions.headers ?? {}),
   };
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
+    ...requestOptions,
     headers,
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && !skipAuthRefresh) {
+    const nextToken = await refreshAuthToken();
+    if (nextToken) {
+      return apiRequest<T>(path, {
+        ...requestOptions,
+        headers: {
+          ...(requestOptions.headers ?? {}),
+          Authorization: `Bearer ${nextToken}`,
+        },
+        skipAuthRefresh: true,
+      });
+    }
+    notifyUnauthorized();
+  } else if (response.status === 401) {
     notifyUnauthorized();
   }
 
