@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -16,7 +18,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
-import { getChats, getMessages } from "@/services/messages";
+import { archiveChat, getChatSummaries } from "@/services/messages";
 import { getMyProfile, getSellerProfile } from "@/services/user";
 import { getListing } from "@/services/listings";
 
@@ -27,6 +29,7 @@ type Conversation = {
   lastMessage: string;
   timestamp: string;
   unread: number;
+  imageUrl?: string | null;
 };
 
 export default function ChatsScreen() {
@@ -70,14 +73,10 @@ export default function ChatsScreen() {
         setError(null);
 
         const profile = await getMyProfile();
-        const chats = await getChats(50, 0);
+        const chats = await getChatSummaries(50, 0);
 
         const otherUserIds = Array.from(
-          new Set(
-            chats.map((chat) =>
-              chat.buyerId === profile.id ? chat.sellerId : chat.buyerId,
-            ),
-          ),
+          new Set(chats.map((chat) => (chat.buyerId === profile.id ? chat.sellerId : chat.buyerId))),
         );
 
         const listingIds = Array.from(
@@ -96,61 +95,40 @@ export default function ChatsScreen() {
           }),
         );
 
-        const listingMap = new Map<string, string>();
+        const listingMap = new Map<string, { title: string; imageUrl?: string | null }>();
         await Promise.all(
           listingIds.map(async (listingId) => {
             try {
               const listing = await getListing(listingId);
-              listingMap.set(listingId, listing.title);
+              listingMap.set(listingId, {
+                title: listing.title,
+                imageUrl: listing.thumbnailUrl ?? listing.imageUrls?.[0] ?? null,
+              });
             } catch {
-              listingMap.set(listingId, t("chats.listingFallback"));
+              listingMap.set(listingId, { title: t("chats.listingFallback") });
             }
           }),
         );
 
-        const chatMessageSets = await Promise.all(
-          chats.map(async (chat) => {
-            try {
-              const messages = await getMessages(chat.id, 50);
-              return { chatId: chat.id, messages };
-            } catch {
-              return { chatId: chat.id, messages: [] };
-            }
-          }),
-        );
-
-        const rows: Conversation[] = chats.map((chat, index) => {
+        const rows: Conversation[] = chats.map((chat) => {
           const otherUserId =
             chat.buyerId === profile.id ? chat.sellerId : chat.buyerId;
 
-          const messageSet = chatMessageSets.find((item) => item.chatId === chat.id);
-          const messages = messageSet?.messages ?? [];
-          const lastMessage =
-            messages.reduce<typeof messages[number] | null>((latest, msg) => {
-              if (!latest) return msg;
-              return new Date(msg.createdAt) > new Date(latest.createdAt) ? msg : latest;
-            }, null) ?? null;
-          const unread = messages.filter(
-            (msg) => msg.receiverId === profile.id && !msg.isRead,
-          ).length;
-
-          const timestamp =
-            lastMessage?.createdAt ??
-            chat.lastMessageAt ??
-            chat.createdAt ??
-            "";
+          const listing = chat.listingId ? listingMap.get(chat.listingId) : null;
+          const timestamp = chat.lastMessage?.createdAt ?? chat.lastMessageAt ?? chat.createdAt ?? "";
 
           return {
-            id: chat.id,
+            id: chat.chatId,
             title: chat.listingId
-              ? listingMap.get(chat.listingId) ?? t("chats.listingFallback")
+              ? listing?.title ?? t("chats.listingFallback")
               : t("chats.generalChat", { defaultValue: "General chat" }),
             participantName: profileMap.get(otherUserId)?.name ?? t("chats.unknownUser"),
             lastMessage:
-              lastMessage?.content ??
+              chat.lastMessage?.content ??
               t("chats.noMessages", { defaultValue: "No messages yet." }),
             timestamp: formatRelativeTime(timestamp),
-            unread,
+            unread: chat.unreadCount,
+            imageUrl: listing?.imageUrl ?? null,
           };
         });
 
@@ -171,6 +149,30 @@ export default function ChatsScreen() {
       isMounted = false;
     };
   }, [t]);
+
+  const handleArchiveChat = useCallback((chatId: string) => {
+    Alert.alert(
+      t("chats.deleteTitle", { defaultValue: "Delete chat?" }),
+      t("chats.deleteBody", { defaultValue: "This removes the chat from your inbox." }),
+      [
+        { text: t("common.actions.cancel", { defaultValue: "Cancel" }), style: "cancel" },
+        {
+          text: t("common.actions.delete", { defaultValue: "Delete" }),
+          style: "destructive",
+          onPress: () => {
+            setConversations((current) => current.filter((item) => item.id !== chatId));
+            archiveChat(chatId).catch(() => {
+              loadChats("refresh");
+              Alert.alert(
+                t("common.errors.title", { defaultValue: "Something went wrong" }),
+                t("chats.deleteError", { defaultValue: "Unable to delete this chat." }),
+              );
+            });
+          },
+        },
+      ],
+    );
+  }, [loadChats, t]);
 
   useEffect(() => {
     const cleanup = loadChats("initial");
@@ -278,13 +280,17 @@ export default function ChatsScreen() {
               >
                 <View style={styles.avatarWrapper}>
                   <View style={styles.avatar}>
-                    <Text style={styles.avatarLabel}>
-                      {item.title
-                        .split(" ")
-                        .map((part) => part[0])
-                        .join("")
-                        .toUpperCase()}
-                    </Text>
+                    {item.imageUrl ? (
+                      <Image source={{ uri: item.imageUrl }} style={styles.avatarImage} />
+                    ) : (
+                      <Text style={styles.avatarLabel}>
+                        {item.title
+                          .split(" ")
+                          .map((part) => part[0])
+                          .join("")
+                          .toUpperCase()}
+                      </Text>
+                    )}
                   </View>
                   {item.unread > 0 ? (
                     <View style={styles.unreadBadge}>
@@ -306,6 +312,17 @@ export default function ChatsScreen() {
                   </Text>
                 </View>
 
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleArchiveChat(item.id)}
+                  accessibilityLabel={t("chats.deleteTitle", { defaultValue: "Delete chat" })}
+                >
+                  <FontAwesome
+                    name="trash-o"
+                    size={18}
+                    color={theme.textSubtle}
+                  />
+                </TouchableOpacity>
                 <FontAwesome
                   name="chevron-right"
                   size={14}
@@ -381,6 +398,12 @@ const createStyles = (theme: ThemeColors) =>
       backgroundColor: theme.primaryMuted,
       alignItems: "center",
       justifyContent: "center",
+      overflow: "hidden",
+    },
+    avatarImage: {
+      width: "100%",
+      height: "100%",
+      resizeMode: "cover",
     },
     avatarWrapper: {
       width: 48,
@@ -418,6 +441,13 @@ const createStyles = (theme: ThemeColors) =>
     threadMessage: {
       fontSize: 14,
       color: theme.textSecondary,
+    },
+    deleteButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
     },
     unreadBadge: {
       position: "absolute",

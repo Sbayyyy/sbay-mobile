@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "expo-router";
 
-import { clearStoredToken, getStoredToken, storeToken } from "@/services/auth";
-import { setAuthToken, setUnauthorizedHandler } from "@/services/auth-session";
+import { clearStoredToken, getStoredToken, refreshStoredToken, revokeStoredRefreshToken, storeToken } from "@/services/auth";
+import { setAuthToken, setTokenRefreshHandler, setUnauthorizedHandler } from "@/services/auth-session";
 import { syncPushToken, unregisterPushToken } from "@/services/push-notifications";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -22,13 +22,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
 
   const signOut = useCallback(async () => {
-    await unregisterPushToken();
+    if (token) {
+      await unregisterPushToken().catch(() => {});
+    }
+    await revokeStoredRefreshToken();
     await clearStoredToken();
     setAuthToken(null);
     setToken(null);
     setStatus("unauthenticated");
     router.replace("/sign-in");
-  }, [router]);
+  }, [router, token]);
 
   const signIn = useCallback(async (nextToken: string) => {
     await storeToken(nextToken);
@@ -64,11 +67,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    setUnauthorizedHandler(null);
+    setTokenRefreshHandler(async () => {
+      const nextToken = await refreshStoredToken();
+      if (nextToken) {
+        setToken(nextToken);
+        setStatus("authenticated");
+        return nextToken;
+      }
+      return null;
+    });
+    setUnauthorizedHandler(() => {
+      void signOut();
+    });
     return () => {
+      setTokenRefreshHandler(null);
       setUnauthorizedHandler(null);
     };
-  }, []);
+  }, [signOut]);
 
   useEffect(() => {
     if (status !== "authenticated") return;

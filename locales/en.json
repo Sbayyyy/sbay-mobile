@@ -18,7 +18,9 @@
       "apply": "Apply",
       "success": "Success",
       "save": "Save changes",
-      "continueBrowsing": "Continue browsing"
+      "continueBrowsing": "Continue browsing",
+      "cancel": "Cancel",
+      "delete": "Delete"
     },
     "errors": {
       "title": "Something went wrong",
@@ -192,6 +194,9 @@
     "listingFallback": "Listing",
     "unknownUser": "User",
     "noMessages": "No messages yet.",
+    "deleteTitle": "Delete chat?",
+    "deleteBody": "This removes the chat from your inbox.",
+    "deleteError": "Unable to delete this chat.",
     "thread": {
       "chatNotFound": "Chat not found.",
       "unavailableTitle": "Chat unavailable",

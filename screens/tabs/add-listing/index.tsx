@@ -465,13 +465,13 @@ export default function AddListingScreen() {
         const nextDescription = description.trim();
         const nextPrice = Number(price);
         const nextLocation = normalizeRegion(location);
-        if (!initialForm || nextTitle !== initialForm.title) updatePayload.title = nextTitle;
-        if (!initialForm || nextDescription !== initialForm.description) updatePayload.description = nextDescription;
-        if (!initialForm || nextPrice !== Number(initialForm.price)) updatePayload.priceAmount = nextPrice;
-        if (!initialForm || currency !== initialForm.currency) updatePayload.priceCurrency = currency;
-        if (!initialForm || category !== initialForm.category) updatePayload.categoryPath = category;
-        if (!initialForm || condition !== initialForm.condition) updatePayload.condition = conditionMap[condition];
-        if (!initialForm || nextLocation !== initialForm.location) updatePayload.region = nextLocation || undefined;
+        updatePayload.title = nextTitle;
+        updatePayload.description = nextDescription;
+        updatePayload.priceAmount = nextPrice;
+        updatePayload.priceCurrency = currency;
+        updatePayload.categoryPath = category;
+        updatePayload.condition = conditionMap[condition];
+        updatePayload.region = nextLocation || undefined;
         if (photosChanged) updatePayload.imageUrls = uploadedUrls;
       }
 
@@ -511,7 +511,7 @@ export default function AddListingScreen() {
               }),
         );
       }
-      router.push(`/listings/${listing.id}`);
+      router.replace(`/listings/${listing.id}`);
     } catch (error) {
       console.error("Error creating listing:", error);
       Alert.alert(
@@ -682,8 +682,8 @@ export default function AddListingScreen() {
             />
           </View>
 
-          <View style={[styles.section, styles.row]}>
-            <View style={{ flex: 1 }}>
+          <View style={[styles.section, styles.priceCurrencyRow]}>
+            <View style={styles.priceField}>
               <ValidatedInput
                 label={t("addListing.fields.price")}
                 placeholder={t("addListing.fields.pricePlaceholder")}
@@ -699,72 +699,81 @@ export default function AddListingScreen() {
                 }
               />
             </View>
-            <View style={{ flex: 1 }}>
-              <View style={styles.menuField}>
-                <Text style={styles.label}>{t("addListing.fields.location")}</Text>
-                <TouchableOpacity
-                  activeOpacity={0.9}
-                  onPress={() => setDistrictMenuVisible((prev) => !prev)}
-                  style={styles.menuButton}
+            <View style={styles.currencyField}>
+              <ChipPicker
+                label={t("addListing.fields.currency")}
+                options={currencyOptions}
+                value={currency}
+                onChange={setCurrency}
+              />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.menuField}>
+              <Text style={styles.label}>{t("addListing.fields.location")}</Text>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => setDistrictMenuVisible((prev) => !prev)}
+                style={styles.menuButton}
+              >
+                <Text style={styles.menuButtonLabel}>
+                  {getRegionLabel(location, t) ?? t("addListing.fields.locationPlaceholder")}
+                </Text>
+                <Text style={styles.menuChevron}>
+                  {districtMenuVisible ? "^" : "v"}
+                </Text>
+              </TouchableOpacity>
+              <Modal
+                visible={districtMenuVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setDistrictMenuVisible(false)}
+              >
+                <Pressable
+                  style={styles.modalBackdrop}
+                  onPress={() => setDistrictMenuVisible(false)}
                 >
-                  <Text style={styles.menuButtonLabel}>
-                    {getRegionLabel(location, t) ?? t("addListing.fields.locationPlaceholder")}
-                  </Text>
-                  <Text style={styles.menuChevron}>
-                    {districtMenuVisible ? "^" : "v"}
-                  </Text>
-                </TouchableOpacity>
-                <Modal
-                  visible={districtMenuVisible}
-                  transparent
-                  animationType="fade"
-                  onRequestClose={() => setDistrictMenuVisible(false)}
-                >
-                  <Pressable
-                    style={styles.modalBackdrop}
-                    onPress={() => setDistrictMenuVisible(false)}
-                  >
-                    <Pressable style={styles.modalCard} onPress={() => {}}>
-                      <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>
-                          {t("addListing.fields.locationPlaceholder")}
-                        </Text>
-                      </View>
-                      <FlatList
-                        data={districtOptions}
-                        keyExtractor={(item) => item.id}
-                        style={styles.modalList}
-                        contentContainerStyle={styles.menuListContent}
-                        showsVerticalScrollIndicator
-                        keyboardShouldPersistTaps="handled"
-                        renderItem={({ item }) => {
-                          const isActive = item.id === location;
-                          return (
-                            <TouchableOpacity
-                              onPress={() =>
-                                handleDistrictChange(item.id as DistrictId)
-                              }
+                  <Pressable style={styles.modalCard} onPress={() => {}}>
+                    <View style={styles.modalHeader}>
+                      <Text style={styles.modalTitle}>
+                        {t("addListing.fields.locationPlaceholder")}
+                      </Text>
+                    </View>
+                    <FlatList
+                      data={districtOptions}
+                      keyExtractor={(item) => item.id}
+                      style={styles.modalList}
+                      contentContainerStyle={styles.menuListContent}
+                      showsVerticalScrollIndicator
+                      keyboardShouldPersistTaps="handled"
+                      renderItem={({ item }) => {
+                        const isActive = item.id === location;
+                        return (
+                          <TouchableOpacity
+                            onPress={() =>
+                              handleDistrictChange(item.id as DistrictId)
+                            }
+                            style={[
+                              styles.menuItem,
+                              isActive && styles.menuItemActive,
+                            ]}
+                          >
+                            <Text
                               style={[
-                                styles.menuItem,
-                                isActive && styles.menuItemActive,
+                                styles.menuItemLabel,
+                                isActive && styles.menuItemLabelActive,
                               ]}
                             >
-                              <Text
-                                style={[
-                                  styles.menuItemLabel,
-                                  isActive && styles.menuItemLabelActive,
-                                ]}
-                              >
-                                {item.label}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        }}
-                      />
-                    </Pressable>
+                              {item.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      }}
+                    />
                   </Pressable>
-                </Modal>
-              </View>
+                </Pressable>
+              </Modal>
             </View>
           </View>
           {showErrors && !validation.location ? (
@@ -788,15 +797,6 @@ export default function AddListingScreen() {
               options={conditionOptions}
               value={condition}
               onChange={setCondition}
-            />
-          </View>
-
-          <View style={styles.section}>
-            <ChipPicker
-              label={t("addListing.fields.currency")}
-              options={currencyOptions}
-              value={currency}
-              onChange={setCurrency}
             />
           </View>
 
@@ -1135,6 +1135,17 @@ const createStyles = (theme: ThemeColors) =>
     row: {
       flexDirection: "row",
       gap: 12,
+    },
+    priceCurrencyRow: {
+      flexDirection: "row",
+      gap: 12,
+      alignItems: "flex-start",
+    },
+    priceField: {
+      flex: 1.2,
+    },
+    currencyField: {
+      flex: 0.9,
     },
     menuField: {
       gap: 6,
