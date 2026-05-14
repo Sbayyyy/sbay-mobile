@@ -210,6 +210,10 @@
     "myListings": "إعلاناتي",
     "emptyListingsSubtitle": "ابدأ بنشر أول عنصر للبيع.",
     "cityUnknown": "المدينة غير معروفة",
+    "shareTitle": "{{name}} على SBay",
+    "shareMessage": "شاهد ملف {{name}} على SBay:\n{{url}}",
+    "shareFailedTitle": "فشلت المشاركة",
+    "shareFailedBody": "تعذرت مشاركة هذا الملف الشخصي.",
     "stats": {
       "totalOrders": "إجمالي الطلبات",
       "pendingOrders": "الطلبات المعلقة",
@@ -248,7 +252,8 @@
       "cancel": "إلغاء",
       "changePhoto": "تغيير الصورة",
       "uploading": "جاري الرفع...",
-      "usePhoto": "استخدام الصورة"
+      "usePhoto": "استخدام الصورة",
+      "share": "مشاركة الملف الشخصي"
     },
     "tabs": {
       "overview": "نظرة عامة",
