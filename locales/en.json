@@ -210,6 +210,10 @@
     "myListings": "My listings",
     "emptyListingsSubtitle": "Start by posting your first item for sale.",
     "cityUnknown": "Unknown city",
+    "shareTitle": "{{name}} on SBay",
+    "shareMessage": "View {{name}}'s profile on SBay:\n{{url}}",
+    "shareFailedTitle": "Share failed",
+    "shareFailedBody": "Unable to share this profile.",
     "stats": {
       "totalOrders": "Total orders",
       "pendingOrders": "Pending orders",
@@ -248,7 +252,8 @@
       "cancel": "Cancel",
       "changePhoto": "Change photo",
       "uploading": "Uploading...",
-      "usePhoto": "Use photo"
+      "usePhoto": "Use photo",
+      "share": "Share profile"
     },
     "tabs": {
       "overview": "Overview",

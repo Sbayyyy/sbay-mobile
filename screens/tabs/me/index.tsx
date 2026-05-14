@@ -10,6 +10,7 @@ import {
   Platform,
   RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -35,6 +36,7 @@ import {
   getBoostOptions,
   type BoostOption,
 } from "@/services/monetization";
+import { WEB_BASE_URL } from "@/services/config";
 import { getMyProfile, updateMyProfile, type UserProfile } from "@/services/user";
 import { uploadImageAsync } from "@/services/uploads";
 
@@ -337,6 +339,35 @@ export default function MeScreen() {
     };
   }, [isEditing, t]);
 
+  const handleShareProfile = useCallback(async () => {
+    if (!profile?.id) return;
+
+    const name = profile.displayName ?? profile.email;
+    const url = `${WEB_BASE_URL}/seller/${profile.id}`;
+
+    try {
+      await Share.share({
+        title: t("profile.shareTitle", {
+          defaultValue: "{{name}} on SBay",
+          name,
+        }),
+        message: t("profile.shareMessage", {
+          defaultValue: "View {{name}}'s profile on SBay:\n{{url}}",
+          name,
+          url,
+        }),
+        url,
+      });
+    } catch {
+      Alert.alert(
+        t("profile.shareFailedTitle", { defaultValue: "Share failed" }),
+        t("profile.shareFailedBody", {
+          defaultValue: "Unable to share this profile.",
+        }),
+      );
+    }
+  }, [profile, t]);
+
   if (status === "loading" || profileLoading) {
     return (
       <AppScreen>
@@ -587,7 +618,14 @@ export default function MeScreen() {
         <View style={styles.toolbar}>
           <Text style={styles.screenTitle}>{t("profile.title")}</Text>
           <View style={styles.toolbarActions}>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleShareProfile}
+              accessibilityRole="button"
+              accessibilityLabel={t("profile.actions.share", {
+                defaultValue: "Share profile",
+              })}
+            >
               <FontAwesome name="share-alt" size={18} color={theme.primary} />
             </TouchableOpacity>
             <TouchableOpacity
