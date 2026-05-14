@@ -39,6 +39,7 @@ import {
 } from "@/services/monetization";
 import { uploadImageAsync } from "@/services/uploads";
 import { type TextValidator } from "@/validation";
+import { useAuth } from "@/providers/AuthProvider";
 
 const currencyOptions = Array.from(CURRENCY_OPTIONS).map((item) => ({
   id: item,
@@ -109,6 +110,7 @@ export default function AddListingScreen() {
   const theme = useAppTheme();
   const { t } = useTranslation();
   const router = useRouter();
+  const { status } = useAuth();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const resetCreateForm = useCallback(() => {
@@ -522,6 +524,33 @@ export default function AddListingScreen() {
     });
   }, [initialForm]);
 
+  if (status === "loading") {
+    return (
+      <AppScreen>
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      </AppScreen>
+    );
+  }
+
+  if (status !== "authenticated") {
+    return (
+      <AppScreen>
+        <View style={styles.authContainer}>
+          <Text style={styles.authTitle}>{t("addListing.authRequiredTitle")}</Text>
+          <Text style={styles.authSubtitle}>{t("addListing.authRequiredSubtitle")}</Text>
+          <TouchableOpacity style={styles.authPrimaryButton} onPress={() => router.push("/sign-in")}>
+            <Text style={styles.authPrimaryLabel}>{t("common.actions.logIn")}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.authSecondaryButton} onPress={() => router.push("/sign-up")}>
+            <Text style={styles.authSecondaryLabel}>{t("common.actions.createAccount")}</Text>
+          </TouchableOpacity>
+        </View>
+      </AppScreen>
+    );
+  }
+
   if (isLoading) {
     return (
       <AppScreen>
@@ -912,6 +941,50 @@ const createStyles = (theme: ThemeColors) =>
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
+    },
+    authContainer: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+      gap: 14,
+      backgroundColor: theme.background,
+    },
+    authTitle: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: theme.text,
+      textAlign: "center",
+    },
+    authSubtitle: {
+      fontSize: 15,
+      color: theme.textMuted,
+      textAlign: "center",
+      lineHeight: 21,
+      marginBottom: 8,
+    },
+    authPrimaryButton: {
+      borderRadius: 16,
+      backgroundColor: theme.primary,
+      paddingVertical: 15,
+      alignItems: "center",
+    },
+    authPrimaryLabel: {
+      color: theme.primaryForeground,
+      fontSize: 15,
+      fontWeight: "700",
+    },
+    authSecondaryButton: {
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      paddingVertical: 15,
+      alignItems: "center",
+    },
+    authSecondaryLabel: {
+      color: theme.text,
+      fontSize: 15,
+      fontWeight: "700",
     },
     content: {
       padding: 20,

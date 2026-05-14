@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useRouter } from "expo-router";
 
 import { clearStoredToken, getStoredToken, storeToken } from "@/services/auth";
-import { getMyProfile } from "@/services/user";
 import { setAuthToken, setUnauthorizedHandler } from "@/services/auth-session";
 import { syncPushToken, unregisterPushToken } from "@/services/push-notifications";
 
@@ -36,7 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthToken(nextToken);
     setToken(nextToken);
     setStatus("authenticated");
-  }, []);
+    router.replace("/");
+  }, [router]);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,19 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      try {
-        setAuthToken(stored);
-        await getMyProfile();
-        if (!isMounted) return;
-        setToken(stored);
-        setStatus("authenticated");
-      } catch {
-        await clearStoredToken();
-        setAuthToken(null);
-        if (!isMounted) return;
-        setToken(null);
-        setStatus("unauthenticated");
-      }
+      setAuthToken(stored);
+      if (!isMounted) return;
+      setToken(stored);
+      setStatus("authenticated");
     };
 
     void hydrate();
@@ -73,13 +64,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    setUnauthorizedHandler(() => {
-      void signOut();
-    });
+    setUnauthorizedHandler(null);
     return () => {
       setUnauthorizedHandler(null);
     };
-  }, [signOut]);
+  }, []);
 
   useEffect(() => {
     if (status !== "authenticated") return;
