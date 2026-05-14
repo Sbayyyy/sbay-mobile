@@ -22,8 +22,8 @@ import { getListing } from "@/services/listings";
 
 type Conversation = {
   id: string;
-  name: string;
-  listingTitle: string;
+  title: string;
+  participantName: string;
   lastMessage: string;
   timestamp: string;
   unread: number;
@@ -91,7 +91,7 @@ export default function ChatsScreen() {
               const data = await getSellerProfile(userId);
               profileMap.set(userId, { name: data.name });
             } catch {
-              profileMap.set(userId, { name: `User ${userId.slice(0, 8)}` });
+              profileMap.set(userId, { name: t("chats.unknownUser") });
             }
           }),
         );
@@ -103,7 +103,7 @@ export default function ChatsScreen() {
               const listing = await getListing(listingId);
               listingMap.set(listingId, listing.title);
             } catch {
-              listingMap.set(listingId, "Listing");
+              listingMap.set(listingId, t("chats.listingFallback"));
             }
           }),
         );
@@ -142,10 +142,10 @@ export default function ChatsScreen() {
 
           return {
             id: chat.id,
-            name: profileMap.get(otherUserId)?.name ?? "User",
-            listingTitle: chat.listingId
-              ? listingMap.get(chat.listingId) ?? "Listing"
+            title: chat.listingId
+              ? listingMap.get(chat.listingId) ?? t("chats.listingFallback")
               : t("chats.generalChat", { defaultValue: "General chat" }),
+            participantName: profileMap.get(otherUserId)?.name ?? t("chats.unknownUser"),
             lastMessage:
               lastMessage?.content ??
               t("chats.noMessages", { defaultValue: "No messages yet." }),
@@ -194,8 +194,8 @@ export default function ChatsScreen() {
     return conversations.filter((conversation) => {
       return (
         query.length === 0 ||
-        conversation.name.toLowerCase().includes(query) ||
-        conversation.listingTitle.toLowerCase().includes(query)
+        conversation.title.toLowerCase().includes(query) ||
+        conversation.participantName.toLowerCase().includes(query)
       );
     });
   }, [search, conversations]);
@@ -279,7 +279,7 @@ export default function ChatsScreen() {
                 <View style={styles.avatarWrapper}>
                   <View style={styles.avatar}>
                     <Text style={styles.avatarLabel}>
-                      {item.name
+                      {item.title
                         .split(" ")
                         .map((part) => part[0])
                         .join("")
@@ -297,10 +297,10 @@ export default function ChatsScreen() {
 
                 <View style={styles.threadBody}>
                   <View style={styles.threadHeader}>
-                    <Text style={styles.threadName}>{item.name}</Text>
+                    <Text style={styles.threadName} numberOfLines={1}>{item.title}</Text>
                     <Text style={styles.threadTime}>{item.timestamp}</Text>
                   </View>
-                  <Text style={styles.listingTitle}>{item.listingTitle}</Text>
+                  <Text style={styles.listingTitle} numberOfLines={1}>{item.participantName}</Text>
                   <Text style={styles.threadMessage} numberOfLines={1}>
                     {item.lastMessage}
                   </Text>

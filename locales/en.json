@@ -189,9 +189,12 @@
     "emptyTitle": "No chats found",
     "emptySubtitle": "Start a conversation from a listing or adjust your search.",
     "generalChat": "General chat",
+    "listingFallback": "Listing",
+    "unknownUser": "User",
     "noMessages": "No messages yet.",
     "thread": {
       "chatNotFound": "Chat not found.",
+      "unavailableTitle": "Chat unavailable",
       "deleteTitle": "Delete message?",
       "deleteBody": "This action can't be undone.",
       "deleteCancel": "Cancel",

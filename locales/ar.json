@@ -189,9 +189,12 @@
     "emptyTitle": "لا توجد محادثات",
     "emptySubtitle": "ابدأ محادثة من إعلان أو عدّل البحث.",
     "generalChat": "محادثة عامة",
+    "listingFallback": "إعلان",
+    "unknownUser": "مستخدم",
     "noMessages": "لا توجد رسائل بعد.",
     "thread": {
       "chatNotFound": "لم يتم العثور على المحادثة.",
+      "unavailableTitle": "المحادثة غير متاحة",
       "deleteTitle": "حذف الرسالة؟",
       "deleteBody": "لا يمكن التراجع عن هذا الإجراء.",
       "deleteCancel": "إلغاء",
