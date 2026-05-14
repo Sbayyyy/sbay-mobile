@@ -29,6 +29,12 @@ import {
   LISTING_CONDITIONS,
   PHOTO_SLOTS,
 } from "@/constants/mockData";
+import {
+  getRegionLabel,
+  normalizeRegion,
+  SYRIA_REGION_OPTIONS,
+  type SyriaRegionId,
+} from "@/constants/regions";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
 import {
@@ -54,28 +60,7 @@ const currencyOptions = Array.from(CURRENCY_OPTIONS).map((item) => ({
 type CurrencyId = (typeof CURRENCY_OPTIONS)[number];
 
 type ConditionId = (typeof LISTING_CONDITIONS)[number];
-const SYRIA_DISTRICTS = [
-  "Damascus",
-  "Rif Dimashq",
-  "Aleppo",
-  "Homs",
-  "Hama",
-  "Latakia",
-  "Tartus",
-  "Idlib",
-  "Deir ez-Zor",
-  "Raqqa",
-  "Hasakah",
-  "Daraa",
-  "As-Suwayda",
-  "Quneitra",
-  "Other",
-] as const;
-type DistrictId = (typeof SYRIA_DISTRICTS)[number] | "";
-const districtOptions = SYRIA_DISTRICTS.map((district) => ({
-  id: district,
-  label: district,
-}));
+type DistrictId = SyriaRegionId | "";
 
 export default function AddListingScreen() {
   const { id, mode } = useLocalSearchParams<{ id?: string; mode?: string }>();
@@ -157,6 +142,15 @@ export default function AddListingScreen() {
       }),
     }));
   }, [t]);
+
+  const districtOptions = useMemo(
+    () =>
+      SYRIA_REGION_OPTIONS.map((district) => ({
+        id: district.id,
+        label: t(district.labelKey, { defaultValue: district.id }),
+      })),
+    [t],
+  );
 
   const conditionOptions = useMemo(() => {
     return Array.from(LISTING_CONDITIONS).map((item) => ({
@@ -263,11 +257,7 @@ export default function AddListingScreen() {
           const nextDescription = listing.description ?? "";
           const nextPrice = String(listing.priceAmount ?? "");
           const nextCategory = listing.categoryPath ?? ADD_LISTING_CATEGORIES[0].id;
-          const matchedDistrict =
-            districtOptions.find(
-              (item) => item.id === listing.region || item.label === listing.region,
-            ) ?? null;
-          const nextLocation = matchedDistrict?.id ?? "";
+          const nextLocation = normalizeRegion(listing.region);
           const nextCurrency = (listing.priceCurrency ?? currencyOptions[0].id) as CurrencyId;
           const nextCondition =
             conditionFromApi[listing.condition ?? ""] ?? LISTING_CONDITIONS[0];
@@ -464,7 +454,7 @@ export default function AddListingScreen() {
         priceCurrency: currency,
         categoryPath: category,
         condition: conditionMap[condition],
-        region: location.trim() || undefined,
+        region: normalizeRegion(location) || undefined,
         stock: 1,
         imageUrls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
       };
@@ -474,7 +464,7 @@ export default function AddListingScreen() {
         const nextTitle = title.trim();
         const nextDescription = description.trim();
         const nextPrice = Number(price);
-        const nextLocation = location.trim();
+        const nextLocation = normalizeRegion(location);
         if (!initialForm || nextTitle !== initialForm.title) updatePayload.title = nextTitle;
         if (!initialForm || nextDescription !== initialForm.description) updatePayload.description = nextDescription;
         if (!initialForm || nextPrice !== Number(initialForm.price)) updatePayload.priceAmount = nextPrice;
@@ -718,7 +708,7 @@ export default function AddListingScreen() {
                   style={styles.menuButton}
                 >
                   <Text style={styles.menuButtonLabel}>
-                    {location || t("addListing.fields.locationPlaceholder")}
+                    {getRegionLabel(location, t) ?? t("addListing.fields.locationPlaceholder")}
                   </Text>
                   <Text style={styles.menuChevron}>
                     {districtMenuVisible ? "^" : "v"}

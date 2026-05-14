@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { ReportModal } from "@/components/reports/ReportModal";
+import { getRegionLabel } from "@/constants/regions";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { getSellerListings, type Listing as ApiListing } from "@/services/listings";
@@ -84,7 +85,7 @@ export default function SellerProfileScreen() {
           title: listing.title,
           price: `${listing.priceCurrency} ${listing.priceAmount}`,
           category: listing.categoryPath ?? "other",
-          location: listing.region ?? listing.seller?.city ?? undefined,
+          location: getRegionLabel(listing.region ?? listing.seller?.city, t),
           image:
             listing.thumbnailUrl ??
             listing.imageUrls?.[0] ??
@@ -187,7 +188,7 @@ export default function SellerProfileScreen() {
             {profile.city ? (
               <View style={styles.metaRow}>
                 <Ionicons name="location-outline" size={14} color={theme.textMuted} />
-                <Text style={styles.metaText}>{profile.city}</Text>
+                <Text style={styles.metaText}>{getRegionLabel(profile.city, t) ?? profile.city}</Text>
               </View>
             ) : null}
           </View>

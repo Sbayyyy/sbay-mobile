@@ -22,6 +22,7 @@ import {
 import { ListingCard } from "@/components/listings/ListingCard";
 import { SearchBar } from "@/components/common/SearchBar";
 import { HOME_CATEGORIES } from "@/constants/mockData";
+import { getRegionLabel } from "@/constants/regions";
 import { Listing } from "@/types/listing";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
@@ -118,13 +119,13 @@ export default function HomeScreen() {
       title: listing.title,
       price: `${listing.priceCurrency} ${listing.priceAmount}`,
       category: listing.categoryPath ?? "other",
-      location: listing.region ?? listing.seller?.city ?? undefined,
+      location: getRegionLabel(listing.region ?? listing.seller?.city, t),
       image:
         listing.thumbnailUrl ??
         listing.imageUrls?.[0] ??
         "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=60",
     }));
-  }, [listings]);
+  }, [listings, t]);
 
   const displayFeaturedListings = useMemo(() => {
     return featuredListings.filter((listing) => listing.isBoosted === true).map((listing) => ({
@@ -132,13 +133,13 @@ export default function HomeScreen() {
       title: listing.title,
       price: `${listing.priceCurrency} ${listing.priceAmount}`,
       category: listing.categoryPath ?? "other",
-      location: listing.region ?? listing.seller?.city ?? undefined,
+      location: getRegionLabel(listing.region ?? listing.seller?.city, t),
       image:
         listing.thumbnailUrl ??
         listing.imageUrls?.[0] ??
         "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=60",
     }));
-  }, [featuredListings]);
+  }, [featuredListings, t]);
 
   return (
     <AppScreen>

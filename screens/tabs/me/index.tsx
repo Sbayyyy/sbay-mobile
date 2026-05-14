@@ -28,6 +28,7 @@ import { ScreenMessage } from "@/components/common/ScreenMessage";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ListingCard } from "@/components/listings/ListingCard";
+import { getRegionLabel } from "@/constants/regions";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { getMyListings, type Listing as ApiListing } from "@/services/listings";
@@ -958,7 +959,7 @@ export default function MeScreen() {
                         title: item.title,
                         price: `${item.priceCurrency} ${item.priceAmount}`,
                         category: item.categoryPath ?? "other",
-                        location: item.region ?? item.seller?.city ?? undefined,
+                        location: getRegionLabel(item.region ?? item.seller?.city, t),
                         image: item.thumbnailUrl ?? item.imageUrls[0] ?? "",
                       }}
                       onPress={() => router.push(`/listings/${item.id}`)}

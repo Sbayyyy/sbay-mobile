@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ReportModal } from "@/components/reports/ReportModal";
+import { getRegionLabel } from "@/constants/regions";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import {
@@ -160,6 +161,7 @@ export default function ListingDetailScreen() {
 
   const isAvailable = listing.stock === undefined || listing.stock > 0;
   const sellerProfileId = listing.seller?.id ?? listing.sellerId ?? null;
+  const regionLabel = getRegionLabel(listing.region, t);
   const isOwnListing =
     !!profileId && (listing.sellerId === profileId || listing.seller?.id === profileId);
 
@@ -374,7 +376,7 @@ const handleContactSeller = async () => {
           ) : null}
           {listing.region ? (
             <View style={styles.metaChip}>
-              <Text style={styles.metaChipLabel}>{listing.region}</Text>
+              <Text style={styles.metaChipLabel}>{regionLabel}</Text>
             </View>
           ) : null}
           {listing.categoryPath ? (
@@ -409,7 +411,7 @@ const handleContactSeller = async () => {
             {listing.region ? (
               <View style={styles.detailItem}>
                 <Text style={styles.detailLabel}>Location</Text>
-                <Text style={styles.detailValue}>{listing.region}</Text>
+                <Text style={styles.detailValue}>{regionLabel}</Text>
               </View>
             ) : null}
             {listing.stock != null ? (
