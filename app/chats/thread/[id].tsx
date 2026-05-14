@@ -39,7 +39,12 @@ import { getMyProfile, getSellerProfile } from "@/services/user";
 import { sanitizeInput, validateSafeText } from "@/validation";
 import * as Clipboard from "expo-clipboard";
 
-type ChatHeader = { name: string; listingTitle?: string; avatar?: string | null };
+type ChatHeader = {
+  title: string;
+  participantName?: string;
+  avatar?: string | null;
+  listingId?: string | null;
+};
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const CHAT_BUBBLE_BLUE = "#2563eb";
@@ -158,7 +163,7 @@ export default function ChatThreadScreen() {
         setOtherUserId(otherUserId);
 
         const [otherProfile, listing, history] = await Promise.all([
-          getSellerProfile(otherUserId).catch(() => ({ name: "User" })),
+          getSellerProfile(otherUserId).catch(() => ({ name: t("chats.unknownUser") })),
           chat.listingId ? getListing(chat.listingId).catch(() => null) : Promise.resolve(null),
           getMessages(chat.id, 50),
         ]);
@@ -166,9 +171,10 @@ export default function ChatThreadScreen() {
         if (!isMounted) return;
 
         setHeader({
-          name: otherProfile.name ?? "User",
-          listingTitle: listing?.title,
-          avatar: "avatar" in otherProfile ? otherProfile.avatar ?? null : null,
+          title: listing?.title ?? t("chats.generalChat"),
+          participantName: otherProfile.name ?? t("chats.unknownUser"),
+          avatar: listing?.thumbnailUrl ?? listing?.imageUrls?.[0] ?? null,
+          listingId: chat.listingId ?? null,
         });
 
         const ordered = [...history].sort(
@@ -525,10 +531,10 @@ export default function ChatThreadScreen() {
     return (
       <AppScreen>
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>Chat unavailable</Text>
-          <Text style={styles.emptySubtitle}>{error ?? "Please try again."}</Text>
+          <Text style={styles.emptyTitle}>{t("chats.thread.unavailableTitle")}</Text>
+          <Text style={styles.emptySubtitle}>{error ?? t("listings.tryAgain")}</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonLabel}>Go back</Text>
+            <Text style={styles.backButtonLabel}>{t("sellerProfile.actions.goBack")}</Text>
           </TouchableOpacity>
         </View>
       </AppScreen>
@@ -547,9 +553,13 @@ export default function ChatThreadScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerInfo}
-              disabled={!otherUserId}
+              disabled={!header.listingId && !otherUserId}
               onPress={() => {
-                if (otherUserId) router.push(`/seller/${otherUserId}`);
+                if (header.listingId) {
+                  router.push(`/listings/${header.listingId}`);
+                } else if (otherUserId) {
+                  router.push(`/seller/${otherUserId}`);
+                }
               }}
             >
               <View style={styles.avatar}>
@@ -557,15 +567,15 @@ export default function ChatThreadScreen() {
                   <Image source={{ uri: header.avatar }} style={styles.avatarImage} />
                 ) : (
                   <Text style={styles.avatarLabel}>
-                    {header.name.charAt(0).toUpperCase()}
+                    {header.title.charAt(0).toUpperCase()}
                   </Text>
                 )}
               </View>
               <View style={styles.headerText}>
-                <Text style={styles.headerTitle}>{header.name}</Text>
-                {header.listingTitle ? (
+                <Text style={styles.headerTitle} numberOfLines={1}>{header.title}</Text>
+                {header.participantName ? (
                   <Text style={styles.headerSubtitle} numberOfLines={1}>
-                    {header.listingTitle}
+                    {header.participantName}
                   </Text>
                 ) : null}
               </View>
