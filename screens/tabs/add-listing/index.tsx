@@ -31,7 +31,13 @@ import {
 } from "@/constants/mockData";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
-import { createListing, getListing, updateListing } from "@/services/listings";
+import {
+  createListing,
+  getListing,
+  updateListing,
+  type CreateListingPayload,
+  type UpdateListingPayload,
+} from "@/services/listings";
 import {
   createBoostPayment,
   getBoostOptions,
@@ -433,17 +439,25 @@ export default function AddListingScreen() {
 
     try {
       const selectedPhotos = photos.filter(Boolean) as string[];
-      const uploadedUrls = await Promise.all(
-        selectedPhotos.map(async (uri, index) => {
+      const initialPhotos = initialForm?.photos.filter(Boolean) as string[] | undefined;
+      const photosChanged =
+        !id ||
+        !initialPhotos ||
+        selectedPhotos.length !== initialPhotos.length ||
+        selectedPhotos.some((uri, index) => uri !== initialPhotos[index]);
+      const uploadedUrls = photosChanged
+        ? await Promise.all(
+          selectedPhotos.map(async (uri, index) => {
           if (uri.startsWith("http://") || uri.startsWith("https://")) {
             return uri;
           }
           const name = `listing-${Date.now()}-${index}.jpg`;
           return uploadImageAsync(uri, name, "image/jpeg");
-        }),
-      );
+          }),
+        )
+        : selectedPhotos;
 
-      const payload = {
+      const payload: CreateListingPayload = {
         title: title.trim(),
         description: description.trim(),
         priceAmount: Number(price),
@@ -455,8 +469,24 @@ export default function AddListingScreen() {
         imageUrls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
       };
 
+      const updatePayload: UpdateListingPayload = {};
+      if (id) {
+        const nextTitle = title.trim();
+        const nextDescription = description.trim();
+        const nextPrice = Number(price);
+        const nextLocation = location.trim();
+        if (!initialForm || nextTitle !== initialForm.title) updatePayload.title = nextTitle;
+        if (!initialForm || nextDescription !== initialForm.description) updatePayload.description = nextDescription;
+        if (!initialForm || nextPrice !== Number(initialForm.price)) updatePayload.priceAmount = nextPrice;
+        if (!initialForm || currency !== initialForm.currency) updatePayload.priceCurrency = currency;
+        if (!initialForm || category !== initialForm.category) updatePayload.categoryPath = category;
+        if (!initialForm || condition !== initialForm.condition) updatePayload.condition = conditionMap[condition];
+        if (!initialForm || nextLocation !== initialForm.location) updatePayload.region = nextLocation || undefined;
+        if (photosChanged) updatePayload.imageUrls = uploadedUrls;
+      }
+
       const listing = id
-        ? await updateListing(id, payload)
+        ? await updateListing(id, updatePayload)
         : await createListing(payload);
 
       if (!id && boostAfterPublish && selectedBoostOption) {

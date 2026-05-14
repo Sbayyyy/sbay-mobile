@@ -92,7 +92,9 @@ export async function searchListings(
 }
 
 export async function getListing(id: string): Promise<Listing> {
-  return apiRequest<Listing>(`/api/listings/${id}`);
+  return apiRequest<Listing>(`/api/listings/${id}`, {
+    headers: await authHeader(),
+  });
 }
 
 export async function getMyListings(): Promise<Listing[]> {
