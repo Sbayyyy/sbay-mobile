@@ -18,33 +18,20 @@ import { SectionHeader } from "@/components/common/SectionHeader";
 import { ChipPicker } from "@/components/form/ChipPicker";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { HOME_CATEGORIES } from "@/constants/mockData";
+import {
+  getRegionLabel,
+  SYRIA_REGION_OPTIONS,
+  type SyriaRegionId,
+} from "@/constants/regions";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { searchListings, type Listing as ApiListing } from "@/services/listings";
-
-const SYRIA_DISTRICTS = [
-  "Damascus",
-  "Rif Dimashq",
-  "Aleppo",
-  "Homs",
-  "Hama",
-  "Latakia",
-  "Tartus",
-  "Idlib",
-  "Deir ez-Zor",
-  "Raqqa",
-  "Hasakah",
-  "Daraa",
-  "As-Suwayda",
-  "Quneitra",
-  "Other",
-] as const;
 
 type SortId = "newest" | "price_low" | "price_high";
 type StatusId = "all" | "new" | "used" | "renewed" | "defective";
 type FeaturedFilterId = "all" | "featured";
 type CategoryId = "all" | string;
-type LocationId = "all" | (typeof SYRIA_DISTRICTS)[number];
+type LocationId = "all" | SyriaRegionId;
 
 const statusToCondition: Record<Exclude<StatusId, "all">, string> = {
   new: "New",
@@ -117,9 +104,9 @@ export default function SearchScreen() {
   const locationOptions = useMemo(
     () => [
       { id: "all", label: t("common.actions.all", { defaultValue: "All" }) },
-      ...SYRIA_DISTRICTS.map((district) => ({
-        id: district,
-        label: district,
+      ...SYRIA_REGION_OPTIONS.map((district) => ({
+        id: district.id,
+        label: t(district.labelKey, { defaultValue: district.id }),
       })),
     ],
     [t],
@@ -187,13 +174,13 @@ export default function SearchScreen() {
         title: listing.title,
         price: `${listing.priceCurrency} ${listing.priceAmount}`,
         category: listing.categoryPath ?? "other",
-        location: listing.region ?? listing.seller?.city ?? undefined,
+        location: getRegionLabel(listing.region ?? listing.seller?.city, t),
         image:
           listing.thumbnailUrl ??
           listing.imageUrls?.[0] ??
           "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=60",
       })),
-    [sortedListings],
+    [sortedListings, t],
   );
 
   return (

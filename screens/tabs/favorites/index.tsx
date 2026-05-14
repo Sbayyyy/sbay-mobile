@@ -15,6 +15,7 @@ import { EmptyPlaceholder } from "@/components/common/EmptyPlaceholder";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { FavoriteListingCard } from "@/components/listings/FavoriteListingCard";
 import { FAVORITE_CATEGORIES } from "@/constants/mockData";
+import { getRegionLabel } from "@/constants/regions";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { FavoriteListing, ListingCategory } from "@/types/listing";
@@ -164,7 +165,7 @@ export default function FavoritesScreen() {
       currency: listing.priceCurrency,
       category: listing.categoryPath ?? "other",
       image: listing.thumbnailUrl ?? listing.imageUrls?.[0] ?? "",
-      location: listing.region ?? "Unknown location",
+      location: getRegionLabel(listing.region, t) ?? t("favorites.unknownLocation", { defaultValue: "Unknown location" }),
       condition: listing.condition ?? "Unknown",
       seller: listing.seller?.name ?? "Seller",
       sellerId: listing.seller?.id ?? listing.sellerId ?? null,
