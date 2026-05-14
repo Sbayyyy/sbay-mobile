@@ -21,6 +21,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import ViewShot, { captureRef } from "@/lib/view-shot";
+import { useAuth } from "@/providers/AuthProvider";
 
 import { ScreenMessage } from "@/components/common/ScreenMessage";
 import { SectionHeader } from "@/components/common/SectionHeader";
@@ -71,6 +72,7 @@ export default function MeScreen() {
   const router = useRouter();
   const theme = useAppTheme();
   const { t } = useTranslation();
+  const { status } = useAuth();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -147,6 +149,14 @@ export default function MeScreen() {
 
   const loadProfile = useCallback(() => {
     let isMounted = true;
+    if (status !== "authenticated") {
+      setProfile(null);
+      setProfileError(null);
+      setProfileLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
     setProfileLoading(true);
     getMyProfile()
       .then((data) => {
@@ -171,7 +181,7 @@ export default function MeScreen() {
     return () => {
       isMounted = false;
     };
-  }, [t]);
+  }, [status, t]);
 
   useEffect(() => {
     const cleanup = loadProfile();
@@ -191,6 +201,14 @@ export default function MeScreen() {
 
   const loadListings = useCallback(() => {
     let isMounted = true;
+    if (status !== "authenticated") {
+      setListings([]);
+      setListingsError(null);
+      setListingsLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
     setListingsLoading(true);
     getMyListings()
       .then((data) => {
@@ -215,7 +233,7 @@ export default function MeScreen() {
     return () => {
       isMounted = false;
     };
-  }, [t]);
+  }, [status, t]);
 
   useEffect(() => {
     const cleanup = loadListings();
@@ -319,11 +337,31 @@ export default function MeScreen() {
     };
   }, [isEditing, t]);
 
-  if (profileLoading) {
+  if (status === "loading" || profileLoading) {
     return (
       <AppScreen>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      </AppScreen>
+    );
+  }
+
+  if (status !== "authenticated") {
+    return (
+      <AppScreen>
+        <View style={styles.authContainer}>
+          <Text style={styles.authTitle}>{t("profile.authRequiredTitle")}</Text>
+          <Text style={styles.authSubtitle}>{t("profile.authRequiredSubtitle")}</Text>
+          <TouchableOpacity style={styles.authPrimaryButton} onPress={() => router.push("/sign-in")}>
+            <Text style={styles.authPrimaryLabel}>{t("common.actions.logIn")}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.authSecondaryButton} onPress={() => router.push("/sign-up")}>
+            <Text style={styles.authSecondaryLabel}>{t("common.actions.createAccount")}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.authTextButton} onPress={() => router.push("/")}>
+            <Text style={styles.authTextLabel}>{t("common.actions.continueBrowsing")}</Text>
+          </TouchableOpacity>
         </View>
       </AppScreen>
     );
@@ -1060,6 +1098,59 @@ const createStyles = (theme: ThemeColors) =>
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
+    },
+    authContainer: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+      gap: 14,
+      backgroundColor: theme.background,
+    },
+    authTitle: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: theme.text,
+      textAlign: "center",
+    },
+    authSubtitle: {
+      fontSize: 15,
+      color: theme.textMuted,
+      textAlign: "center",
+      lineHeight: 21,
+      marginBottom: 8,
+    },
+    authPrimaryButton: {
+      borderRadius: 16,
+      backgroundColor: theme.primary,
+      paddingVertical: 15,
+      alignItems: "center",
+    },
+    authPrimaryLabel: {
+      color: theme.primaryForeground,
+      fontSize: 15,
+      fontWeight: "700",
+    },
+    authSecondaryButton: {
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      paddingVertical: 15,
+      alignItems: "center",
+    },
+    authSecondaryLabel: {
+      color: theme.text,
+      fontSize: 15,
+      fontWeight: "700",
+    },
+    authTextButton: {
+      paddingVertical: 8,
+      alignItems: "center",
+    },
+    authTextLabel: {
+      color: theme.textMuted,
+      fontSize: 14,
+      fontWeight: "600",
     },
     toolbar: {
       flexDirection: "row",

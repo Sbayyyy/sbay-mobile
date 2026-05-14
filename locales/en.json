@@ -17,7 +17,8 @@
       "reset": "Reset",
       "apply": "Apply",
       "success": "Success",
-      "save": "Save changes"
+      "save": "Save changes",
+      "continueBrowsing": "Continue browsing"
     },
     "errors": {
       "title": "Something went wrong",
@@ -131,6 +132,8 @@
   "addListing": {
     "title": "Create a listing",
     "subtitle": "Add details so people can find and buy your item.",
+    "authRequiredTitle": "Sign in to create a listing",
+    "authRequiredSubtitle": "Browsing is open to everyone. Sellers need an account before publishing listings.",
     "editTitle": "Edit listing",
     "save": "Save changes",
     "validation": {
@@ -199,6 +202,8 @@
     "title": "My Profile",
     "welcomeBack": "Welcome back",
     "authSubtitle": "Log in or create an account to manage your listings.",
+    "authRequiredTitle": "Sign in to continue",
+    "authRequiredSubtitle": "You can browse SBay freely. Sign in or create an account to manage listings, favorites, chats, and your profile.",
     "myListings": "My listings",
     "emptyListingsSubtitle": "Start by posting your first item for sale.",
     "cityUnknown": "Unknown city",
