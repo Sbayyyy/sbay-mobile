@@ -35,6 +35,11 @@
       "noChats": "لا توجد محادثات"
     }
   },
+  "popup": {
+    "errorTitle": "حدث خطأ",
+    "successTitle": "تم",
+    "dismiss": "حسناً"
+  },
   "categories": {
     "all": "الكل",
     "allCategories": "جميع الفئات",

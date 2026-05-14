@@ -37,6 +37,11 @@
       "noChats": "No chats found"
     }
   },
+  "popup": {
+    "errorTitle": "Something went wrong",
+    "successTitle": "Done",
+    "dismiss": "OK"
+  },
   "categories": {
     "all": "All",
     "allCategories": "All categories",

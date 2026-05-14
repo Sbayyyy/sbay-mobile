@@ -52,6 +52,7 @@ import {
 import { uploadImageAsync } from "@/services/uploads";
 import { type TextValidator } from "@/validation";
 import { useAuth } from "@/providers/AuthProvider";
+import { useAppPopup } from "@/providers/AppPopupProvider";
 
 const currencyOptions = Array.from(CURRENCY_OPTIONS).map((item) => ({
   id: item,
@@ -102,6 +103,7 @@ export default function AddListingScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { status } = useAuth();
+  const { showError, showSuccess } = useAppPopup();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const resetCreateForm = useCallback(() => {
@@ -289,13 +291,13 @@ export default function AddListingScreen() {
         })
         .catch((error) => {
           if (!isMounted) return;
-          Alert.alert(
-            t("common.errors.title", { defaultValue: "Something went wrong" }),
+          showError(
             error instanceof Error
               ? error.message
               : t("addListing.error", {
                   defaultValue: "Unable to load listing.",
                 }),
+            t("common.errors.title", { defaultValue: "Something went wrong" }),
           );
         })
         .finally(() => {
@@ -483,25 +485,24 @@ export default function AddListingScreen() {
         const transaction = await createBoostPayment(listing.id, selectedBoostOption.id, `/listings/${listing.id}`);
         if (transaction.checkoutUrl) {
           await Linking.openURL(transaction.checkoutUrl);
-          Alert.alert(
-            t("common.actions.success", { defaultValue: "Success" }),
+          showSuccess(
             t("addListing.successWithBoostCheckout", {
               defaultValue:
                 "Your listing is published. Complete payment to activate the boost.",
             }),
+            t("common.actions.success", { defaultValue: "Success" }),
           );
         } else {
-          Alert.alert(
-            t("common.actions.success", { defaultValue: "Success" }),
+          showSuccess(
             t("addListing.successWithBoostPending", {
               defaultValue:
                 "Your listing is published. The boost will activate after payment is confirmed.",
             }),
+            t("common.actions.success", { defaultValue: "Success" }),
           );
         }
       } else {
-        Alert.alert(
-          t("common.actions.success", { defaultValue: "Success" }),
+        showSuccess(
           id
             ? t("addListing.updated", {
                 defaultValue: "Your listing has been updated.",
@@ -509,16 +510,19 @@ export default function AddListingScreen() {
             : t("addListing.success", {
                 defaultValue: "Your listing has been published.",
               }),
+          t("common.actions.success", { defaultValue: "Success" }),
         );
       }
       router.replace(`/listings/${listing.id}`);
     } catch (error) {
       console.error("Error creating listing:", error);
-      Alert.alert(
+      showError(
+        error instanceof Error
+          ? error.message
+          : t("addListing.error", {
+              defaultValue: "Unable to publish listing. Please try again.",
+            }),
         t("common.errors.title", { defaultValue: "Something went wrong" }),
-        t("addListing.error", {
-          defaultValue: "Unable to publish listing. Please try again.",
-        }),
       );
     } finally {
       setIsSubmitting(false);
