@@ -41,6 +41,7 @@ import {
 import { WEB_BASE_URL } from "@/services/config";
 import { getMyProfile, updateMyProfile, type UserProfile } from "@/services/user";
 import { uploadImageAsync } from "@/services/uploads";
+import { resolveMediaUrl } from "@/services/media";
 import { isEmailVerified } from "@/services/email-verification";
 
 const tabs = ["overview", "listings"] as const;
@@ -649,7 +650,7 @@ export default function MeScreen() {
             <View style={styles.avatar}>
               {formData.avatar ? (
                 <Image
-                  source={{ uri: formData.avatar }}
+                  source={{ uri: resolveMediaUrl(formData.avatar) ?? formData.avatar }}
                   style={styles.avatarImage}
                 />
               ) : (

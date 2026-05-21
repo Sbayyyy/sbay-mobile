@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -8,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { type Href, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
@@ -20,6 +21,7 @@ import {
   type AppNotification,
 } from "@/services/notifications";
 import { useNotificationContext } from "@/providers/NotificationProvider";
+import { normalizeNotificationHref } from "@/services/notification-links";
 
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -30,6 +32,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const { refreshUnreadCount } = useNotificationContext();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const hasUnread = notifications.some((item) => !item.read);
 
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -58,15 +61,46 @@ export default function NotificationsScreen() {
     try {
       const data = await getNotifications();
       setNotifications(data);
-      if (data.some((item) => !item.read)) {
-        await markNotificationsRead();
-        await refreshUnreadCount();
-      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [refreshUnreadCount]);
+  }, []);
+
+  const handleMarkAllRead = useCallback(async () => {
+    if (!hasUnread) return;
+    const previous = notifications;
+    setNotifications((current) => current.map((item) => ({ ...item, read: true })));
+    try {
+      await markNotificationsRead();
+      await refreshUnreadCount();
+    } catch (error) {
+      setNotifications(previous);
+      Alert.alert(
+        t("notifications.markReadErrorTitle", { defaultValue: "Could not mark read" }),
+        error instanceof Error
+          ? error.message
+          : t("notifications.markReadErrorBody", { defaultValue: "Please try again." }),
+      );
+    }
+  }, [hasUnread, notifications, refreshUnreadCount, t]);
+
+  const openNotification = useCallback(
+    (item: AppNotification) => {
+      const href = normalizeNotificationHref(item.href);
+      if (!href) {
+        Alert.alert(
+          t("notifications.linkUnavailableTitle", { defaultValue: "Link unavailable" }),
+          t("notifications.linkUnavailableBody", {
+            defaultValue: "This notification does not point to a mobile screen yet.",
+          }),
+        );
+        return;
+      }
+      router.push(href);
+    },
+    [router, t],
+  );
 
   useEffect(() => {
     void loadNotifications("initial");
@@ -75,7 +109,16 @@ export default function NotificationsScreen() {
   return (
     <AppScreen>
       <View style={styles.container}>
-        <Text style={styles.title}>{t("notifications.title")}</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t("notifications.title")}</Text>
+          {hasUnread ? (
+            <TouchableOpacity style={styles.markReadButton} onPress={handleMarkAllRead}>
+              <Text style={styles.markReadLabel}>
+                {t("notifications.markAllRead", { defaultValue: "Mark read" })}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
 
         {loading ? (
           <View style={styles.loading}>
@@ -109,14 +152,11 @@ export default function NotificationsScreen() {
             {notifications.map((item) => (
               <TouchableOpacity
                 key={item.id}
-                style={styles.card}
-                onPress={() => {
-                  if (item.href) {
-                    router.push(item.href as Href);
-                  }
-                }}
+                style={[styles.card, !item.read && styles.unreadCard]}
+                onPress={() => openNotification(item)}
                 activeOpacity={0.85}
               >
+                {!item.read ? <View style={styles.unreadDot} /> : null}
                 <View style={styles.cardBody}>
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardMessage}>{item.body}</Text>
@@ -142,6 +182,23 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 22,
       fontWeight: "700",
       color: theme.text,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    markReadButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 12,
+      backgroundColor: theme.primaryMuted,
+    },
+    markReadLabel: {
+      color: theme.primary,
+      fontSize: 13,
+      fontWeight: "700",
     },
     loading: {
       flex: 1,
@@ -174,11 +231,26 @@ const createStyles = (theme: ThemeColors) =>
       backgroundColor: theme.surface,
       borderRadius: 16,
       padding: 14,
+      borderWidth: 1,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
       shadowOpacity: 0.08,
       shadowRadius: 10,
       shadowOffset: { width: 0, height: 4 },
       elevation: 2,
+    },
+    unreadCard: {
+      borderColor: theme.primary,
+      backgroundColor: theme.primaryMuted,
+    },
+    unreadDot: {
+      position: "absolute",
+      top: 14,
+      right: 14,
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      backgroundColor: theme.primary,
     },
     cardBody: {
       gap: 6,

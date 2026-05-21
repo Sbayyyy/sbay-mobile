@@ -1,6 +1,6 @@
 import { apiRequest } from "@/services/api";
 import { getStoredToken } from "@/services/auth";
-import { type Listing } from "@/services/listings";
+import { normalizeListingMedia, type Listing } from "@/services/listings";
 
 async function authHeader(): Promise<Record<string, string>> {
   const token = await getStoredToken();
@@ -9,9 +9,10 @@ async function authHeader(): Promise<Record<string, string>> {
 }
 
 export async function getFavorites(): Promise<Listing[]> {
-  return apiRequest<Listing[]>("/api/favorites", {
+  const listings = await apiRequest<Listing[]>("/api/favorites", {
     headers: await authHeader(),
   });
+  return listings.map(normalizeListingMedia);
 }
 
 export async function addFavorite(listingId: string): Promise<void> {

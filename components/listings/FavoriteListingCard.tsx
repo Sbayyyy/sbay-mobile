@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { FavoriteListing } from "@/types/listing";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { resolveMediaUrl } from "@/services/media";
 
 type FavoriteListingCardProps = {
   listing: FavoriteListing;
@@ -43,7 +44,7 @@ export function FavoriteListingCard({
 
   return (
     <Card style={styles.card} mode="elevated" onPress={() => onPress?.(listing)}>
-      <Card.Cover source={{ uri: listing.image }} style={styles.cardImage} />
+      <Card.Cover source={{ uri: resolveMediaUrl(listing.image) ?? listing.image }} style={styles.cardImage} />
       <Card.Content style={styles.cardBody}>
         <View style={styles.cardHeader}>
           <PaperText style={styles.cardTitle}>{listing.title}</PaperText>

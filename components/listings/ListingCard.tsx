@@ -12,6 +12,7 @@ import { Listing } from "@/types/listing";
 
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { resolveMediaUrl } from "@/services/media";
 
 type ListingCardProps = {
   listing: Listing;
@@ -29,7 +30,7 @@ export function ListingCard({ listing, onPress, style }: ListingCardProps) {
       activeOpacity={0.9}
       onPress={() => onPress?.(listing)}
     >
-      <Image source={{ uri: listing.image }} style={styles.image} />
+      <Image source={{ uri: resolveMediaUrl(listing.image) ?? listing.image }} style={styles.image} />
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={2}>
           {listing.title}

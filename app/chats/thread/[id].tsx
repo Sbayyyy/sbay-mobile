@@ -14,6 +14,7 @@ import {
   View,
   Image,
   Pressable,
+  Modal,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -24,7 +25,7 @@ import { AppScreen } from "@/components/layout/AppScreen";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { getListing } from "@/services/listings";
+import { getListing, type Listing } from "@/services/listings";
 import {
   createChatConnection,
   onMessageNew,
@@ -34,7 +35,22 @@ import {
   type RealtimeMessage,
   type RealtimeRead,
 } from "@/services/chat-realtime";
-import { getChats, getMessages, markAsRead, sendMessage, updateMessage, deleteMessage } from "@/services/messages";
+import {
+  acceptOffer,
+  counterOffer,
+  getChats,
+  getMessages,
+  markAsRead,
+  rejectOffer,
+  sendMessage,
+  sendOffer,
+  updateMessage,
+  deleteMessage,
+  type Chat,
+  type Message,
+  type OfferMessageData,
+  type OfferStatus,
+} from "@/services/messages";
 import { getMyProfile, getSellerProfile } from "@/services/user";
 import {
   isEmailVerified,
@@ -50,6 +66,11 @@ type ChatHeader = {
   participantName?: string;
   avatar?: string | null;
   listingId?: string | null;
+};
+
+type OfferModalState = {
+  mode: "new" | "counter";
+  messageId?: string;
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -75,6 +96,25 @@ const parseReplyContent = (content: string) => {
   const match = content.match(/^\[\[reply:([^\]]+)\]\]\n?/);
   if (!match) return { replyId: null, body: content };
   return { replyId: match[1], body: content.slice(match[0].length) };
+};
+
+const parseOfferData = (message: Message, fallbackCurrency?: string): OfferMessageData | null => {
+  if (message.type !== "offer" || !message.dataJson) return null;
+
+  try {
+    const raw = JSON.parse(message.dataJson) as Record<string, unknown>;
+    return {
+      offerId: String(raw.offerId ?? raw.OfferId ?? ""),
+      listingId: String(raw.listingId ?? raw.ListingId ?? message.listingId ?? ""),
+      amount: Number(raw.amount ?? raw.Amount ?? 0),
+      currency: String(raw.currency ?? raw.Currency ?? fallbackCurrency ?? "SYP"),
+      status: String(raw.status ?? raw.Status ?? "pending") as OfferStatus,
+      parentOfferId: (raw.parentOfferId ?? raw.ParentOfferId ?? null) as string | null,
+      expiresAt: (raw.expiresAt ?? raw.ExpiresAt ?? null) as string | null,
+    };
+  } catch {
+    return null;
+  }
 };
 
 function useKeyboardHeight() {
@@ -112,17 +152,18 @@ export default function ChatThreadScreen() {
   const [header, setHeader] = useState<ChatHeader | null>(null);
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [myProfile, setMyProfile] = useState<EmailVerificationStatus | null>(null);
-  const [messages, setMessages] = useState<Array<Awaited<ReturnType<typeof getMessages>>[number]>>(
-    [],
-  );
+  const [chat, setChat] = useState<Chat | null>(null);
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [offerAmount, setOfferAmount] = useState("");
+  const [offerModal, setOfferModal] = useState<OfferModalState | null>(null);
+  const [offerBusyId, setOfferBusyId] = useState<string | null>(null);
   const [inputError, setInputError] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
-  const [replyTo, setReplyTo] = useState<Awaited<ReturnType<typeof getMessages>>[number] | null>(null);
-  const [selectedMessage, setSelectedMessage] = useState<
-    Awaited<ReturnType<typeof getMessages>>[number] | null
-  >(null);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportTargetId, setReportTargetId] = useState<string | null>(null);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -165,6 +206,7 @@ export default function ChatThreadScreen() {
         const chat = chats.find((c) => c.id === id);
         if (!chat) throw new Error(t("chats.thread.chatNotFound"));
 
+        setChat(chat);
         setChatId(chat.id);
 
         const otherUserId = chat.buyerId === profile.id ? chat.sellerId : chat.buyerId;
@@ -184,6 +226,7 @@ export default function ChatThreadScreen() {
           avatar: listing?.thumbnailUrl ?? listing?.imageUrls?.[0] ?? null,
           listingId: chat.listingId ?? null,
         });
+        setListing(listing);
 
         const ordered = [...history].sort(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
@@ -328,11 +371,169 @@ export default function ChatThreadScreen() {
     };
   }, [chatId, myUserId]);
 
+  const upsertMessage = (updated: Message) => {
+    setMessages((prev) => {
+      const exists = prev.some((msg) => msg.id === updated.id);
+      const next = exists
+        ? prev.map((msg) => (msg.id === updated.id ? updated : msg))
+        : [...prev, updated];
+      next.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      return next;
+    });
+  };
+
+  const refreshListing = async () => {
+    if (!chat?.listingId) return;
+    try {
+      const nextListing = await getListing(chat.listingId);
+      setListing(nextListing);
+      setHeader((current) =>
+        current
+          ? {
+              ...current,
+              title: nextListing.title ?? current.title,
+              avatar: nextListing.thumbnailUrl ?? nextListing.imageUrls?.[0] ?? current.avatar,
+            }
+          : current,
+      );
+    } catch {
+      // Keep the current listing snapshot if refresh fails.
+    }
+  };
+
+  const refreshMessages = async () => {
+    if (!chatId) return;
+    try {
+      const latest = await getMessages(chatId, 50);
+      const ordered = [...latest].sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+      setMessages(ordered);
+    } catch {
+      // Realtime/optimistic state remains usable if this refresh fails.
+    }
+  };
+
+  const isListingAvailable =
+    !listing || ((listing.status ?? "active") === "active" && listing.stock > 0);
+  const canMakeOffer = Boolean(
+    chat?.listingId &&
+      listing &&
+      myUserId &&
+      myProfile &&
+      chat.buyerId === myUserId &&
+      isEmailVerified(myProfile) &&
+      isListingAvailable,
+  );
+
+  const openOfferModal = (state: OfferModalState) => {
+    if (!myProfile || !isEmailVerified(myProfile)) {
+      showEmailVerificationRequiredAlert();
+      return;
+    }
+    setOfferAmount("");
+    setInputError(null);
+    setOfferModal(state);
+  };
+
+  const closeOfferModal = () => {
+    setOfferModal(null);
+    setOfferAmount("");
+    setInputError(null);
+  };
+
+  const submitOfferModal = async () => {
+    if (!chatId || !offerModal || offerBusyId) return;
+    const amount = Number(offerAmount.replace(/,/g, "."));
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setInputError("Enter a valid offer amount.");
+      return;
+    }
+
+    setInputError(null);
+    const currency = listing?.priceCurrency ?? "SYP";
+    const busyId = offerModal.mode === "new" ? "new" : offerModal.messageId ?? "counter";
+
+    try {
+      setOfferBusyId(busyId);
+      const updated =
+        offerModal.mode === "new"
+          ? await sendOffer(chatId, { amount, currency })
+          : await counterOffer(chatId, offerModal.messageId as string, { amount, currency });
+      upsertMessage(updated);
+      if (offerModal.mode === "counter") {
+        void refreshMessages();
+      }
+      closeOfferModal();
+      scrollToBottom(true, 50);
+    } catch (error) {
+      if (isUnverifiedEmailError(error)) {
+        closeOfferModal();
+        showEmailVerificationRequiredAlert();
+        return;
+      }
+      setInputError(error instanceof Error ? error.message : "Unable to send offer.");
+    } finally {
+      setOfferBusyId(null);
+    }
+  };
+
+  const handleOfferAction = async (
+    message: Message,
+    action: "accept" | "reject" | "counter",
+  ) => {
+    if (!chatId || offerBusyId) return;
+    if (!myProfile || !isEmailVerified(myProfile)) {
+      showEmailVerificationRequiredAlert();
+      return;
+    }
+
+    if (action === "counter") {
+      openOfferModal({ mode: "counter", messageId: message.id });
+      return;
+    }
+
+    try {
+      setOfferBusyId(message.id);
+      const updated =
+        action === "accept"
+          ? await acceptOffer(chatId, message.id)
+          : await rejectOffer(chatId, message.id);
+      upsertMessage(updated);
+      if (action === "accept") {
+        setListing((current) =>
+          current ? { ...current, status: "sold", stock: 0 } : current,
+        );
+        void refreshListing();
+        void refreshMessages();
+      }
+    } catch (error) {
+      if (isUnverifiedEmailError(error)) {
+        showEmailVerificationRequiredAlert();
+        return;
+      }
+      Alert.alert(
+        "Offer unavailable",
+        error instanceof Error ? error.message : "Unable to update this offer.",
+      );
+    } finally {
+      setOfferBusyId(null);
+    }
+  };
+
   const handleSend = async () => {
     if (!chatId || !input.trim() || sending) return;
 
     if (myProfile && !isEmailVerified(myProfile)) {
       showEmailVerificationRequiredAlert();
+      return;
+    }
+
+    if (chat?.listingId && !isListingAvailable) {
+      Alert.alert(
+        "Listing unavailable",
+        "This listing is no longer active, so offers and messages are disabled.",
+      );
       return;
     }
 
@@ -375,6 +576,8 @@ export default function ChatThreadScreen() {
       receiverId: "",
       listingId: null,
       content: text,
+      type: "text",
+      dataJson: null,
       createdAt: new Date().toISOString(),
       isRead: false,
     };
@@ -396,7 +599,7 @@ export default function ChatThreadScreen() {
       scrollToBottom(true, 50);
     } catch (error) {
       setMessages((prev) => prev.filter((m: any) => m.id !== optimisticId));
-      if ((!myProfile || !isEmailVerified(myProfile)) && isUnverifiedEmailError(error)) {
+      if (isUnverifiedEmailError(error)) {
         showEmailVerificationRequiredAlert();
         return;
       }
@@ -412,7 +615,8 @@ export default function ChatThreadScreen() {
     scrollToBottom(true, 160);
   };
 
-  const canModify = (message: Awaited<ReturnType<typeof getMessages>>[number]) => {
+  const canModify = (message: Message) => {
+    if (message.type && message.type !== "text") return false;
     if (!myUserId || message.senderId !== myUserId) return false;
     return Date.now() - new Date(message.createdAt).getTime() <= 15 * 60 * 1000;
   };
@@ -463,7 +667,7 @@ export default function ChatThreadScreen() {
   };
 
   const handleReportMessage = (
-    message: Awaited<ReturnType<typeof getMessages>>[number],
+    message: Message,
   ) => {
     if (!myUserId || message.senderId === myUserId) return;
     setReportTargetId(message.id);
@@ -712,6 +916,70 @@ export default function ChatThreadScreen() {
                   ]}
                 >
                   {(() => {
+                    const offer = parseOfferData(message, listing?.priceCurrency);
+                    if (offer) {
+                      const canRespond =
+                        offer.status === "pending" && message.receiverId === myUserId;
+                      const canAcceptReject = canRespond && myUserId === chat?.sellerId;
+                      const canCounter = canRespond;
+                      const statusLabel = offer.status.charAt(0).toUpperCase() + offer.status.slice(1);
+                      return (
+                        <View style={styles.offerCard}>
+                          <View style={styles.offerHeader}>
+                            <Text style={styles.offerTitle}>
+                              {offer.parentOfferId ? "Counter offer" : "Offer"}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.offerStatus,
+                                offer.status === "accepted" && styles.offerStatusAccepted,
+                                offer.status === "rejected" && styles.offerStatusRejected,
+                                offer.status === "countered" && styles.offerStatusCountered,
+                              ]}
+                            >
+                              {statusLabel}
+                            </Text>
+                          </View>
+                          <Text style={styles.offerAmount}>
+                            {offer.amount.toLocaleString()} {offer.currency}
+                          </Text>
+                          {canRespond ? (
+                            <View style={styles.offerActions}>
+                              {canAcceptReject ? (
+                                <>
+                                  <TouchableOpacity
+                                    style={[styles.offerActionButton, styles.offerAcceptButton]}
+                                    disabled={offerBusyId === message.id}
+                                    onPress={() => handleOfferAction(message, "accept")}
+                                  >
+                                    <Text style={styles.offerPrimaryActionLabel}>
+                                      {offerBusyId === message.id ? "..." : "Accept"}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={styles.offerActionButton}
+                                    disabled={offerBusyId === message.id}
+                                    onPress={() => handleOfferAction(message, "reject")}
+                                  >
+                                    <Text style={styles.offerSecondaryActionLabel}>Reject</Text>
+                                  </TouchableOpacity>
+                                </>
+                              ) : null}
+                              {canCounter ? (
+                                <TouchableOpacity
+                                  style={[styles.offerActionButton, styles.offerCounterButton]}
+                                  disabled={offerBusyId === message.id}
+                                  onPress={() => handleOfferAction(message, "counter")}
+                                >
+                                  <Text style={styles.offerPrimaryActionLabel}>Counter</Text>
+                                </TouchableOpacity>
+                              ) : null}
+                            </View>
+                          ) : null}
+                        </View>
+                      );
+                    }
+
                     const parsed = parseReplyContent(message.content);
                     const replyTarget = parsed.replyId
                       ? messages.find((m) => m.id === parsed.replyId) ?? null
@@ -797,6 +1065,13 @@ export default function ChatThreadScreen() {
           keyboardVerticalOffset={0}
         >
           <View style={[styles.inputRow, { paddingBottom: 12 + insets.bottom }]}>
+            {chat?.listingId && !isListingAvailable ? (
+              <View style={styles.actionBanner}>
+                <Text style={styles.actionBannerText}>
+                  This listing is no longer active.
+                </Text>
+              </View>
+            ) : null}
             {(editingMessageId || replyTo) ? (
               <View style={styles.actionBanner}>
                 <Text style={styles.actionBannerText}>
@@ -817,6 +1092,18 @@ export default function ChatThreadScreen() {
                 </TouchableOpacity>
               </View>
             ) : null}
+            {canMakeOffer ? (
+              <TouchableOpacity
+                style={styles.offerComposerButton}
+                onPress={() => openOfferModal({ mode: "new" })}
+                disabled={offerBusyId === "new"}
+              >
+                <Ionicons name="pricetag-outline" size={16} color={theme.primary} />
+                <Text style={styles.offerComposerLabel}>
+                  {offerBusyId === "new" ? "Sending..." : "Offer"}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
             <TextInput
               style={[styles.input, inputError && styles.inputError]}
               placeholder="Write a message..."
@@ -825,6 +1112,7 @@ export default function ChatThreadScreen() {
               placeholderTextColor={theme.textMuted}
               multiline
               onFocus={handleInputFocus}
+              editable={isListingAvailable && !offerModal}
             />
             {inputError ? (
               <Text style={styles.inputErrorText}>{inputError}</Text>
@@ -832,10 +1120,11 @@ export default function ChatThreadScreen() {
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                (sending || !input.trim() || !!inputError) && styles.sendButtonDisabled,
+                (sending || !input.trim() || !!inputError || !isListingAvailable) &&
+                  styles.sendButtonDisabled,
               ]}
               onPress={handleSend}
-              disabled={sending || !input.trim() || !!inputError}
+              disabled={sending || !input.trim() || !!inputError || !isListingAvailable}
             >
               {sending ? (
                 <ActivityIndicator color="#fff" />
@@ -847,6 +1136,49 @@ export default function ChatThreadScreen() {
 
           {androidKeyboardSpacer > 0 ? <View style={{ height: androidKeyboardSpacer }} /> : null}
         </KeyboardAvoidingView>
+        <Modal
+          visible={offerModal !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={closeOfferModal}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.offerModalCard}>
+              <Text style={styles.offerModalTitle}>
+                {offerModal?.mode === "counter" ? "Counter offer" : "Make an offer"}
+              </Text>
+              <Text style={styles.offerModalSubtitle}>
+                {listing?.priceCurrency ?? "SYP"} {listing?.priceAmount ?? ""}
+              </Text>
+              <TextInput
+                style={styles.offerAmountInput}
+                value={offerAmount}
+                onChangeText={setOfferAmount}
+                placeholder="Offer amount"
+                keyboardType="decimal-pad"
+                placeholderTextColor={theme.textMuted}
+                autoFocus
+              />
+              {inputError ? <Text style={styles.inputErrorText}>{inputError}</Text> : null}
+              <View style={styles.offerModalActions}>
+                <TouchableOpacity style={styles.offerModalCancel} onPress={closeOfferModal}>
+                  <Text style={styles.offerSecondaryActionLabel}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.offerModalSubmit, !!offerBusyId && styles.sendButtonDisabled]}
+                  onPress={submitOfferModal}
+                  disabled={!!offerBusyId}
+                >
+                  {offerBusyId ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={styles.offerPrimaryActionLabel}>Send</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
         {reportTargetId ? (
           <ReportModal
             visible={reportOpen}
@@ -973,6 +1305,82 @@ const createStyles = (theme: ThemeColors) =>
     replyTextOther: {
       color: theme.textMuted,
     },
+    offerCard: {
+      minWidth: 210,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      padding: 12,
+      gap: 8,
+    },
+    offerHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 10,
+    },
+    offerTitle: {
+      fontSize: 12,
+      fontWeight: "800",
+      color: theme.primary,
+      textTransform: "uppercase",
+    },
+    offerStatus: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: theme.textMuted,
+      backgroundColor: theme.surfaceMuted,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 999,
+    },
+    offerStatusAccepted: {
+      color: theme.success,
+    },
+    offerStatusRejected: {
+      color: theme.danger,
+    },
+    offerStatusCountered: {
+      color: theme.primary,
+    },
+    offerAmount: {
+      fontSize: 22,
+      fontWeight: "800",
+      color: theme.text,
+    },
+    offerActions: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+      marginTop: 2,
+    },
+    offerActionButton: {
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceMuted,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+    },
+    offerAcceptButton: {
+      backgroundColor: theme.success,
+      borderColor: theme.success,
+    },
+    offerCounterButton: {
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
+    },
+    offerPrimaryActionLabel: {
+      color: "#fff",
+      fontSize: 12,
+      fontWeight: "800",
+    },
+    offerSecondaryActionLabel: {
+      color: theme.text,
+      fontSize: 12,
+      fontWeight: "700",
+    },
 
     messageTimeOther: {
       fontSize: 11,
@@ -1055,6 +1463,23 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.textMuted,
       paddingHorizontal: 6,
     },
+    offerComposerButton: {
+      height: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceMuted,
+      paddingHorizontal: 12,
+      marginBottom: 2,
+    },
+    offerComposerLabel: {
+      color: theme.primary,
+      fontSize: 13,
+      fontWeight: "800",
+    },
     sendButton: {
       width: 44,
       height: 44,
@@ -1065,6 +1490,63 @@ const createStyles = (theme: ThemeColors) =>
       marginBottom: 2,
     },
     sendButtonDisabled: { opacity: 0.6 },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.45)",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 20,
+    },
+    offerModalCard: {
+      width: "100%",
+      maxWidth: 360,
+      borderRadius: 18,
+      backgroundColor: theme.surface,
+      padding: 18,
+      gap: 12,
+    },
+    offerModalTitle: {
+      fontSize: 18,
+      fontWeight: "800",
+      color: theme.text,
+    },
+    offerModalSubtitle: {
+      fontSize: 13,
+      color: theme.textMuted,
+    },
+    offerAmountInput: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 14,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      color: theme.text,
+      fontSize: 18,
+      fontWeight: "700",
+      backgroundColor: theme.surfaceMuted,
+    },
+    offerModalActions: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      gap: 10,
+    },
+    offerModalCancel: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceMuted,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+    },
+    offerModalSubmit: {
+      minWidth: 92,
+      borderRadius: 12,
+      backgroundColor: theme.primary,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+    },
 
     emptyState: {
       flex: 1,

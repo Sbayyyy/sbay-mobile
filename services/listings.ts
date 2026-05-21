@@ -1,5 +1,6 @@
 import { apiRequest } from "@/services/api";
 import { getStoredToken } from "@/services/auth";
+import { resolveMediaUrl } from "@/services/media";
 
 export type ListingImage = {
   url: string;
@@ -25,9 +26,11 @@ export type Listing = {
   priceCurrency: string;
   stock: number;
   condition: string;
+  status?: "active" | "sold" | "inactive" | "hidden" | "deleted" | string | null;
   categoryPath?: string | null;
   region?: string | null;
   createdAt: string;
+  soldUntil?: string | null;
   title: string;
   description: string;
   thumbnailUrl?: string | null;
@@ -70,6 +73,25 @@ async function authHeader(): Promise<Record<string, string>> {
   return { Authorization: `Bearer ${token}` };
 }
 
+export function normalizeListingMedia(listing: Listing): Listing {
+  const imageUrls = listing.imageUrls?.map((url) => resolveMediaUrl(url) ?? url) ?? [];
+  return {
+    ...listing,
+    thumbnailUrl: resolveMediaUrl(listing.thumbnailUrl),
+    images: listing.images?.map((image) => ({
+      ...image,
+      url: resolveMediaUrl(image.url) ?? image.url,
+    })) ?? [],
+    imageUrls,
+    seller: listing.seller
+      ? {
+          ...listing.seller,
+          avatar: resolveMediaUrl(listing.seller.avatar),
+        }
+      : listing.seller,
+  };
+}
+
 function buildQuery(params: ListingQuery): string {
   const query = new URLSearchParams();
   if (params.text) query.append("text", params.text);
@@ -88,23 +110,27 @@ function buildQuery(params: ListingQuery): string {
 export async function searchListings(
   params: ListingQuery = {},
 ): Promise<Listing[]> {
-  return apiRequest<Listing[]>(`/api/listings${buildQuery(params)}`);
+  const listings = await apiRequest<Listing[]>(`/api/listings${buildQuery(params)}`);
+  return listings.map(normalizeListingMedia);
 }
 
 export async function getListing(id: string): Promise<Listing> {
-  return apiRequest<Listing>(`/api/listings/${id}`, {
+  const listing = await apiRequest<Listing>(`/api/listings/${id}`, {
     headers: await authHeader(),
   });
+  return normalizeListingMedia(listing);
 }
 
 export async function getMyListings(): Promise<Listing[]> {
-  return apiRequest<Listing[]>("/api/listings/me", {
+  const listings = await apiRequest<Listing[]>("/api/listings/me", {
     headers: await authHeader(),
   });
+  return listings.map(normalizeListingMedia);
 }
 
 export async function getSellerListings(sellerId: string): Promise<Listing[]> {
-  return apiRequest<Listing[]>(`/api/listings/seller/${sellerId}`);
+  const listings = await apiRequest<Listing[]>(`/api/listings/seller/${sellerId}`);
+  return listings.map(normalizeListingMedia);
 }
 
 export async function createListing(

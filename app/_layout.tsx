@@ -1,5 +1,5 @@
 import { DarkTheme as NavigationDarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { type Href, Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useMemo } from "react";
@@ -17,6 +17,7 @@ import { ThemeProvider as AppThemeProvider, useThemeContext } from "@/providers/
 import { NotificationProvider } from "@/providers/NotificationProvider";
 import { AppPopupProvider } from "@/providers/AppPopupProvider";
 import { type PushNotificationData } from "@/types/notifications";
+import { getNotificationTarget } from "@/services/notification-links";
 
 const ignoredPromiseErrors = [
   "Unable to activate keep awake",
@@ -39,16 +40,6 @@ rejectionTracking.enable({
 });
 
 LogBox.ignoreLogs(ignoredPromiseErrors);
-
-function getNotificationHref(data?: PushNotificationData | null): Href | null {
-  if (data?.chatId) {
-    return `/chats/thread/${data.chatId}` as Href;
-  }
-  if (data?.href) {
-    return data.href as Href;
-  }
-  return null;
-}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -127,7 +118,7 @@ function RootLayoutContent() {
 
   const openNotificationTarget = useCallback(
     (data?: PushNotificationData | null) => {
-      const href = getNotificationHref(data);
+      const href = getNotificationTarget(data);
       if (href) {
         router.replace(href);
       }
