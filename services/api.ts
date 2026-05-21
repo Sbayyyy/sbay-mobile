@@ -16,6 +16,18 @@ type ApiErrorPayload = {
   message?: string;
 };
 
+export class ApiError extends Error {
+  status: number;
+  payload?: ApiErrorPayload;
+
+  constructor(message: string, status: number, payload?: ApiErrorPayload) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.payload = payload;
+  }
+}
+
 type ApiRequestInit = RequestInit & {
   skipAuthRefresh?: boolean;
 };
@@ -53,23 +65,36 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
+    let payload: ApiErrorPayload | undefined;
     try {
-      const data = (await response.json()) as ApiErrorPayload;
-      if (data?.message) message = data.message;
-    } catch {
-      try {
-        const text = await response.text();
-        if (text) message = text;
-      } catch {
-        // ignore parse errors
+      const text = await response.text();
+      if (text) {
+        try {
+          const data = JSON.parse(text) as ApiErrorPayload;
+          payload = data;
+          if (data?.message) {
+            message = data.message;
+          } else {
+            message = text;
+          }
+        } catch {
+          message = text;
+        }
       }
+    } catch {
+      // ignore parse errors
     }
-    throw new Error(message);
+    throw new ApiError(message, response.status, payload);
   }
 
   if (response.status === 204) {
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  const text = await response.text();
+  if (!text) {
+    return undefined as T;
+  }
+
+  return JSON.parse(text) as T;
 }

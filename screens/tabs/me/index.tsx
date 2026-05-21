@@ -26,6 +26,7 @@ import { useAuth } from "@/providers/AuthProvider";
 
 import { ScreenMessage } from "@/components/common/ScreenMessage";
 import { SectionHeader } from "@/components/common/SectionHeader";
+import { EmailVerificationBanner } from "@/components/auth/EmailVerificationBanner";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { getRegionLabel } from "@/constants/regions";
@@ -40,6 +41,7 @@ import {
 import { WEB_BASE_URL } from "@/services/config";
 import { getMyProfile, updateMyProfile, type UserProfile } from "@/services/user";
 import { uploadImageAsync } from "@/services/uploads";
+import { isEmailVerified } from "@/services/email-verification";
 
 const tabs = ["overview", "listings"] as const;
 
@@ -637,6 +639,10 @@ export default function MeScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {!isEmailVerified(profile) ? (
+          <EmailVerificationBanner onSent={handleRefresh} />
+        ) : null}
 
         <View style={styles.profileCard}>
           <View style={styles.avatarBlock}>

@@ -7,6 +7,13 @@ import { API_BASE_URL } from "@/services/api";
 export type AuthUser = {
   id: string;
   email: string;
+  verified?: boolean | null;
+  emailVerified?: boolean | null;
+  isEmailVerified?: boolean | null;
+  emailConfirmed?: boolean | null;
+  isVerified?: boolean | null;
+  emailVerifiedAt?: string | null;
+  emailConfirmedAt?: string | null;
   displayName?: string | null;
   phone?: string | null;
   city?: string | null;
@@ -19,6 +26,14 @@ export type AuthResponse = {
   token: string;
   refreshToken?: string | null;
   refreshTokenExpiresAt?: string | null;
+};
+
+export type RegisterResponse = {
+  user: AuthUser;
+  token?: string | null;
+  refreshToken?: string | null;
+  refreshTokenExpiresAt?: string | null;
+  emailVerificationRequired?: boolean | null;
 };
 
 export type RegisterPayload = {
@@ -35,6 +50,12 @@ export type LoginPayload = {
   password: string;
 };
 
+export type VerifyEmailPayload = {
+  token?: string;
+  code?: string;
+  email?: string;
+};
+
 const TOKEN_STORAGE_KEY = "sbay.auth.token";
 const REFRESH_TOKEN_STORAGE_KEY = "sbay.auth.refreshToken";
 
@@ -48,14 +69,31 @@ export async function login(payload: LoginPayload): Promise<AuthResponse> {
   return response;
 }
 
-export async function register(payload: RegisterPayload): Promise<AuthResponse> {
-  const response = await apiRequest<AuthResponse>("/api/auth/register", {
+export async function register(payload: RegisterPayload): Promise<RegisterResponse> {
+  const response = await apiRequest<RegisterResponse>("/api/auth/register", {
     method: "POST",
     body: JSON.stringify(payload),
     skipAuthRefresh: true,
   });
-  await storeAuthTokens(response.token, response.refreshToken ?? null);
+  if (response.token) {
+    await storeAuthTokens(response.token, response.refreshToken ?? null);
+  }
   return response;
+}
+
+export async function requestEmailVerification(): Promise<void> {
+  await apiRequest<void>("/api/auth/request-email-verification", {
+    method: "POST",
+    headers: await authHeader(),
+  });
+}
+
+export async function verifyEmail(payload: VerifyEmailPayload): Promise<void> {
+  await apiRequest<void>("/api/auth/verify-email", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    skipAuthRefresh: true,
+  });
 }
 
 export async function storeToken(token: string): Promise<void> {

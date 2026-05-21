@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -14,6 +14,9 @@ import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/hooks/use-localization";
 import { useAuth } from "@/providers/AuthProvider";
+import { EmailVerificationBanner } from "@/components/auth/EmailVerificationBanner";
+import { isEmailVerified } from "@/services/email-verification";
+import { getMyProfile, type UserProfile } from "@/services/user";
 
 const settingsItems = [
   { id: "profile", labelKey: "settings.items.profile" },
@@ -33,7 +36,30 @@ export default function SettingsHome() {
   const { isRTL } = useLocalization();
   const backIcon = isRTL ? ">" : "<";
   const forwardIcon = isRTL ? "<" : ">";
-  const { signOut } = useAuth();
+  const { signOut, status } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (status !== "authenticated") {
+      setProfile(null);
+      return () => {
+        isMounted = false;
+      };
+    }
+    getMyProfile()
+      .then((data) => {
+        if (!isMounted) return;
+        setProfile(data);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setProfile(null);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [status]);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
@@ -45,6 +71,8 @@ export default function SettingsHome() {
           <Text style={styles.headerTitle}>{t("settings.title")}</Text>
           <View style={{ width: 32 }} />
         </View>
+
+        {profile && !isEmailVerified(profile) ? <EmailVerificationBanner /> : null}
 
         <View style={styles.card}>
           {settingsItems.map((item, index) => {

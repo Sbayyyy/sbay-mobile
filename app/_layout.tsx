@@ -164,12 +164,16 @@ function RootLayoutContent() {
   useEffect(() => {
     if (status === "loading") return;
     const route = segments[0];
-    const inAuth = route === "sign-in" || route === "sign-up";
-    if (status === "authenticated" && inAuth) {
+    const isPublicAuthRoute = route === "sign-in" || route === "sign-up";
+    const isVerificationRoute =
+      route === "verify-email" ||
+      (route === "auth" && segments[1] === "verify-email") ||
+      (route === "api" && segments[1] === "auth" && segments[2] === "verify-email");
+    if (status === "authenticated" && isPublicAuthRoute) {
       router.replace("/(tabs)");
       return;
     }
-    if (status === "unauthenticated" && !inAuth) {
+    if (status === "unauthenticated" && !isPublicAuthRoute && !isVerificationRoute) {
       router.replace("/sign-in");
     }
   }, [router, segments, status]);
@@ -223,6 +227,9 @@ function RootLayoutContent() {
           {status === "authenticated" ? (
             <>
               <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="auth/verify-email" />
+              <Stack.Screen name="verify-email" />
+              <Stack.Screen name="api/auth/verify-email" />
               <Stack.Screen
                 name="modal"
                 options={{
@@ -235,6 +242,9 @@ function RootLayoutContent() {
             <>
               <Stack.Screen name="sign-in" />
               <Stack.Screen name="sign-up" />
+              <Stack.Screen name="auth/verify-email" />
+              <Stack.Screen name="verify-email" />
+              <Stack.Screen name="api/auth/verify-email" />
             </>
           )}
         </Stack>

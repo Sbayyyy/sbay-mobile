@@ -38,6 +38,36 @@
               "scheme": "https",
               "host": "www.syrian-bay.com",
               "pathPrefix": "/listing/"
+            },
+            {
+              "scheme": "https",
+              "host": "syrian-bay.com",
+              "pathPrefix": "/auth/verify-email"
+            },
+            {
+              "scheme": "https",
+              "host": "www.syrian-bay.com",
+              "pathPrefix": "/auth/verify-email"
+            },
+            {
+              "scheme": "https",
+              "host": "syrian-bay.com",
+              "pathPrefix": "/verify-email"
+            },
+            {
+              "scheme": "https",
+              "host": "www.syrian-bay.com",
+              "pathPrefix": "/verify-email"
+            },
+            {
+              "scheme": "https",
+              "host": "syrian-bay.com",
+              "pathPrefix": "/api/auth/verify-email"
+            },
+            {
+              "scheme": "https",
+              "host": "www.syrian-bay.com",
+              "pathPrefix": "/api/auth/verify-email"
             }
           ],
           "category": [

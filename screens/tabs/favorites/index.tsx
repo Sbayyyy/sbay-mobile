@@ -23,7 +23,12 @@ import { getFavorites, removeFavorite } from "@/services/favorites";
 import { type Listing as ApiListing } from "@/services/listings";
 import { getStoredToken } from "@/services/auth";
 import { openChat } from "@/services/messages";
-import { getMyProfile } from "@/services/user";
+import { getMyProfile, type UserProfile } from "@/services/user";
+import {
+  isEmailVerified,
+  isUnverifiedEmailError,
+  showEmailVerificationRequiredAlert,
+} from "@/services/email-verification";
 
 export default function FavoritesScreen() {
   const theme = useAppTheme();
@@ -31,6 +36,7 @@ export default function FavoritesScreen() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [favorites, setFavorites] = useState<ApiListing[]>([]);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [removingIds, setRemovingIds] = useState<Set<string>>(() => new Set());
@@ -53,6 +59,7 @@ export default function FavoritesScreen() {
           if (!isMounted) return;
           setFavorites([]);
           setProfileId(null);
+          setProfile(null);
           setLoading(false);
           setRefreshing(false);
           return;
@@ -62,6 +69,7 @@ export default function FavoritesScreen() {
             if (!isMounted) return;
             setFavorites(data);
             setProfileId(profile.id);
+            setProfile(profile);
           })
           .catch((err) => {
             if (!isMounted) return;
@@ -97,6 +105,11 @@ export default function FavoritesScreen() {
         return;
       }
 
+      if (profile && !isEmailVerified(profile)) {
+        showEmailVerificationRequiredAlert();
+        return;
+      }
+
       try {
         const { chatId } = await openChat({
           otherUserId: listing.sellerId,
@@ -104,13 +117,17 @@ export default function FavoritesScreen() {
         });
         router.push(`/chats/thread/${chatId}`);
       } catch (err) {
+        if ((!profile || !isEmailVerified(profile)) && isUnverifiedEmailError(err)) {
+          showEmailVerificationRequiredAlert();
+          return;
+        }
         Alert.alert(
           t("listings.openChatFailedTitle"),
           err instanceof Error ? err.message : t("listings.tryAgain"),
         );
       }
     },
-    [profileId, router, t],
+    [profile, profileId, router, t],
   );
 
   const handleRemoveFavorite = useCallback(async (listing: FavoriteListing) => {

@@ -21,6 +21,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { AppScreen } from "@/components/layout/AppScreen";
+import { EmailVerificationBanner } from "@/components/auth/EmailVerificationBanner";
 import { ChipPicker } from "@/components/form/ChipPicker";
 import { ValidatedInput } from "@/components/ValidatedInput";
 import {
@@ -53,6 +54,12 @@ import { uploadImageAsync } from "@/services/uploads";
 import { type TextValidator } from "@/validation";
 import { useAuth } from "@/providers/AuthProvider";
 import { useAppPopup } from "@/providers/AppPopupProvider";
+import { getMyProfile, type UserProfile } from "@/services/user";
+import {
+  isEmailVerified,
+  isUnverifiedEmailError,
+  showEmailVerificationRequiredAlert,
+} from "@/services/email-verification";
 
 const currencyOptions = Array.from(CURRENCY_OPTIONS).map((item) => ({
   id: item,
@@ -93,6 +100,7 @@ export default function AddListingScreen() {
   const [boostAfterPublish, setBoostAfterPublish] = useState(false);
   const [boostOptions, setBoostOptions] = useState<BoostOption[]>([]);
   const [selectedBoostOptionId, setSelectedBoostOptionId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [validation, setValidation] = useState({
     title: true,
     price: true,
@@ -338,6 +346,30 @@ export default function AddListingScreen() {
   }, [id]);
 
   useEffect(() => {
+    let isMounted = true;
+    if (status !== "authenticated") {
+      setProfile(null);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    getMyProfile()
+      .then((data) => {
+        if (!isMounted) return;
+        setProfile(data);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setProfile(null);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [status]);
+
+  useEffect(() => {
     setValidation((prev) => ({ ...prev, location: location.trim().length > 0 }));
   }, [location]);
 
@@ -425,6 +457,10 @@ export default function AddListingScreen() {
   const handleSubmit = async () => {
     if (!isFormValid || isSubmitting) {
       setShowErrors(true);
+      return;
+    }
+    if (profile && !isEmailVerified(profile)) {
+      showEmailVerificationRequiredAlert();
       return;
     }
     setIsSubmitting(true);
@@ -516,6 +552,10 @@ export default function AddListingScreen() {
       router.replace(`/listings/${listing.id}`);
     } catch (error) {
       console.error("Error creating listing:", error);
+      if ((!profile || !isEmailVerified(profile)) && isUnverifiedEmailError(error)) {
+        showEmailVerificationRequiredAlert();
+        return;
+      }
       showError(
         error instanceof Error
           ? error.message
@@ -607,6 +647,8 @@ export default function AddListingScreen() {
             <Text style={styles.title}>{t("addListing.title")}</Text>
             <Text style={styles.subtitle}>{t("addListing.subtitle")}</Text>
           </View>
+
+          {profile && !isEmailVerified(profile) ? <EmailVerificationBanner /> : null}
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>

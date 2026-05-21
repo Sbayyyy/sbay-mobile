@@ -271,7 +271,14 @@ export default function SignUpScreen() {
         phone,
         city: district || undefined,
       });
-      await signIn(response.token);
+      if (response.token) {
+        await signIn(response.token);
+        return;
+      }
+      router.replace({
+        pathname: "/sign-in",
+        params: { registered: "1" },
+      });
     } catch (error) {
       setApiError(
         error instanceof Error ? error.message : "Unable to sign up. Try again.",
@@ -299,6 +306,7 @@ export default function SignUpScreen() {
     password,
     passwordContext,
     passwordValidators,
+    router,
     signIn,
   ]);
 
