@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ValidatedInput } from "@/components/ValidatedInput";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import {
   type TextValidator,
@@ -85,6 +85,10 @@ export default function SignInScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const router = useRouter();
+  const { registered, verified } = useLocalSearchParams<{
+    registered?: string;
+    verified?: string;
+  }>();
   const { signIn } = useAuth();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
@@ -179,6 +183,26 @@ export default function SignInScreen() {
             Use your email and password to access your account.
           </Text>
         </View>
+
+      {verified === "1" ? (
+        <View style={styles.successBanner}>
+          <Text style={styles.successBannerText}>
+            Email verified. Sign in to continue.
+          </Text>
+        </View>
+      ) : registered === "1" ? (
+        <View style={styles.successBanner}>
+          <Text style={styles.successBannerText}>
+            Account created. Check your inbox for the verification email, then sign in.
+          </Text>
+        </View>
+      ) : verified === "0" ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>
+            We could not verify that link. Please request a new email.
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.form}>
           <ValidatedInput
@@ -296,5 +320,29 @@ const createStyles = (theme: ReturnType<typeof useAppTheme>) =>
     secondaryLabel: {
       color: theme.primary,
       fontWeight: "600",
+    },
+    successBanner: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      padding: 12,
+    },
+    successBannerText: {
+      color: theme.success,
+      fontSize: 14,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+    errorBanner: {
+      borderRadius: 14,
+      backgroundColor: theme.dangerBackground,
+      padding: 12,
+    },
+    errorBannerText: {
+      color: theme.danger,
+      fontSize: 14,
+      fontWeight: "600",
+      textAlign: "center",
     },
   });

@@ -4,6 +4,13 @@ import { getStoredToken } from "@/services/auth";
 export type UserProfile = {
   id: string;
   email: string;
+  verified?: boolean | null;
+  emailVerified?: boolean | null;
+  isEmailVerified?: boolean | null;
+  emailConfirmed?: boolean | null;
+  isVerified?: boolean | null;
+  emailVerifiedAt?: string | null;
+  emailConfirmedAt?: string | null;
   displayName?: string | null;
   phone?: string | null;
   city?: string | null;

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { GlobalEmailVerificationPrompt } from "@/components/auth/GlobalEmailVerificationPrompt";
 import { getStoredToken } from "@/services/auth";
 import {
   createChatConnection,
@@ -127,95 +128,98 @@ export default function TabsLayout() {
   );
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: true,
-        tabBarActiveTintColor: theme.tabIconSelected,
-        tabBarInactiveTintColor: theme.tabIconDefault,
-        tabBarStyle: {
-          borderTopWidth: 1,
-          elevation: 5,
-          backgroundColor: theme.navigationBackground,
-          borderTopColor: theme.navigationBorder,
-          height: tabBarHeight,
-          paddingBottom: Math.max(insets.bottom, 0),
-          paddingTop: 4,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-        },
-        tabBarItemStyle: {
-          paddingBottom: 4,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t("navigation.tabs.home"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="favorites"
-        options={{
-          title: t("navigation.tabs.favorites"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="heart-outline" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="add_listing"
-        options={{
-          title: t("navigation.tabs.addListing"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle-outline" size={size} color={color} />
-          ),
-        }}
-        listeners={{
-          tabPress: (event) => {
-            event.preventDefault();
-            router.navigate("/add_listing?mode=create");
+    <>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarShowLabel: true,
+          tabBarActiveTintColor: theme.tabIconSelected,
+          tabBarInactiveTintColor: theme.tabIconDefault,
+          tabBarStyle: {
+            borderTopWidth: 1,
+            elevation: 5,
+            backgroundColor: theme.navigationBackground,
+            borderTopColor: theme.navigationBorder,
+            height: tabBarHeight,
+            paddingBottom: Math.max(insets.bottom, 0),
+            paddingTop: 4,
+          },
+          tabBarLabelStyle: {
+            fontSize: 11,
+          },
+          tabBarItemStyle: {
+            paddingBottom: 4,
           },
         }}
-      />
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: t("navigation.tabs.home"),
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="home-outline" size={size} color={color} />
+            ),
+          }}
+        />
 
-      <Tabs.Screen
-        name="chats"
-        options={{
-          title: t("navigation.tabs.chats"),
-          tabBarBadge: unreadTotal > 0 ? (unreadTotal > 99 ? "99+" : unreadTotal) : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: "#E53935",
-            color: "#fff",
-            fontSize: 10,
-            fontWeight: "700",
-            minWidth: 18,
-            height: 18,
-            borderRadius: 9,
-            paddingHorizontal: 4,
-          },
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubble-outline" size={size} color={color} />
-          ),
-        }}
-      />
+        <Tabs.Screen
+          name="favorites"
+          options={{
+            title: t("navigation.tabs.favorites"),
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="heart-outline" size={size} color={color} />
+            ),
+          }}
+        />
 
-      <Tabs.Screen
-        name="me"
-        options={{
-          title: t("navigation.tabs.me"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+        <Tabs.Screen
+          name="add_listing"
+          options={{
+            title: t("navigation.tabs.addListing"),
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="add-circle-outline" size={size} color={color} />
+            ),
+          }}
+          listeners={{
+            tabPress: (event) => {
+              event.preventDefault();
+              router.navigate("/add_listing?mode=create");
+            },
+          }}
+        />
+
+        <Tabs.Screen
+          name="chats"
+          options={{
+            title: t("navigation.tabs.chats"),
+            tabBarBadge: unreadTotal > 0 ? (unreadTotal > 99 ? "99+" : unreadTotal) : undefined,
+            tabBarBadgeStyle: {
+              backgroundColor: "#E53935",
+              color: "#fff",
+              fontSize: 10,
+              fontWeight: "700",
+              minWidth: 18,
+              height: 18,
+              borderRadius: 9,
+              paddingHorizontal: 4,
+            },
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="chatbubble-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="me"
+          options={{
+            title: t("navigation.tabs.me"),
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="person-outline" size={size} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+      <GlobalEmailVerificationPrompt />
+    </>
   );
 }

@@ -36,6 +36,12 @@ import {
 } from "@/services/chat-realtime";
 import { getChats, getMessages, markAsRead, sendMessage, updateMessage, deleteMessage } from "@/services/messages";
 import { getMyProfile, getSellerProfile } from "@/services/user";
+import {
+  isEmailVerified,
+  isUnverifiedEmailError,
+  showEmailVerificationRequiredAlert,
+  type EmailVerificationStatus,
+} from "@/services/email-verification";
 import { sanitizeInput, validateSafeText } from "@/validation";
 import * as Clipboard from "expo-clipboard";
 
@@ -105,6 +111,7 @@ export default function ChatThreadScreen() {
 
   const [header, setHeader] = useState<ChatHeader | null>(null);
   const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [myProfile, setMyProfile] = useState<EmailVerificationStatus | null>(null);
   const [messages, setMessages] = useState<Array<Awaited<ReturnType<typeof getMessages>>[number]>>(
     [],
   );
@@ -151,6 +158,7 @@ export default function ChatThreadScreen() {
 
         const profile = await getMyProfile();
         if (!isMounted) return;
+        setMyProfile(profile);
         setMyUserId(profile.id);
 
         const chats = await getChats(200, 0);
@@ -323,6 +331,11 @@ export default function ChatThreadScreen() {
   const handleSend = async () => {
     if (!chatId || !input.trim() || sending) return;
 
+    if (myProfile && !isEmailVerified(myProfile)) {
+      showEmailVerificationRequiredAlert();
+      return;
+    }
+
     const trimmed = input.trim();
     const validation = validateSafeText(trimmed);
     if (!validation.valid) {
@@ -381,8 +394,12 @@ export default function ChatThreadScreen() {
       });
       scrollToBottom(true, 0);
       scrollToBottom(true, 50);
-    } catch {
+    } catch (error) {
       setMessages((prev) => prev.filter((m: any) => m.id !== optimisticId));
+      if ((!myProfile || !isEmailVerified(myProfile)) && isUnverifiedEmailError(error)) {
+        showEmailVerificationRequiredAlert();
+        return;
+      }
       setInput(text);
     } finally {
       setSending(false);

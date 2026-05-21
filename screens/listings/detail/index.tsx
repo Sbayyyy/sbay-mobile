@@ -27,12 +27,17 @@ import {
   type Listing as ApiListing,
 } from "@/services/listings";
 import { getStoredToken } from "@/services/auth";
-import { getMyProfile } from "@/services/user";
+import { getMyProfile, type UserProfile } from "@/services/user";
 import { addFavorite, getFavorites, removeFavorite } from "@/services/favorites";
 import { openChat } from "@/services/messages";
 import { WEB_BASE_URL } from "@/services/config";
 import {SafeAreaView} from "react-native-safe-area-context";
 import { useAppPopup } from "@/providers/AppPopupProvider";
+import {
+  isEmailVerified,
+  isUnverifiedEmailError,
+  showEmailVerificationRequiredAlert,
+} from "@/services/email-verification";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80";
@@ -52,6 +57,7 @@ export default function ListingDetailScreen() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [openingChat, setOpeningChat] = useState(false);
@@ -66,6 +72,7 @@ export default function ListingDetailScreen() {
       })
       .then((profile) => {
         if (!isMounted || !profile) return;
+        setProfile(profile);
         setProfileId(profile.id);
       })
       .catch(() => undefined);
@@ -202,6 +209,11 @@ const handleContactSeller = async () => {
       return;
     }
 
+    if (profile && !isEmailVerified(profile)) {
+      showEmailVerificationRequiredAlert();
+      return;
+    }
+
     setOpeningChat(true);
 
     const { chatId } = await openChat({
@@ -211,6 +223,10 @@ const handleContactSeller = async () => {
 
     router.push(`/chats/thread/${chatId}`);
   } catch (err) {
+    if ((!profile || !isEmailVerified(profile)) && isUnverifiedEmailError(err)) {
+      showEmailVerificationRequiredAlert();
+      return;
+    }
     showError(
       err instanceof Error ? err.message : t("listings.tryAgain"),
       t("listings.openChatFailedTitle"),
