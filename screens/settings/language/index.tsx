@@ -28,7 +28,7 @@ export default function LanguageSettingsScreen() {
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.replace("/settings")}>
             <Text style={styles.backIcon}>{backIcon}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("settings.language.title")}</Text>

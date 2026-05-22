@@ -213,7 +213,8 @@ export default function SearchScreen() {
             </TouchableOpacity>
             <Text style={styles.resultCount}>
               {t("listings.resultsCount", {
-                defaultValue: `${displayListings.length} results`,
+                defaultValue: "{{count}} results",
+                count: displayListings.length,
               })}
             </Text>
           </View>

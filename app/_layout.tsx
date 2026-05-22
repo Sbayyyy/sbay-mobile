@@ -2,7 +2,7 @@ import { DarkTheme as NavigationDarkTheme, DefaultTheme, ThemeProvider } from "@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, BackHandler, LogBox, Platform, ToastAndroid, View } from "react-native";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
@@ -79,6 +79,50 @@ function RootLayoutContent() {
   const { status } = useAuth();
   const router = useRouter();
   const segments = useSegments();
+  const segmentList = useMemo(() => [...segments] as string[], [segments]);
+  const lastBackPressRef = useRef(0);
+  const lastHomeBackPressRef = useRef(0);
+
+  const isHomeRoute = useCallback(() => {
+    return segmentList[0] === "(tabs)" && (segmentList[1] == null || segmentList[1] === "index");
+  }, [segmentList]);
+
+  const goHome = useCallback(() => {
+    lastHomeBackPressRef.current = 0;
+    router.replace("/(tabs)");
+  }, [router]);
+
+  const goBackOneLayer = useCallback(() => {
+    const route = segmentList[0];
+    const child = segmentList[1];
+
+    if (route === "settings") {
+      if (child && child !== "index") {
+        router.replace("/settings");
+        return;
+      }
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
+      router.replace("/(tabs)/me");
+      return;
+    }
+
+    if (route === "(tabs)") {
+      if (child && child !== "index") {
+        goHome();
+      }
+      return;
+    }
+
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    goHome();
+  }, [goHome, router, segmentList]);
 
   const paperTheme = useMemo(() => {
     const base = isDark ? MD3DarkTheme : MD3LightTheme;
@@ -154,12 +198,12 @@ function RootLayoutContent() {
 
   useEffect(() => {
     if (status === "loading") return;
-    const route = segments[0];
+    const route = segmentList[0];
     const isPublicAuthRoute = route === "sign-in" || route === "sign-up";
     const isVerificationRoute =
       route === "verify-email" ||
-      (route === "auth" && segments[1] === "verify-email") ||
-      (route === "api" && segments[1] === "auth" && segments[2] === "verify-email");
+      (route === "auth" && segmentList[1] === "verify-email") ||
+      (route === "api" && segmentList[1] === "auth" && segmentList[2] === "verify-email");
     if (status === "authenticated" && isPublicAuthRoute) {
       router.replace("/(tabs)");
       return;
@@ -167,36 +211,43 @@ function RootLayoutContent() {
     if (status === "unauthenticated" && !isPublicAuthRoute && !isVerificationRoute) {
       router.replace("/sign-in");
     }
-  }, [router, segments, status]);
+  }, [router, segmentList, status]);
 
   useEffect(() => {
     if (Platform.OS !== "android") return undefined;
-    let lastBackPress = 0;
 
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (status !== "authenticated") return false;
 
-      const route = segments[0];
-      const isTabsRoot = route === "(tabs)" || route == null;
-      if (!isTabsRoot) {
-        router.replace("/(tabs)");
+      const now = Date.now();
+
+      if (isHomeRoute()) {
+        const homeElapsed = now - lastHomeBackPressRef.current;
+        if (homeElapsed < 1800) {
+          BackHandler.exitApp();
+          return true;
+        }
+        lastHomeBackPressRef.current = now;
+        ToastAndroid.show(t("navigation.backToExit", { defaultValue: "Press back again to exit" }), ToastAndroid.SHORT);
         return true;
       }
 
-      const now = Date.now();
-      if (now - lastBackPress < 1800) {
-        BackHandler.exitApp();
+      const elapsed = now - lastBackPressRef.current;
+      if (elapsed < 700) {
+        lastBackPressRef.current = 0;
+        goHome();
         return true;
       }
-      lastBackPress = now;
-      ToastAndroid.show(t("navigation.backToExit", { defaultValue: "Press back again to exit" }), ToastAndroid.SHORT);
+
+      lastBackPressRef.current = now;
+      goBackOneLayer();
       return true;
     });
 
     return () => {
       subscription.remove();
     };
-  }, [router, segments, status, t]);
+  }, [goBackOneLayer, goHome, isHomeRoute, status, t]);
 
   if (status === "loading") {
     return (
