@@ -40,7 +40,7 @@ See `DOCKER.md` for Android debug APK and signed release AAB commands.
 
 ## Jenkins Android release
 
-`Jenkinsfile` builds a Docker image, runs checks inside the container, builds a signed Android production AAB inside Docker, archives it, and removes Docker resources afterward.
+`Jenkinsfile` builds a Docker image, runs checks inside the container, builds a signed Android production AAB inside Docker, archives it, and removes Docker resources afterward. The expensive Docker/AAB stages only run when `expo.android.versionCode` in `app.json` increases.
 
 Required Jenkins credentials:
 

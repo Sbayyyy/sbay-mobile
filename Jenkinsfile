@@ -13,7 +13,8 @@ pipeline {
         AAB_PATH = 'artifacts/SBay-android-production.aab'
         DOCKER_IMAGE = "sbay-mobile:${BUILD_NUMBER}"
         COMPOSE_PROJECT_NAME = "sbay-mobile-${BUILD_NUMBER}"
-        MIN_ANDROID_VERSION_CODE = '8'
+        SHOULD_BUILD_AAB = 'false'
+        SKIP_REASON = ''
     }
 
     stages {
@@ -32,7 +33,67 @@ pipeline {
             }
         }
 
+        stage('Check Android Version Code') {
+            steps {
+                dir(env.MOBILE_DIR) {
+                    script {
+                        def currentCode = sh(
+                            script: '''
+                                set -eu
+                                code="$(sed -n 's/.*"versionCode"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p' app.json | head -n 1)"
+                                test -n "$code"
+                                printf '%s' "$code"
+                            ''',
+                            returnStdout: true
+                        ).trim()
+
+                        def baseCommit = env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?: env.GIT_PREVIOUS_COMMIT ?: ''
+                        def previousCode = ''
+
+                        withEnv(["BASE_COMMIT=${baseCommit}"]) {
+                            previousCode = sh(
+                                script: '''
+                                    set +e
+                                    read_code() {
+                                        sed -n 's/.*"versionCode"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p' | head -n 1
+                                    }
+
+                                    if [ -n "$BASE_COMMIT" ] && git cat-file -e "$BASE_COMMIT:app.json" 2>/dev/null; then
+                                        git show "$BASE_COMMIT:app.json" | read_code
+                                        exit 0
+                                    fi
+
+                                    if git rev-parse HEAD~1 >/dev/null 2>&1 && git cat-file -e HEAD~1:app.json 2>/dev/null; then
+                                        git show HEAD~1:app.json | read_code
+                                        exit 0
+                                    fi
+                                ''',
+                                returnStdout: true
+                            ).trim()
+                        }
+
+                        env.CURRENT_ANDROID_VERSION_CODE = currentCode
+                        env.PREVIOUS_ANDROID_VERSION_CODE = previousCode
+                        env.SHOULD_BUILD_AAB = (!previousCode || currentCode.toInteger() > previousCode.toInteger()) ? 'true' : 'false'
+
+                        if (env.SHOULD_BUILD_AAB == 'true') {
+                            currentBuild.description = "Building Android versionCode ${currentCode}"
+                            echo "Android versionCode increased from ${previousCode ?: 'none'} to ${currentCode}; building signed AAB."
+                        } else {
+                            env.SKIP_REASON = "Android versionCode ${currentCode} did not increase from ${previousCode}"
+                            currentBuild.result = 'NOT_BUILT'
+                            currentBuild.description = "Skipped: ${env.SKIP_REASON}"
+                            echo "Android versionCode stayed at ${currentCode} or did not increase from ${previousCode}; skipping signed AAB build."
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Prepare Docker Inputs') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
             steps {
                 dir(env.MOBILE_DIR) {
                     sh '''
@@ -46,22 +107,10 @@ pipeline {
             }
         }
 
-        stage('Set Android Version Code') {
-            steps {
-                dir(env.MOBILE_DIR) {
-                    sh '''
-                        set -eu
-                        VERSION_CODE="$BUILD_NUMBER"
-                        if [ "$VERSION_CODE" -lt "$MIN_ANDROID_VERSION_CODE" ]; then
-                            VERSION_CODE="$MIN_ANDROID_VERSION_CODE"
-                        fi
-                        npm run set:android-version-code -- "$VERSION_CODE"
-                    '''
-                }
-            }
-        }
-
         stage('Build Docker Image') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
             steps {
                 dir(env.MOBILE_DIR) {
                     sh 'docker compose build app'
@@ -70,6 +119,9 @@ pipeline {
         }
 
         stage('Test In Docker') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
             steps {
                 dir(env.MOBILE_DIR) {
                     sh 'docker compose run --rm app npm run test:ci'
@@ -80,6 +132,9 @@ pipeline {
         }
 
         stage('Build Signed AAB In Docker') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
             steps {
                 dir(env.MOBILE_DIR) {
                     withCredentials([
@@ -106,6 +161,9 @@ pipeline {
         }
 
         stage('Verify AAB') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
             steps {
                 dir(env.MOBILE_DIR) {
                     sh '''
@@ -118,6 +176,9 @@ pipeline {
         }
 
         stage('Archive Artifact') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
             steps {
                 archiveArtifacts artifacts: "${env.ARTIFACT_PREFIX}artifacts/*.aab", fingerprint: true
             }
@@ -126,13 +187,19 @@ pipeline {
 
     post {
         always {
-            dir(env.MOBILE_DIR ?: '.') {
-                sh '''
-                    set +e
-                    docker compose --profile build down --remove-orphans --volumes --rmi local
-                    docker image rm -f "$DOCKER_IMAGE"
-                    rm -rf android ios .expo
-                '''
+            script {
+                if (env.SHOULD_BUILD_AAB == 'true') {
+                    dir(env.MOBILE_DIR ?: '.') {
+                        sh '''
+                            set +e
+                            docker compose --profile build down --remove-orphans --volumes --rmi local
+                            docker image rm -f "$DOCKER_IMAGE"
+                            rm -rf android ios .expo
+                        '''
+                    }
+                } else {
+                    echo "No AAB build requested; Docker cleanup skipped. ${env.SKIP_REASON}"
+                }
             }
             echo 'Mobile Docker AAB pipeline finished.'
         }
