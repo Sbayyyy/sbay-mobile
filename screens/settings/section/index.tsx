@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -19,9 +20,15 @@ import { type ThemeColors } from "@/constants/theme";
 import { useLocalization } from "@/hooks/use-localization";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useThemeContext } from "@/providers/ThemeProvider";
-import { getMyProfile, updateMyProfile } from "@/services/user";
+import { getMyProfile, requestAccountDeletion, updateMyProfile } from "@/services/user";
 import { changePassword } from "@/services/auth";
 import { uploadImageAsync } from "@/services/uploads";
+import {
+  createBugReport,
+  getBugReportDeviceInfo,
+  type BugReportSeverity,
+} from "@/services/bug-reports";
+import { sendContactMessage } from "@/services/contact";
 import {
   getNotificationPreferences,
   setNotificationPreferences,
@@ -44,7 +51,31 @@ export default function SettingsDetail() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences | null>(null);
-  const [notifSaving, setNotifSaving] = useState(false);
+  const [notifSaving, setNotifSaving] = useState<keyof NotificationPreferences | null>(null);
+  const [notificationError, setNotificationError] = useState<string | null>(null);
+  const [deletionReason, setDeletionReason] = useState("");
+  const [deletionConfirm, setDeletionConfirm] = useState("");
+  const [deletionSaving, setDeletionSaving] = useState(false);
+  const [scheduledDeletionAt, setScheduledDeletionAt] = useState<string | null>(null);
+  const [deletionError, setDeletionError] = useState<string | null>(null);
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
+  const [contactSaving, setContactSaving] = useState(false);
+  const [contactSuccess, setContactSuccess] = useState<string | null>(null);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [bugForm, setBugForm] = useState({
+    title: "",
+    description: "",
+    screen: "",
+    severity: "medium" as BugReportSeverity,
+  });
+  const [bugSaving, setBugSaving] = useState(false);
+  const [bugSuccess, setBugSuccess] = useState<string | null>(null);
+  const [bugError, setBugError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     displayName: "",
     phone: "",
@@ -70,6 +101,7 @@ export default function SettingsDetail() {
   const isAccount = section === "account";
   const isNotifications = section === "notifications";
   const isTheme = section === "theme";
+  const isHelp = section === "help";
 
   const loadProfile = useCallback(async () => {
     setProfileLoading(true);
@@ -82,6 +114,11 @@ export default function SettingsDetail() {
         email: profile.email ?? "",
         avatar: profile.avatar ?? "",
       });
+      setContactForm((prev) => ({
+        ...prev,
+        name: prev.name || profile.displayName || profile.email || "",
+        email: prev.email || profile.email || "",
+      }));
     } catch (error) {
       setProfileError(error instanceof Error ? error.message : "Unable to load profile");
     } finally {
@@ -90,15 +127,20 @@ export default function SettingsDetail() {
   }, []);
 
   const loadNotifications = useCallback(async () => {
-    const prefs = await getNotificationPreferences();
-    setNotificationPrefs(prefs);
+    setNotificationError(null);
+    try {
+      const prefs = await getNotificationPreferences();
+      setNotificationPrefs(prefs);
+    } catch (error) {
+      setNotificationError(error instanceof Error ? error.message : "Unable to load notification settings");
+    }
   }, []);
 
   useEffect(() => {
-    if (isProfile) {
+    if (isProfile || isHelp) {
       void loadProfile();
     }
-  }, [isProfile, loadProfile]);
+  }, [isHelp, isProfile, loadProfile]);
 
   useEffect(() => {
     if (isNotifications) {
@@ -131,7 +173,8 @@ export default function SettingsDetail() {
       const url = await uploadImageAsync(asset.uri, fileName, asset.mimeType ?? "image/jpeg", {
         endpoint: "avatar",
       });
-      setFormData((prev) => ({ ...prev, avatar: url }));
+      const updated = await updateMyProfile({ avatar: url });
+      setFormData((prev) => ({ ...prev, avatar: updated.avatar ?? url }));
     } catch (error) {
       setProfileError(error instanceof Error ? error.message : "Unable to upload avatar");
     } finally {
@@ -175,7 +218,6 @@ export default function SettingsDetail() {
       await updateMyProfile({
         displayName: sanitizeInput(nameValue),
         phone: phoneValue ? sanitizeInput(phoneValue) : null,
-        avatar: formData.avatar || null,
       });
     } catch (error) {
       setProfileError(error instanceof Error ? error.message : "Unable to save profile");
@@ -230,21 +272,149 @@ export default function SettingsDetail() {
     value: boolean,
   ) => {
     if (!notificationPrefs) return;
+    const previous = notificationPrefs;
     const next = { ...notificationPrefs, [key]: value };
     setNotificationPrefs(next);
-    setNotifSaving(true);
+    setNotificationError(null);
+    setNotifSaving(key);
     try {
-      await setNotificationPreferences(next);
+      const saved = await setNotificationPreferences(next);
+      setNotificationPrefs(saved);
+    } catch (error) {
+      setNotificationPrefs(previous);
+      const message = error instanceof Error ? error.message : "Unable to save notification settings";
+      setNotificationError(message);
+      Alert.alert(
+        t("settings.notifications.saveErrorTitle", { defaultValue: "Could not save" }),
+        message,
+      );
     } finally {
-      setNotifSaving(false);
+      setNotifSaving(null);
     }
   };
+
+  const handleDeletionRequest = async () => {
+    if (deletionSaving || deletionConfirm.trim().toUpperCase() !== "DELETE") return;
+    Alert.alert(
+      t("settings.accountDeletion.confirmTitle", { defaultValue: "Request account deletion?" }),
+      t("settings.accountDeletion.confirmBody", {
+        defaultValue:
+          "Your account will be deactivated now and permanently deleted after the scheduled grace period.",
+      }),
+      [
+        { text: t("common.actions.cancel", { defaultValue: "Cancel" }), style: "cancel" },
+        {
+          text: t("settings.accountDeletion.confirmAction", { defaultValue: "Request deletion" }),
+          style: "destructive",
+          onPress: async () => {
+            setDeletionSaving(true);
+            setDeletionError(null);
+            try {
+              const result = await requestAccountDeletion(deletionReason);
+              setScheduledDeletionAt(result.scheduledDeletionAt);
+            } catch (error) {
+              setDeletionError(
+                error instanceof Error ? error.message : "Unable to request account deletion",
+              );
+            } finally {
+              setDeletionSaving(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleContactSubmit = async () => {
+    if (contactSaving) return;
+    const next = {
+      name: contactForm.name.trim(),
+      email: contactForm.email.trim(),
+      subject: contactForm.subject.trim(),
+      message: contactForm.message.trim(),
+    };
+    if (!next.name || !next.email || !next.subject || !next.message) {
+      setContactError(
+        t("settings.help.contactRequired", { defaultValue: "Fill out all contact fields." }),
+      );
+      return;
+    }
+
+    setContactSaving(true);
+    setContactError(null);
+    setContactSuccess(null);
+    try {
+      const deviceInfo = getBugReportDeviceInfo();
+      await sendContactMessage({
+        ...next,
+        pageUrl: "sbay://settings/help",
+        userAgent: deviceInfo.userAgent,
+      });
+      setContactSuccess(
+        t("settings.help.contactSuccess", { defaultValue: "Message sent. Support will follow up soon." }),
+      );
+      setContactForm((prev) => ({ ...prev, subject: "", message: "" }));
+    } catch (error) {
+      setContactError(error instanceof Error ? error.message : "Unable to send message");
+    } finally {
+      setContactSaving(false);
+    }
+  };
+
+  const handleBugSubmit = async () => {
+    if (bugSaving) return;
+    const title = bugForm.title.trim();
+    const description = bugForm.description.trim();
+    const screen = bugForm.screen.trim() || "settings/help";
+    if (!title || !description) {
+      setBugError(
+        t("settings.help.bugRequired", { defaultValue: "Add a bug title and description." }),
+      );
+      return;
+    }
+
+    setBugSaving(true);
+    setBugError(null);
+    setBugSuccess(null);
+    try {
+      await createBugReport({
+        title,
+        description,
+        pageUrl: `sbay://${screen.replace(/^\/+/, "")}`,
+        severity: bugForm.severity,
+      });
+      setBugSuccess(
+        t("settings.help.bugSuccess", { defaultValue: "Bug report sent. Thank you." }),
+      );
+      setBugForm((prev) => ({ ...prev, title: "", description: "" }));
+    } catch (error) {
+      setBugError(error instanceof Error ? error.message : "Unable to submit bug report");
+    } finally {
+      setBugSaving(false);
+    }
+  };
+
+  const emailNotificationItems: Array<{ key: keyof NotificationPreferences; label: string }> = [
+    { key: "emailMessages", label: t("settings.notifications.emailMessages", { defaultValue: "Email messages" }) },
+    { key: "emailNewBids", label: t("settings.notifications.emailNewBids", { defaultValue: "Email new bids" }) },
+    { key: "emailOutbidAlerts", label: t("settings.notifications.emailOutbid", { defaultValue: "Email outbid alerts" }) },
+    { key: "emailWonAuctions", label: t("settings.notifications.emailWonAuction", { defaultValue: "Email won auctions" }) },
+    { key: "emailPriceDrops", label: t("settings.notifications.emailPriceDrops", { defaultValue: "Email price drops" }) },
+    { key: "emailPromotions", label: t("settings.notifications.emailPromotions", { defaultValue: "Email promotions" }) },
+  ];
+
+  const pushNotificationItems: Array<{ key: keyof NotificationPreferences; label: string }> = [
+    { key: "pushMessages", label: t("settings.notifications.pushMessages", { defaultValue: "Push messages" }) },
+    { key: "pushNewBids", label: t("settings.notifications.pushNewBids", { defaultValue: "Push new bids" }) },
+    { key: "pushOutbidAlerts", label: t("settings.notifications.pushOutbid", { defaultValue: "Push outbid alerts" }) },
+    { key: "pushWonAuctions", label: t("settings.notifications.pushWonAuction", { defaultValue: "Push won auctions" }) },
+  ];
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.replace("/settings")}>
             <Text style={styles.backIcon}>{backIcon}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{title}</Text>
@@ -468,43 +638,128 @@ export default function SettingsDetail() {
                   </Text>
                 </View>
               </View>
+              <View style={styles.dangerZone}>
+                <Text style={styles.dangerTitle}>
+                  {t("settings.accountDeletion.title", { defaultValue: "Delete account" })}
+                </Text>
+                <Text style={styles.body}>
+                  {t("settings.accountDeletion.body", {
+                    defaultValue:
+                      "Request account deletion to deactivate your account now and schedule permanent deletion.",
+                  })}
+                </Text>
+                {scheduledDeletionAt ? (
+                  <Text style={styles.successText}>
+                    {t("settings.accountDeletion.scheduled", {
+                      defaultValue: "Scheduled deletion: {{date}}",
+                      date: new Date(scheduledDeletionAt).toLocaleDateString(),
+                    })}
+                  </Text>
+                ) : (
+                  <>
+                    <View style={styles.formGroup}>
+                      <Text style={styles.label}>
+                        {t("settings.accountDeletion.reason", { defaultValue: "Reason" })}
+                      </Text>
+                      <TextInput
+                        style={[styles.input, styles.textarea]}
+                        value={deletionReason}
+                        onChangeText={setDeletionReason}
+                        placeholder={t("settings.accountDeletion.reasonPlaceholder", {
+                          defaultValue: "Optional",
+                        })}
+                        placeholderTextColor={theme.inputPlaceholder}
+                        multiline
+                      />
+                    </View>
+                    <View style={styles.formGroup}>
+                      <Text style={styles.label}>
+                        {t("settings.accountDeletion.confirmLabel", {
+                          defaultValue: 'Type "DELETE" to confirm',
+                        })}
+                      </Text>
+                      <TextInput
+                        style={styles.input}
+                        value={deletionConfirm}
+                        onChangeText={setDeletionConfirm}
+                        autoCapitalize="characters"
+                        placeholder="DELETE"
+                        placeholderTextColor={theme.inputPlaceholder}
+                      />
+                    </View>
+                    {deletionError ? <Text style={styles.errorText}>{deletionError}</Text> : null}
+                    <TouchableOpacity
+                      style={[
+                        styles.primaryButton,
+                        styles.deleteButton,
+                        (deletionSaving || deletionConfirm.trim().toUpperCase() !== "DELETE") &&
+                          styles.buttonDisabled,
+                      ]}
+                      onPress={handleDeletionRequest}
+                      disabled={deletionSaving || deletionConfirm.trim().toUpperCase() !== "DELETE"}
+                    >
+                      <Text style={styles.primaryButtonLabel}>
+                        {deletionSaving
+                          ? t("settings.accountDeletion.requesting", { defaultValue: "Requesting..." })
+                          : t("settings.accountDeletion.request", {
+                              defaultValue: "Request account deletion",
+                            })}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
             </View>
           )}
 
           {isNotifications && (
             <View style={styles.card}>
               <Text style={styles.heading}>{t("settings.notifications.title", { defaultValue: "Notification settings" })}</Text>
+              {notificationError ? <Text style={styles.errorText}>{notificationError}</Text> : null}
               {!notificationPrefs ? (
                 <View style={styles.loadingRow}>
                   <ActivityIndicator size="small" color={theme.primary} />
                 </View>
               ) : (
                 <View style={styles.list}>
-                  {[
-                    { key: "messages", label: t("settings.notifications.messages", { defaultValue: "Messages" }) },
-                    { key: "newBids", label: t("settings.notifications.newBids", { defaultValue: "New bids" }) },
-                    { key: "outbid", label: t("settings.notifications.outbid", { defaultValue: "Outbid alerts" }) },
-                    { key: "wonAuction", label: t("settings.notifications.wonAuction", { defaultValue: "Won auctions" }) },
-                    { key: "priceDrops", label: t("settings.notifications.priceDrops", { defaultValue: "Price drops" }) },
-                    { key: "promotions", label: t("settings.notifications.promotions", { defaultValue: "Promotions" }) },
-                  ].map((item) => (
+                  <Text style={styles.sectionLabel}>
+                    {t("settings.notifications.emailSection", { defaultValue: "Email" })}
+                  </Text>
+                  {emailNotificationItems.map((item) => (
                     <View key={item.key} style={styles.toggleRow}>
                       <Text style={styles.toggleLabel}>{item.label}</Text>
                       <Switch
-                        value={notificationPrefs[item.key as keyof NotificationPreferences]}
-                        onValueChange={(value) =>
-                          toggleNotification(item.key as keyof NotificationPreferences, value)
-                        }
+                        value={notificationPrefs[item.key]}
+                        onValueChange={(value) => toggleNotification(item.key, value)}
+                        disabled={notifSaving === item.key}
                         thumbColor={theme.surface}
                         trackColor={{ false: theme.border, true: theme.primary }}
                       />
                     </View>
                   ))}
-                  {notifSaving ? (
-                    <Text style={styles.helperText}>
-                      {t("settings.common.saving", { defaultValue: "Saving..." })}
-                    </Text>
-                  ) : null}
+
+                  <Text style={[styles.sectionLabel, styles.sectionLabelSpaced]}>
+                    {t("settings.notifications.pushSection", { defaultValue: "Push" })}
+                  </Text>
+                  {pushNotificationItems.map((item) => (
+                    <View key={item.key} style={styles.toggleRow}>
+                      <Text style={styles.toggleLabel}>{item.label}</Text>
+                      <Switch
+                        value={notificationPrefs[item.key]}
+                        onValueChange={(value) => toggleNotification(item.key, value)}
+                        disabled={notifSaving === item.key}
+                        thumbColor={theme.surface}
+                        trackColor={{ false: theme.border, true: theme.primary }}
+                      />
+                    </View>
+                  ))}
+                  <Text style={styles.helperText}>
+                    {notifSaving
+                      ? t("settings.common.saving", { defaultValue: "Saving..." })
+                      : t("settings.notifications.synced", {
+                          defaultValue: "Preferences sync with your account.",
+                        })}
+                  </Text>
                 </View>
               )}
             </View>
@@ -565,7 +820,157 @@ export default function SettingsDetail() {
             </View>
           )}
 
-          {!isProfile && !isAccount && !isNotifications && !isTheme && (
+          {isHelp && (
+            <>
+              <View style={styles.card}>
+                <Text style={styles.heading}>
+                  {t("settings.help.contactTitle", { defaultValue: "Contact support" })}
+                </Text>
+                <Text style={styles.body}>
+                  {t("settings.help.contactBody", {
+                    defaultValue: "Send a message to the support team.",
+                  })}
+                </Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>{t("contact.form.name", { defaultValue: "Name" })}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={contactForm.name}
+                    onChangeText={(name) => setContactForm((prev) => ({ ...prev, name }))}
+                    placeholder={t("contact.form.namePlaceholder", { defaultValue: "Your name" })}
+                    placeholderTextColor={theme.inputPlaceholder}
+                  />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>{t("contact.form.email", { defaultValue: "Email" })}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={contactForm.email}
+                    onChangeText={(email) => setContactForm((prev) => ({ ...prev, email }))}
+                    placeholder={t("contact.form.emailPlaceholder", { defaultValue: "you@example.com" })}
+                    placeholderTextColor={theme.inputPlaceholder}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>{t("contact.form.subject", { defaultValue: "Subject" })}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={contactForm.subject}
+                    onChangeText={(subject) => setContactForm((prev) => ({ ...prev, subject }))}
+                    placeholder={t("contact.form.subjectPlaceholder", { defaultValue: "How can we help?" })}
+                    placeholderTextColor={theme.inputPlaceholder}
+                  />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>{t("contact.form.message", { defaultValue: "Message" })}</Text>
+                  <TextInput
+                    style={[styles.input, styles.textarea]}
+                    value={contactForm.message}
+                    onChangeText={(message) => setContactForm((prev) => ({ ...prev, message }))}
+                    placeholder={t("contact.form.messagePlaceholder", { defaultValue: "Tell us what happened." })}
+                    placeholderTextColor={theme.inputPlaceholder}
+                    multiline
+                  />
+                </View>
+                {contactError ? <Text style={styles.errorText}>{contactError}</Text> : null}
+                {contactSuccess ? <Text style={styles.successText}>{contactSuccess}</Text> : null}
+                <TouchableOpacity
+                  style={[styles.primaryButton, contactSaving && styles.buttonDisabled]}
+                  onPress={handleContactSubmit}
+                  disabled={contactSaving}
+                >
+                  <Text style={styles.primaryButtonLabel}>
+                    {contactSaving
+                      ? t("contact.form.submitting", { defaultValue: "Sending..." })
+                      : t("contact.form.submit", { defaultValue: "Send message" })}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.card}>
+                <Text style={styles.heading}>
+                  {t("settings.help.bugTitle", { defaultValue: "Report a bug" })}
+                </Text>
+                <Text style={styles.body}>
+                  {t("settings.help.bugBody", {
+                    defaultValue: "Send a technical report with mobile device details.",
+                  })}
+                </Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>{t("settings.help.bugSummary", { defaultValue: "Title" })}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={bugForm.title}
+                    onChangeText={(title) => setBugForm((prev) => ({ ...prev, title }))}
+                    placeholder={t("settings.help.bugSummaryPlaceholder", { defaultValue: "Short bug summary" })}
+                    placeholderTextColor={theme.inputPlaceholder}
+                  />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>{t("settings.help.bugScreen", { defaultValue: "Screen" })}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={bugForm.screen}
+                    onChangeText={(screen) => setBugForm((prev) => ({ ...prev, screen }))}
+                    placeholder={t("settings.help.bugScreenPlaceholder", { defaultValue: "settings/help" })}
+                    placeholderTextColor={theme.inputPlaceholder}
+                    autoCapitalize="none"
+                  />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>{t("settings.help.bugSeverity", { defaultValue: "Severity" })}</Text>
+                  <View style={styles.segmentRow}>
+                    {(["low", "medium", "high", "critical"] as BugReportSeverity[]).map((severity) => {
+                      const active = bugForm.severity === severity;
+                      return (
+                        <TouchableOpacity
+                          key={severity}
+                          style={[styles.segmentButton, active && styles.segmentButtonActive]}
+                          onPress={() => setBugForm((prev) => ({ ...prev, severity }))}
+                        >
+                          <Text style={[styles.segmentLabel, active && styles.segmentLabelActive]}>
+                            {severity}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>
+                    {t("settings.help.bugDescription", { defaultValue: "Description" })}
+                  </Text>
+                  <TextInput
+                    style={[styles.input, styles.textarea]}
+                    value={bugForm.description}
+                    onChangeText={(description) => setBugForm((prev) => ({ ...prev, description }))}
+                    placeholder={t("settings.help.bugDescriptionPlaceholder", {
+                      defaultValue: "What did you expect, and what happened instead?",
+                    })}
+                    placeholderTextColor={theme.inputPlaceholder}
+                    multiline
+                  />
+                </View>
+                {bugError ? <Text style={styles.errorText}>{bugError}</Text> : null}
+                {bugSuccess ? <Text style={styles.successText}>{bugSuccess}</Text> : null}
+                <TouchableOpacity
+                  style={[styles.primaryButton, bugSaving && styles.buttonDisabled]}
+                  onPress={handleBugSubmit}
+                  disabled={bugSaving}
+                >
+                  <Text style={styles.primaryButtonLabel}>
+                    {bugSaving
+                      ? t("settings.help.bugSubmitting", { defaultValue: "Submitting..." })
+                      : t("settings.help.bugSubmit", { defaultValue: "Submit bug report" })}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          {!isProfile && !isAccount && !isNotifications && !isTheme && !isHelp && (
             <View style={styles.card}>
               <View style={styles.comingSoonBadge}>
                 <Text style={styles.comingSoonBadgeText}>
@@ -702,9 +1107,23 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.danger,
       fontSize: 12,
     },
+    successText: {
+      color: theme.success,
+      fontSize: 13,
+      fontWeight: "700",
+    },
     helperText: {
       fontSize: 12,
       color: theme.textMuted,
+    },
+    sectionLabel: {
+      fontSize: 13,
+      fontWeight: "800",
+      color: theme.textMuted,
+      textTransform: "uppercase",
+    },
+    sectionLabelSpaced: {
+      marginTop: 10,
     },
     primaryButton: {
       marginTop: 8,
@@ -719,6 +1138,10 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.primaryForeground,
       fontSize: 15,
       fontWeight: "700",
+    },
+    deleteButton: {
+      backgroundColor: theme.danger,
+      borderColor: theme.danger,
     },
     secondaryButton: {
       paddingHorizontal: 12,
@@ -740,6 +1163,32 @@ const createStyles = (theme: ThemeColors) =>
     },
     list: {
       gap: 16,
+    },
+    segmentRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    segmentButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 9,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceMuted,
+    },
+    segmentButtonActive: {
+      borderColor: theme.primary,
+      backgroundColor: theme.primaryMuted,
+    },
+    segmentLabel: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: theme.textMuted,
+      textTransform: "capitalize",
+    },
+    segmentLabelActive: {
+      color: theme.primary,
     },
     themeRow: {
       flexDirection: "row",
@@ -809,5 +1258,19 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 11,
       fontWeight: "700",
       color: theme.warning ?? theme.text,
+    },
+    dangerZone: {
+      marginTop: 18,
+      padding: 16,
+      borderRadius: 14,
+      backgroundColor: theme.dangerBackground,
+      borderWidth: 1,
+      borderColor: theme.danger,
+      gap: 12,
+    },
+    dangerTitle: {
+      fontSize: 16,
+      fontWeight: "800",
+      color: theme.danger,
     },
   });

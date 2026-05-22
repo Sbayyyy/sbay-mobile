@@ -8,6 +8,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "build:web": "expo export --platform web --output-dir dist",
+    "build:android": "bash ./scripts/docker-build-android.sh",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest",

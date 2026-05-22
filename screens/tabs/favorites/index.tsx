@@ -29,6 +29,7 @@ import {
   isUnverifiedEmailError,
   showEmailVerificationRequiredAlert,
 } from "@/services/email-verification";
+import { getActionErrorMessage } from "@/services/account-status-errors";
 
 export default function FavoritesScreen() {
   const theme = useAppTheme();
@@ -105,6 +106,19 @@ export default function FavoritesScreen() {
         return;
       }
 
+      const listingStatus = (listing.status ?? "active").toLowerCase();
+      const isAvailable =
+        listingStatus === "active" && (listing.stock == null || listing.stock > 0);
+      if (!isAvailable) {
+        Alert.alert(
+          t("listings.unavailableTitle", { defaultValue: "Listing unavailable" }),
+          t("listings.unavailableMessage", {
+            defaultValue: "This listing is not currently available.",
+          }),
+        );
+        return;
+      }
+
       if (profile && !isEmailVerified(profile)) {
         showEmailVerificationRequiredAlert();
         return;
@@ -123,7 +137,7 @@ export default function FavoritesScreen() {
         }
         Alert.alert(
           t("listings.openChatFailedTitle"),
-          err instanceof Error ? err.message : t("listings.tryAgain"),
+          getActionErrorMessage(err, t("listings.tryAgain")),
         );
       }
     },
@@ -184,6 +198,8 @@ export default function FavoritesScreen() {
       image: listing.thumbnailUrl ?? listing.imageUrls?.[0] ?? "",
       location: getRegionLabel(listing.region, t) ?? t("favorites.unknownLocation", { defaultValue: "Unknown location" }),
       condition: listing.condition ?? "Unknown",
+      status: listing.status,
+      stock: listing.stock,
       seller: listing.seller?.name ?? "Seller",
       sellerId: listing.seller?.id ?? listing.sellerId ?? null,
       updatedAt: listing.createdAt

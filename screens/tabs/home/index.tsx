@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { useRouter, useFocusEffect } from "expo-router";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { SectionHeader } from "@/components/common/SectionHeader";
+import { SponsoredAdCard } from "@/components/ads/SponsoredAdCard";
 import {
   HorizontalFilterChips,
   FilterChipOption,
@@ -23,10 +24,10 @@ import { ListingCard } from "@/components/listings/ListingCard";
 import { SearchBar } from "@/components/common/SearchBar";
 import { HOME_CATEGORIES } from "@/constants/mockData";
 import { getRegionLabel } from "@/constants/regions";
-import { Listing } from "@/types/listing";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
 import { searchListings, type Listing as ApiListing } from "@/services/listings";
+import { getSponsoredAds, type SponsoredAd } from "@/services/ads";
 import { useNotificationContext } from "@/providers/NotificationProvider";
 
 export default function HomeScreen() {
@@ -34,6 +35,7 @@ export default function HomeScreen() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [listings, setListings] = useState<ApiListing[]>([]);
   const [featuredListings, setFeaturedListings] = useState<ApiListing[]>([]);
+  const [sponsoredAds, setSponsoredAds] = useState<SponsoredAd[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -71,7 +73,7 @@ export default function HomeScreen() {
 
       const run = async () => {
         try {
-          const [data, featured] = await Promise.all([
+          const [data, featured, ads] = await Promise.all([
             searchListings({
               category: activeCategory === "all" ? undefined : activeCategory,
             }),
@@ -79,10 +81,12 @@ export default function HomeScreen() {
               featured: true,
               pageSize: 8,
             }),
+            getSponsoredAds().catch(() => []),
           ]);
           if (!isMounted) return;
           setListings(data);
           setFeaturedListings(featured.filter((listing) => listing.isBoosted === true));
+          setSponsoredAds(ads);
         } catch (err) {
           if (!isMounted) return;
           setError(
@@ -217,6 +221,12 @@ export default function HomeScreen() {
                 </ScrollView>
               </View>
             </>
+          ) : null}
+
+          {sponsoredAds[0] ? (
+            <View style={styles.sponsoredWrapper}>
+              <SponsoredAdCard ad={sponsoredAds[0]} />
+            </View>
           ) : null}
 
           <SectionHeader
@@ -378,6 +388,9 @@ const createStyles = (theme: ThemeColors) =>
     fontSize: 13,
     fontWeight: "700",
     color: theme.success,
+  },
+  sponsoredWrapper: {
+    paddingHorizontal: 20,
   },
   loading: {
     paddingVertical: 24,

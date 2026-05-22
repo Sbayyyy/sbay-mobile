@@ -1,5 +1,6 @@
 import { apiRequest } from "@/services/api";
 import { getStoredToken } from "@/services/auth";
+import { resolveMediaUrl } from "@/services/media";
 
 export type ListingImage = {
   url: string;
@@ -8,6 +9,8 @@ export type ListingImage = {
   width?: number | null;
   height?: number | null;
 };
+
+export type ListingStatus = "active" | "sold" | "hidden";
 
 export type SellerSummary = {
   id: string;
@@ -25,9 +28,11 @@ export type Listing = {
   priceCurrency: string;
   stock: number;
   condition: string;
+  status?: ListingStatus | "inactive" | "deleted" | string | null;
   categoryPath?: string | null;
   region?: string | null;
   createdAt: string;
+  soldUntil?: string | null;
   title: string;
   description: string;
   thumbnailUrl?: string | null;
@@ -64,10 +69,33 @@ export type CreateListingPayload = {
 
 export type UpdateListingPayload = Partial<CreateListingPayload>;
 
+export type UpdateListingStatusPayload = {
+  status: ListingStatus;
+};
+
 async function authHeader(): Promise<Record<string, string>> {
   const token = await getStoredToken();
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };
+}
+
+export function normalizeListingMedia(listing: Listing): Listing {
+  const imageUrls = listing.imageUrls?.map((url) => resolveMediaUrl(url) ?? url) ?? [];
+  return {
+    ...listing,
+    thumbnailUrl: resolveMediaUrl(listing.thumbnailUrl),
+    images: listing.images?.map((image) => ({
+      ...image,
+      url: resolveMediaUrl(image.url) ?? image.url,
+    })) ?? [],
+    imageUrls,
+    seller: listing.seller
+      ? {
+          ...listing.seller,
+          avatar: resolveMediaUrl(listing.seller.avatar),
+        }
+      : listing.seller,
+  };
 }
 
 function buildQuery(params: ListingQuery): string {
@@ -88,44 +116,69 @@ function buildQuery(params: ListingQuery): string {
 export async function searchListings(
   params: ListingQuery = {},
 ): Promise<Listing[]> {
-  return apiRequest<Listing[]>(`/api/listings${buildQuery(params)}`);
+  const listings = await apiRequest<Listing[]>(`/api/listings${buildQuery(params)}`);
+  return listings.map(normalizeListingMedia);
 }
 
 export async function getListing(id: string): Promise<Listing> {
-  return apiRequest<Listing>(`/api/listings/${id}`, {
+  const listing = await apiRequest<Listing>(`/api/listings/${id}`, {
     headers: await authHeader(),
   });
+  return normalizeListingMedia(listing);
 }
 
 export async function getMyListings(): Promise<Listing[]> {
-  return apiRequest<Listing[]>("/api/listings/me", {
+  const listings = await apiRequest<Listing[]>("/api/listings/me", {
     headers: await authHeader(),
   });
+  return listings.map(normalizeListingMedia);
 }
 
 export async function getSellerListings(sellerId: string): Promise<Listing[]> {
-  return apiRequest<Listing[]>(`/api/listings/seller/${sellerId}`);
+  const listings = await apiRequest<Listing[]>(`/api/listings/seller/${sellerId}`);
+  return listings.map(normalizeListingMedia);
 }
 
 export async function createListing(
   payload: CreateListingPayload,
 ): Promise<Listing> {
-  return apiRequest<Listing>("/api/listings", {
+  const listing = await apiRequest<Listing>("/api/listings", {
     method: "POST",
     headers: await authHeader(),
     body: JSON.stringify(payload),
   });
+  return normalizeListingMedia(listing);
 }
 
 export async function updateListing(
   id: string,
-  payload: UpdateListingPayload,
+  payload: UpdateListingPayload & Partial<UpdateListingStatusPayload>,
 ): Promise<Listing> {
-  return apiRequest<Listing>(`/api/listings/${id}`, {
+  const listing = await apiRequest<Listing>(`/api/listings/${id}`, {
     method: "PUT",
     headers: await authHeader(),
     body: JSON.stringify(payload),
   });
+  return normalizeListingMedia(listing);
+}
+
+export async function updateListingStatus(
+  id: string,
+  status: ListingStatus,
+): Promise<Listing> {
+  return updateListing(id, { status });
+}
+
+export async function markListingSold(id: string): Promise<Listing> {
+  return updateListingStatus(id, "sold");
+}
+
+export async function relistListing(id: string): Promise<Listing> {
+  return updateListingStatus(id, "active");
+}
+
+export async function hideListing(id: string): Promise<Listing> {
+  return updateListingStatus(id, "hidden");
 }
 
 export async function deleteListing(id: string): Promise<void> {

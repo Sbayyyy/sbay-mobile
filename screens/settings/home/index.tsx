@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ScrollView,
@@ -30,6 +30,7 @@ const settingsItems = [
 ] as const;
 
 export default function SettingsHome() {
+  const router = useRouter();
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { t } = useTranslation();
@@ -38,6 +39,14 @@ export default function SettingsHome() {
   const forwardIcon = isRTL ? "<" : ">";
   const { signOut, status } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/(tabs)/me");
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -65,7 +74,7 @@ export default function SettingsHome() {
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Text style={styles.backIcon}>{backIcon}</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("settings.title")}</Text>

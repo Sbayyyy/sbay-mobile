@@ -1,5 +1,6 @@
 import { apiRequest } from "@/services/api";
 import { getStoredToken } from "@/services/auth";
+import { resolveMediaUrl } from "@/services/media";
 
 export type UserProfile = {
   id: string;
@@ -38,22 +39,44 @@ export type UpdateProfilePayload = {
   avatar?: string | null;
 };
 
+export type AccountDeletionRequestResponse = {
+  status: string;
+  requestedAt: string;
+  scheduledDeletionAt: string;
+  reason?: string | null;
+};
+
 async function authHeader(): Promise<Record<string, string>> {
   const token = await getStoredToken();
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };
 }
 
+function normalizeUserProfile(profile: UserProfile): UserProfile {
+  return {
+    ...profile,
+    avatar: resolveMediaUrl(profile.avatar),
+  };
+}
+
+function normalizeSellerProfile(profile: SellerProfile): SellerProfile {
+  return {
+    ...profile,
+    avatar: resolveMediaUrl(profile.avatar),
+  };
+}
+
 export async function getMyProfile(): Promise<UserProfile> {
-  return apiRequest<UserProfile>("/api/users/me", {
+  const profile = await apiRequest<UserProfile>("/api/users/me", {
     headers: await authHeader(),
   });
+  return normalizeUserProfile(profile);
 }
 
 export async function updateMyProfile(
   payload: UpdateProfilePayload,
 ): Promise<UserProfile> {
-  return apiRequest<UserProfile>("/api/users/me", {
+  const profile = await apiRequest<UserProfile>("/api/users/me", {
     method: "PUT",
     headers: {
       Accept: "application/json",
@@ -61,6 +84,21 @@ export async function updateMyProfile(
       ...(await authHeader()),
     },
     body: JSON.stringify(payload ?? {}),
+  });
+  return normalizeUserProfile(profile);
+}
+
+export async function requestAccountDeletion(
+  reason?: string,
+): Promise<AccountDeletionRequestResponse> {
+  return apiRequest<AccountDeletionRequestResponse>("/api/users/me/deletion-request", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(await authHeader()),
+    },
+    body: JSON.stringify({ reason: reason?.trim() || undefined }),
   });
 }
 
@@ -76,5 +114,6 @@ export type SellerProfile = {
 };
 
 export async function getSellerProfile(id: string): Promise<SellerProfile> {
-  return apiRequest<SellerProfile>(`/api/users/${id}`);
+  const profile = await apiRequest<SellerProfile>(`/api/users/${id}`);
+  return normalizeSellerProfile(profile);
 }

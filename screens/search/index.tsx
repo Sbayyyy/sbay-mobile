@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { SearchBar } from "@/components/common/SearchBar";
 import { SectionHeader } from "@/components/common/SectionHeader";
+import { SponsoredAdCard } from "@/components/ads/SponsoredAdCard";
 import { ChipPicker } from "@/components/form/ChipPicker";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { HOME_CATEGORIES } from "@/constants/mockData";
@@ -26,6 +27,7 @@ import {
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { searchListings, type Listing as ApiListing } from "@/services/listings";
+import { getSponsoredAds, type SponsoredAd } from "@/services/ads";
 
 type SortId = "newest" | "price_low" | "price_high";
 type StatusId = "all" | "new" | "used" | "renewed" | "defective";
@@ -64,6 +66,7 @@ export default function SearchScreen() {
   const [maxPrice, setMaxPrice] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [listings, setListings] = useState<ApiListing[]>([]);
+  const [sponsoredAds, setSponsoredAds] = useState<SponsoredAd[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -121,21 +124,25 @@ export default function SearchScreen() {
       try {
         const parsedMin = Number(minPrice);
         const parsedMax = Number(maxPrice);
-        const data = await searchListings({
-          text: search.trim() || undefined,
-          category: category === "all" ? undefined : category,
-          region: location === "all" ? undefined : location,
-          condition: status === "all" ? undefined : statusToCondition[status],
-          featured: featuredFilter === "featured" ? true : undefined,
-          minPrice: Number.isFinite(parsedMin) && parsedMin > 0 ? parsedMin : undefined,
-          maxPrice: Number.isFinite(parsedMax) && parsedMax > 0 ? parsedMax : undefined,
-        });
+        const [data, ads] = await Promise.all([
+          searchListings({
+            text: search.trim() || undefined,
+            category: category === "all" ? undefined : category,
+            region: location === "all" ? undefined : location,
+            condition: status === "all" ? undefined : statusToCondition[status],
+            featured: featuredFilter === "featured" ? true : undefined,
+            minPrice: Number.isFinite(parsedMin) && parsedMin > 0 ? parsedMin : undefined,
+            maxPrice: Number.isFinite(parsedMax) && parsedMax > 0 ? parsedMax : undefined,
+          }),
+          getSponsoredAds().catch(() => []),
+        ]);
         if (!isMounted) return;
         setListings(
           featuredFilter === "featured"
             ? data.filter((listing) => listing.isBoosted === true)
             : data,
         );
+        setSponsoredAds(ads);
       } catch (err) {
         if (!isMounted) return;
         setError(err instanceof Error ? err.message : t("listings.errorSubtitle"));
@@ -206,7 +213,8 @@ export default function SearchScreen() {
             </TouchableOpacity>
             <Text style={styles.resultCount}>
               {t("listings.resultsCount", {
-                defaultValue: `${displayListings.length} results`,
+                defaultValue: "{{count}} results",
+                count: displayListings.length,
               })}
             </Text>
           </View>
@@ -233,12 +241,19 @@ export default function SearchScreen() {
             </View>
           ) : (
             <View style={styles.grid}>
-              {displayListings.map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={listing}
-                  onPress={() => router.push(`/listings/${listing.id}`)}
-                />
+              {displayListings.map((listing, index) => (
+                <Fragment key={listing.id}>
+                  {index === 4 && sponsoredAds[0] ? (
+                    <SponsoredAdCard
+                      ad={sponsoredAds[0]}
+                      style={styles.sponsoredGridItem}
+                    />
+                  ) : null}
+                  <ListingCard
+                    listing={listing}
+                    onPress={() => router.push(`/listings/${listing.id}`)}
+                  />
+                </Fragment>
               ))}
             </View>
           )}
@@ -435,6 +450,9 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: "space-between",
       paddingHorizontal: 20,
       rowGap: 16,
+    },
+    sponsoredGridItem: {
+      width: "48%",
     },
     emptyState: {
       paddingHorizontal: 20,

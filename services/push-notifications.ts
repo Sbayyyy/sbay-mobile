@@ -53,6 +53,8 @@ export async function syncPushToken(): Promise<void> {
   await apiRequest("/api/notifications/push-token", {
     method: "POST",
     headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
       Authorization: `Bearer ${authToken}`,
     },
     body: JSON.stringify({

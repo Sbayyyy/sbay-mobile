@@ -1,4 +1,9 @@
-import { getNotifications, getUnreadNotificationCount } from "../notifications";
+import {
+  archiveNotification,
+  getNotifications,
+  getUnreadNotificationCount,
+  markNotificationRead,
+} from "../notifications";
 import * as api from "@/services/api";
 import * as auth from "@/services/auth";
 
@@ -124,6 +129,36 @@ describe("Notifications Service", () => {
       const result = await getNotifications();
 
       expect(result[0].href).toBe("/chat/123");
+    });
+  });
+
+  describe("notification item actions", () => {
+    it("marks a single notification read", async () => {
+      (api.apiRequest as jest.Mock).mockResolvedValue(undefined);
+
+      await markNotificationRead("notification-1");
+
+      expect(api.apiRequest).toHaveBeenCalledWith(
+        "/api/notifications/notification-1/mark-read",
+        {
+          method: "POST",
+          headers: { Authorization: "Bearer token" },
+        },
+      );
+    });
+
+    it("archives a single notification", async () => {
+      (api.apiRequest as jest.Mock).mockResolvedValue(undefined);
+
+      await archiveNotification("notification-1");
+
+      expect(api.apiRequest).toHaveBeenCalledWith(
+        "/api/notifications/notification-1",
+        {
+          method: "DELETE",
+          headers: { Authorization: "Bearer token" },
+        },
+      );
     });
   });
 });

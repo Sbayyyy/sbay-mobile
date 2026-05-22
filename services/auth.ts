@@ -105,6 +105,8 @@ export async function storeAuthTokens(token: string, refreshToken?: string | nul
   await storeToken(token);
   if (refreshToken) {
     await SecureStore.setItemAsync(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
+  } else {
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_STORAGE_KEY);
   }
 }
 
@@ -121,8 +123,16 @@ export async function logout(): Promise<void> {
 }
 
 export async function clearStoredToken(): Promise<void> {
-  await SecureStore.deleteItemAsync(TOKEN_STORAGE_KEY);
-  await SecureStore.deleteItemAsync(REFRESH_TOKEN_STORAGE_KEY);
+  const failures: unknown[] = [];
+  await SecureStore.deleteItemAsync(TOKEN_STORAGE_KEY).catch((error) => {
+    failures.push(error);
+  });
+  await SecureStore.deleteItemAsync(REFRESH_TOKEN_STORAGE_KEY).catch((error) => {
+    failures.push(error);
+  });
+  if (failures.length > 0) {
+    throw new Error("Unable to clear stored auth tokens.");
+  }
   setAuthToken(null);
 }
 
@@ -144,7 +154,9 @@ export async function refreshStoredToken(): Promise<string | null> {
   });
 
   if (!response.ok) {
-    await clearStoredToken();
+    await clearStoredToken().catch((error) => {
+      console.warn("Unable to clear stored auth tokens after refresh failure.", error);
+    });
     return null;
   }
 

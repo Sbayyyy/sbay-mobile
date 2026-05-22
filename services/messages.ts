@@ -30,8 +30,27 @@ export type Message = {
   receiverId: string;
   listingId?: string | null;
   content: string;
+  type?: "text" | "offer" | "system" | string | null;
+  dataJson?: string | null;
   createdAt: string;
   isRead: boolean;
+};
+
+export type OfferStatus = "pending" | "accepted" | "rejected" | "countered";
+
+export type OfferMessageData = {
+  offerId: string;
+  listingId: string;
+  amount: number;
+  currency: string;
+  status: OfferStatus;
+  parentOfferId?: string | null;
+  expiresAt?: string | null;
+};
+
+export type SendOfferPayload = {
+  amount: number;
+  currency?: string;
 };
 
 export type OpenChatPayload = {
@@ -85,6 +104,57 @@ export async function sendMessage(
       ...(await authHeader()),
     },
     body: JSON.stringify({ content }),
+  });
+}
+
+export async function sendOffer(
+  chatId: string,
+  payload: SendOfferPayload,
+): Promise<Message> {
+  return apiRequest<Message>(`/api/chats/${chatId}/offers`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(await authHeader()),
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function acceptOffer(
+  chatId: string,
+  messageId: string,
+): Promise<Message> {
+  return apiRequest<Message>(`/api/chats/${chatId}/offers/${messageId}/accept`, {
+    method: "POST",
+    headers: await authHeader(),
+  });
+}
+
+export async function rejectOffer(
+  chatId: string,
+  messageId: string,
+): Promise<Message> {
+  return apiRequest<Message>(`/api/chats/${chatId}/offers/${messageId}/reject`, {
+    method: "POST",
+    headers: await authHeader(),
+  });
+}
+
+export async function counterOffer(
+  chatId: string,
+  messageId: string,
+  payload: SendOfferPayload,
+): Promise<Message> {
+  return apiRequest<Message>(`/api/chats/${chatId}/offers/${messageId}/counter`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(await authHeader()),
+    },
+    body: JSON.stringify(payload),
   });
 }
 

@@ -27,6 +27,17 @@ EXPO_PUBLIC_WEB_BASE_URL=https://syrian-bay.com
 
 Override these in `.env` only when testing against a local backend.
 
+## Docker
+
+Docker support is available for running the Expo dev server, checks, web export, and Android builds.
+
+```bash
+docker compose build
+docker compose up app
+```
+
+See `DOCKER.md` for Android debug APK and signed release AAB commands.
+
 ## Jenkins Android release
 
 `Jenkinsfile` builds a signed Android production AAB that can be uploaded manually to Google Play Console.

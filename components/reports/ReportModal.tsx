@@ -21,6 +21,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
 import { ChipPicker } from "@/components/form/ChipPicker";
+import { resolveMediaUrl } from "@/services/media";
 import { uploadImageAsync } from "@/services/uploads";
 import { createReport, type ReportReason, type ReportTargetType } from "@/services/reports";
 
@@ -188,7 +189,7 @@ export function ReportModal({ visible, targetType, targetId, onClose }: ReportMo
                 <View style={styles.evidenceRow}>
                   {evidence.map((url, index) => (
                     <View key={`${url}-${index}`} style={styles.evidenceItem}>
-                      <Image source={{ uri: url }} style={styles.evidenceImage} />
+                      <Image source={{ uri: resolveMediaUrl(url) ?? url }} style={styles.evidenceImage} />
                       <TouchableOpacity
                         style={styles.evidenceRemove}
                         onPress={() => handleRemoveEvidence(index)}

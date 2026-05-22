@@ -13,7 +13,9 @@ const rawBaseUrl =
 export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, "");
 
 type ApiErrorPayload = {
+  code?: string;
   message?: string;
+  [key: string]: unknown;
 };
 
 export class ApiError extends Error {
