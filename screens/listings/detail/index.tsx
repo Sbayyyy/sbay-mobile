@@ -24,6 +24,9 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import {
   deleteListing,
   getListing,
+  hideListing,
+  markListingSold,
+  relistListing,
   type Listing as ApiListing,
 } from "@/services/listings";
 import { getStoredToken } from "@/services/auth";
@@ -38,6 +41,7 @@ import {
   isUnverifiedEmailError,
   showEmailVerificationRequiredAlert,
 } from "@/services/email-verification";
+import { getActionErrorMessage } from "@/services/account-status-errors";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80";
@@ -59,6 +63,7 @@ export default function ListingDetailScreen() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [openingChat, setOpeningChat] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -167,7 +172,11 @@ export default function ListingDetailScreen() {
     Refurbished: "Refurbished",
   };
 
-  const isAvailable = listing.stock === undefined || listing.stock > 0;
+  const listingStatus = (listing.status ?? "active").toLowerCase();
+  const isSold = listingStatus === "sold" || (listing.stock != null && listing.stock <= 0);
+  const isHidden = listingStatus === "hidden" || listingStatus === "inactive";
+  const isAvailable = listingStatus === "active" && (listing.stock === undefined || listing.stock > 0);
+  const statusLabel = isSold ? "Sold" : isHidden ? "Hidden" : "Active";
   const sellerProfileId = listing.seller?.id ?? listing.sellerId ?? null;
   const regionLabel = getRegionLabel(listing.region, t);
   const isOwnListing =
@@ -186,55 +195,88 @@ export default function ListingDetailScreen() {
       router.replace("/");
     } catch (err) {
       showError(
-        err instanceof Error ? err.message : t("listings.deleteFailedBody"),
+        getActionErrorMessage(err, t("listings.deleteFailedBody")),
         t("listings.deleteFailedTitle"),
       );
     } finally {
       setDeleteLoading(false);
     }
   };
-const handleContactSeller = async () => {
-  if (openingChat) return;
-
-  try {
-    const token = await getStoredToken();
-    if (!token) {
-      showError(t("listings.signInMessageSeller"), t("listings.signInRequiredTitle"));
-      return;
+  const updateOwnerListingStatus = async (
+    action: "sold" | "active" | "hidden",
+  ) => {
+    if (statusUpdating) return;
+    setStatusUpdating(true);
+    try {
+      const updated =
+        action === "sold"
+          ? await markListingSold(listing.id)
+          : action === "hidden"
+            ? await hideListing(listing.id)
+            : await relistListing(listing.id);
+      setListing(updated);
+      setSelectedImageIndex(0);
+    } catch (err) {
+      showError(
+        getActionErrorMessage(err, "Unable to update listing status."),
+        "Listing update failed",
+      );
+    } finally {
+      setStatusUpdating(false);
     }
+  };
+  const handleContactSeller = async () => {
+    if (openingChat) return;
 
-    const sellerId = sellerProfileId;
-    if (!sellerId || !listing?.id) {
-      showError(t("listings.sellerMissing"), t("listings.contactSellerTitle"));
-      return;
+    try {
+      const token = await getStoredToken();
+      if (!token) {
+        showError(t("listings.signInMessageSeller"), t("listings.signInRequiredTitle"));
+        return;
+      }
+
+      const sellerId = sellerProfileId;
+      if (!sellerId || !listing?.id) {
+        showError(t("listings.sellerMissing"), t("listings.contactSellerTitle"));
+        return;
+      }
+
+      if (!isAvailable) {
+        showError(
+          t("listings.unavailableMessage", {
+            defaultValue: "This listing is not currently available.",
+          }),
+          t("listings.unavailableTitle", { defaultValue: "Listing unavailable" }),
+        );
+        return;
+      }
+
+      if (profile && !isEmailVerified(profile)) {
+        showEmailVerificationRequiredAlert();
+        return;
+      }
+
+      setOpeningChat(true);
+
+      const { chatId } = await openChat({
+        otherUserId: sellerId,
+        listingId: listing.id,
+      });
+
+      router.push(`/chats/thread/${chatId}`);
+    } catch (err) {
+      if ((!profile || !isEmailVerified(profile)) && isUnverifiedEmailError(err)) {
+        showEmailVerificationRequiredAlert();
+        return;
+      }
+      showError(
+        getActionErrorMessage(err, t("listings.tryAgain")),
+        t("listings.openChatFailedTitle"),
+      );
+    } finally {
+      setOpeningChat(false);
     }
-
-    if (profile && !isEmailVerified(profile)) {
-      showEmailVerificationRequiredAlert();
-      return;
-    }
-
-    setOpeningChat(true);
-
-    const { chatId } = await openChat({
-      otherUserId: sellerId,
-      listingId: listing.id,
-    });
-
-    router.push(`/chats/thread/${chatId}`);
-  } catch (err) {
-    if ((!profile || !isEmailVerified(profile)) && isUnverifiedEmailError(err)) {
-      showEmailVerificationRequiredAlert();
-      return;
-    }
-    showError(
-      err instanceof Error ? err.message : t("listings.tryAgain"),
-      t("listings.openChatFailedTitle"),
-    );
-  } finally {
-    setOpeningChat(false);
-  }
-};
+  };
   return (
   <AppScreen>
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
@@ -301,7 +343,26 @@ const handleContactSeller = async () => {
         </View>
 
         <View style={styles.header}>
-          <Text style={styles.title}>{listing.title}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{listing.title}</Text>
+            <View
+              style={[
+                styles.statusBadge,
+                isSold && styles.statusBadgeSold,
+                isHidden && styles.statusBadgeHidden,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusBadgeText,
+                  isSold && styles.statusBadgeTextSold,
+                  isHidden && styles.statusBadgeTextHidden,
+                ]}
+              >
+                {statusLabel}
+              </Text>
+            </View>
+          </View>
           <Text style={styles.price}>
             {listing.priceCurrency} {listing.priceAmount}
           </Text>
@@ -437,6 +498,18 @@ const handleContactSeller = async () => {
                 <Text style={styles.detailValue}>{listing.stock}</Text>
               </View>
             ) : null}
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Status</Text>
+              <Text style={styles.detailValue}>{statusLabel}</Text>
+            </View>
+            {listing.soldUntil ? (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Sold until</Text>
+                <Text style={styles.detailValue}>
+                  {new Date(listing.soldUntil).toLocaleDateString()}
+                </Text>
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -487,22 +560,22 @@ const handleContactSeller = async () => {
             </View>
           ) : null}
 
-{!isOwnListing ? (
-  <TouchableOpacity
-    style={[styles.primaryButton, openingChat && { opacity: 0.7 }]}
-    onPress={handleContactSeller}
-    disabled={openingChat}
-  >
-    {openingChat ? (
-      <ActivityIndicator color="#fff" />
-    ) : (
-      <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
-    )}
-    <Text style={styles.primaryButtonLabel}>
-      {openingChat ? "Opening..." : "Contact seller"}
-    </Text>
-  </TouchableOpacity>
-)  : (
+          {!isOwnListing ? (
+            <TouchableOpacity
+              style={[styles.primaryButton, (openingChat || !isAvailable) && { opacity: 0.7 }]}
+              onPress={handleContactSeller}
+              disabled={openingChat || !isAvailable}
+            >
+              {openingChat ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
+              )}
+              <Text style={styles.primaryButtonLabel}>
+                {openingChat ? "Opening..." : "Contact seller"}
+              </Text>
+            </TouchableOpacity>
+          ) : (
             <View style={styles.ownerActions}>
               <View style={styles.noticeBannerInfo}>
                 <Text style={styles.noticeInfoText}>This is your listing.</Text>
@@ -514,6 +587,53 @@ const handleContactSeller = async () => {
                 <Ionicons name="create-outline" size={18} color="#fff" />
                 <Text style={styles.primaryButtonLabel}>Edit listing</Text>
               </TouchableOpacity>
+              {isSold || isHidden ? (
+                <TouchableOpacity
+                  style={[styles.primaryButton, statusUpdating && { opacity: 0.7 }]}
+                  onPress={() => updateOwnerListingStatus("active")}
+                  disabled={statusUpdating}
+                >
+                  {statusUpdating ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Ionicons name="refresh-outline" size={18} color="#fff" />
+                  )}
+                  <Text style={styles.primaryButtonLabel}>
+                    {statusUpdating ? "Updating..." : "Relist"}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={[
+                      styles.primaryButton,
+                      styles.successButton,
+                      statusUpdating && { opacity: 0.7 },
+                    ]}
+                    onPress={() => updateOwnerListingStatus("sold")}
+                    disabled={statusUpdating}
+                  >
+                    <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
+                    <Text style={styles.primaryButtonLabel}>
+                      {statusUpdating ? "Updating..." : "Mark sold"}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.primaryButton,
+                      styles.secondaryOwnerButton,
+                      statusUpdating && { opacity: 0.7 },
+                    ]}
+                    onPress={() => updateOwnerListingStatus("hidden")}
+                    disabled={statusUpdating}
+                  >
+                    <Ionicons name="eye-off-outline" size={18} color="#fff" />
+                    <Text style={styles.primaryButtonLabel}>
+                      {statusUpdating ? "Updating..." : "Hide listing"}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
               <TouchableOpacity
                 style={[styles.primaryButton, styles.dangerButton]}
                 onPress={handleDeleteListing}
@@ -655,10 +775,44 @@ const createStyles = (theme: ThemeColors) =>
     header: {
       gap: 6,
     },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: 12,
+    },
     title: {
+      flex: 1,
       fontSize: 22,
       fontWeight: "700",
       color: theme.text,
+    },
+    statusBadge: {
+      borderRadius: 999,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      backgroundColor: theme.successBackground,
+      borderWidth: 1,
+      borderColor: theme.success,
+    },
+    statusBadgeSold: {
+      backgroundColor: "#FDECEC",
+      borderColor: theme.danger,
+    },
+    statusBadgeHidden: {
+      backgroundColor: theme.surfaceMuted,
+      borderColor: theme.border,
+    },
+    statusBadgeText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: theme.success,
+    },
+    statusBadgeTextSold: {
+      color: theme.danger,
+    },
+    statusBadgeTextHidden: {
+      color: theme.textMuted,
     },
     price: {
       fontSize: 20,
@@ -796,6 +950,12 @@ const createStyles = (theme: ThemeColors) =>
     },
     dangerButton: {
       backgroundColor: theme.danger,
+    },
+    successButton: {
+      backgroundColor: theme.success,
+    },
+    secondaryOwnerButton: {
+      backgroundColor: theme.textMuted,
     },
     primaryButtonLabel: {
       fontSize: 15,

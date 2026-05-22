@@ -32,7 +32,14 @@ import { ListingCard } from "@/components/listings/ListingCard";
 import { getRegionLabel } from "@/constants/regions";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { getMyListings, type Listing as ApiListing } from "@/services/listings";
+import {
+  getMyListings,
+  hideListing,
+  markListingSold,
+  relistListing,
+  type Listing as ApiListing,
+  type ListingStatus,
+} from "@/services/listings";
 import {
   createBoostPayment,
   getBoostOptions,
@@ -43,6 +50,7 @@ import { getMyProfile, updateMyProfile, type UserProfile } from "@/services/user
 import { uploadImageAsync } from "@/services/uploads";
 import { resolveMediaUrl } from "@/services/media";
 import { isEmailVerified } from "@/services/email-verification";
+import { getActionErrorMessage } from "@/services/account-status-errors";
 
 const tabs = ["overview", "listings"] as const;
 
@@ -73,6 +81,19 @@ type StatEntry = {
   label: string;
   value: string | number;
 };
+
+function getListingStatusFlags(listing: ApiListing) {
+  const status = (listing.status ?? "active").toLowerCase();
+  const isSold = status === "sold" || (listing.stock != null && listing.stock <= 0);
+  const isHidden = status === "hidden" || status === "inactive";
+  const isDeleted = status === "deleted";
+  return {
+    isActive: status === "active" && !isSold && !isHidden && !isDeleted,
+    isSold,
+    isHidden,
+    isDeleted,
+  };
+}
 
 export default function MeScreen() {
   const router = useRouter();
@@ -152,6 +173,7 @@ export default function MeScreen() {
   const [boostOptions, setBoostOptions] = useState<BoostOption[]>([]);
   const [boostingListingId, setBoostingListingId] = useState<string | null>(null);
   const [boostPlanListing, setBoostPlanListing] = useState<ApiListing | null>(null);
+  const [statusUpdatingListingId, setStatusUpdatingListingId] = useState<string | null>(null);
 
   const loadProfile = useCallback(() => {
     let isMounted = true;
@@ -295,17 +317,51 @@ export default function MeScreen() {
       } catch (error) {
         Alert.alert(
           t("monetization.boostErrorTitle", { defaultValue: "Unable to boost" }),
-          error instanceof Error
-            ? error.message
-            : t("monetization.boostErrorSubtitle", {
-                defaultValue: "Please try again.",
-              }),
+          getActionErrorMessage(
+            error,
+            t("monetization.boostErrorSubtitle", {
+              defaultValue: "Please try again.",
+            }),
+          ),
         );
       } finally {
         setBoostingListingId(null);
       }
     },
     [boostingListingId, t],
+  );
+
+  const handleListingStatusChange = useCallback(
+    async (listing: ApiListing, nextStatus: ListingStatus) => {
+      if (statusUpdatingListingId) return;
+      setStatusUpdatingListingId(listing.id);
+      try {
+        const updated =
+          nextStatus === "sold"
+            ? await markListingSold(listing.id)
+            : nextStatus === "hidden"
+              ? await hideListing(listing.id)
+              : await relistListing(listing.id);
+        setListings((current) =>
+          current.map((item) => (item.id === listing.id ? updated : item)),
+        );
+      } catch (error) {
+        Alert.alert(
+          t("profile.listingStatusUpdateFailedTitle", {
+            defaultValue: "Unable to update listing",
+          }),
+          getActionErrorMessage(
+            error,
+            t("profile.listingStatusUpdateFailedBody", {
+              defaultValue: "Please try again.",
+            }),
+          ),
+        );
+      } finally {
+        setStatusUpdatingListingId(null);
+      }
+    },
+    [statusUpdatingListingId, t],
   );
 
   const handleRefresh = useCallback(() => {
@@ -958,43 +1014,132 @@ export default function MeScreen() {
               <View style={styles.grid}>
                 {listings.map((item) => {
                   const isBoosting = boostingListingId === item.id;
+                  const statusFlags = getListingStatusFlags(item);
+                  const isStatusUpdating = statusUpdatingListingId === item.id;
+                  const statusLabel = statusFlags.isSold
+                    ? t("listings.status.sold", { defaultValue: "Sold" })
+                    : statusFlags.isHidden
+                      ? t("listings.status.hidden", { defaultValue: "Hidden" })
+                      : statusFlags.isDeleted
+                        ? t("listings.status.deleted", { defaultValue: "Deleted" })
+                        : t("listings.status.active", { defaultValue: "Active" });
+                  const canBoost =
+                    statusFlags.isActive &&
+                    !item.isBoosted &&
+                    !isBoosting &&
+                    boostOptions.length > 0;
                   return (
                     <View key={item.id} style={styles.listingManageCard}>
-                    <ListingCard
-                      listing={{
-                        id: item.id,
-                        title: item.title,
-                        price: `${item.priceCurrency} ${item.priceAmount}`,
-                        category: item.categoryPath ?? "other",
-                        location: getRegionLabel(item.region ?? item.seller?.city, t),
-                        image: item.thumbnailUrl ?? item.imageUrls[0] ?? "",
-                      }}
-                      onPress={() => router.push(`/listings/${item.id}`)}
-                      style={styles.listingCardFull}
-                    />
-                    <TouchableOpacity
-                      style={[
-                        styles.boostButton,
-                        (item.isBoosted || isBoosting || boostOptions.length === 0) &&
-                          styles.boostButtonDisabled,
-                      ]}
-                      disabled={item.isBoosted || isBoosting || boostOptions.length === 0}
-                      onPress={() => setBoostPlanListing(item)}
-                    >
-                      <Text style={styles.boostButtonLabel}>
-                        {item.isBoosted
-                          ? t("monetization.boosted", { defaultValue: "Boosted" })
-                          : isBoosting
-                            ? t("monetization.creatingPayment", {
-                                defaultValue: "Creating payment...",
-                              })
-                            : boostOptions.length > 0
-                              ? t("monetization.boostFor", {
-                                  defaultValue: "Boost listing",
-                                })
-                              : t("monetization.boost", { defaultValue: "Boost" })}
-                      </Text>
-                    </TouchableOpacity>
+                      <ListingCard
+                        listing={{
+                          id: item.id,
+                          title: item.title,
+                          price: `${item.priceCurrency} ${item.priceAmount}`,
+                          category: item.categoryPath ?? "other",
+                          location: getRegionLabel(item.region ?? item.seller?.city, t),
+                          image: item.thumbnailUrl ?? item.imageUrls[0] ?? "",
+                        }}
+                        onPress={() => router.push(`/listings/${item.id}`)}
+                        style={styles.listingCardFull}
+                      />
+                      <View style={styles.listingStatusRow}>
+                        <View
+                          style={[
+                            styles.listingStatusBadge,
+                            statusFlags.isSold && styles.listingStatusBadgeSold,
+                            statusFlags.isHidden && styles.listingStatusBadgeHidden,
+                            statusFlags.isDeleted && styles.listingStatusBadgeHidden,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.listingStatusBadgeText,
+                              statusFlags.isSold && styles.listingStatusBadgeTextSold,
+                              (statusFlags.isHidden || statusFlags.isDeleted) &&
+                                styles.listingStatusBadgeTextHidden,
+                            ]}
+                          >
+                            {statusLabel}
+                          </Text>
+                        </View>
+                      </View>
+                      {!statusFlags.isDeleted ? (
+                        <View style={styles.listingStatusActions}>
+                          {statusFlags.isSold || statusFlags.isHidden ? (
+                            <TouchableOpacity
+                              style={[
+                                styles.listingStatusButton,
+                                isStatusUpdating && styles.listingStatusButtonDisabled,
+                              ]}
+                              disabled={isStatusUpdating}
+                              onPress={() => handleListingStatusChange(item, "active")}
+                            >
+                              <Text style={styles.listingStatusButtonLabel}>
+                                {isStatusUpdating
+                                  ? t("common.actions.updating", { defaultValue: "Updating..." })
+                                  : t("listings.actions.relist", { defaultValue: "Relist" })}
+                              </Text>
+                            </TouchableOpacity>
+                          ) : (
+                            <>
+                              <TouchableOpacity
+                                style={[
+                                  styles.listingStatusButton,
+                                  styles.listingStatusButtonSuccess,
+                                  isStatusUpdating && styles.listingStatusButtonDisabled,
+                                ]}
+                                disabled={isStatusUpdating}
+                                onPress={() => handleListingStatusChange(item, "sold")}
+                              >
+                                <Text style={styles.listingStatusButtonLabel}>
+                                  {isStatusUpdating
+                                    ? t("common.actions.updating", { defaultValue: "Updating..." })
+                                    : t("listings.actions.markSold", { defaultValue: "Mark sold" })}
+                                </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[
+                                  styles.listingStatusButton,
+                                  styles.listingStatusButtonSecondary,
+                                  isStatusUpdating && styles.listingStatusButtonDisabled,
+                                ]}
+                                disabled={isStatusUpdating}
+                                onPress={() => handleListingStatusChange(item, "hidden")}
+                              >
+                                <Text style={styles.listingStatusButtonLabel}>
+                                  {isStatusUpdating
+                                    ? t("common.actions.updating", { defaultValue: "Updating..." })
+                                    : t("listings.actions.hide", { defaultValue: "Hide" })}
+                                </Text>
+                              </TouchableOpacity>
+                            </>
+                          )}
+                        </View>
+                      ) : null}
+                      <TouchableOpacity
+                        style={[
+                          styles.boostButton,
+                          !canBoost && styles.boostButtonDisabled,
+                        ]}
+                        disabled={!canBoost}
+                        onPress={() => setBoostPlanListing(item)}
+                      >
+                        <Text style={styles.boostButtonLabel}>
+                          {!statusFlags.isActive
+                            ? t("listings.status.unavailable", { defaultValue: "Unavailable" })
+                            : item.isBoosted
+                              ? t("monetization.boosted", { defaultValue: "Boosted" })
+                              : isBoosting
+                                ? t("monetization.creatingPayment", {
+                                    defaultValue: "Creating payment...",
+                                  })
+                                : boostOptions.length > 0
+                                  ? t("monetization.boostFor", {
+                                      defaultValue: "Boost listing",
+                                    })
+                                  : t("monetization.boost", { defaultValue: "Boost" })}
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   );
                 })}
@@ -1498,6 +1643,66 @@ const createStyles = (theme: ThemeColors) =>
     },
     listingCardFull: {
       width: "100%",
+    },
+    listingStatusRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    listingStatusBadge: {
+      borderRadius: 999,
+      paddingHorizontal: 9,
+      paddingVertical: 4,
+      backgroundColor: theme.successBackground,
+      borderWidth: 1,
+      borderColor: theme.success,
+    },
+    listingStatusBadgeSold: {
+      backgroundColor: theme.dangerBackground,
+      borderColor: theme.danger,
+    },
+    listingStatusBadgeHidden: {
+      backgroundColor: theme.surfaceMuted,
+      borderColor: theme.border,
+    },
+    listingStatusBadgeText: {
+      color: theme.success,
+      fontSize: 11,
+      fontWeight: "800",
+    },
+    listingStatusBadgeTextSold: {
+      color: theme.danger,
+    },
+    listingStatusBadgeTextHidden: {
+      color: theme.textMuted,
+    },
+    listingStatusActions: {
+      flexDirection: "row",
+      gap: 8,
+    },
+    listingStatusButton: {
+      flex: 1,
+      minHeight: 34,
+      borderRadius: 10,
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.primary,
+    },
+    listingStatusButtonSuccess: {
+      backgroundColor: theme.success,
+    },
+    listingStatusButtonSecondary: {
+      backgroundColor: theme.textMuted,
+    },
+    listingStatusButtonDisabled: {
+      opacity: 0.6,
+    },
+    listingStatusButtonLabel: {
+      color: theme.primaryForeground,
+      fontSize: 11,
+      fontWeight: "800",
+      textAlign: "center",
     },
     boostButton: {
       borderRadius: 12,

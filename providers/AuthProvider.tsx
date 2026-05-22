@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Alert } from "react-native";
 import { useRouter } from "expo-router";
 
 import { clearStoredToken, getStoredToken, refreshStoredToken, revokeStoredRefreshToken, storeToken } from "@/services/auth";
@@ -20,17 +21,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [token, setToken] = useState<string | null>(null);
+  const signingOutRef = useRef(false);
 
   const signOut = useCallback(async () => {
-    if (token) {
-      await unregisterPushToken().catch(() => {});
+    if (signingOutRef.current) return;
+    signingOutRef.current = true;
+    try {
+      if (token) {
+        await unregisterPushToken().catch(() => {});
+      }
+      await revokeStoredRefreshToken().catch(() => {});
+      await clearStoredToken();
+      setAuthToken(null);
+      setToken(null);
+      setStatus("unauthenticated");
+      router.replace("/sign-in");
+    } catch (error) {
+      console.warn("Unable to clear stored auth tokens during sign out.", error);
+      Alert.alert(
+        "Sign out failed",
+        "We could not remove your saved session from this device. Please try again.",
+      );
+    } finally {
+      signingOutRef.current = false;
     }
-    await revokeStoredRefreshToken();
-    await clearStoredToken();
-    setAuthToken(null);
-    setToken(null);
-    setStatus("unauthenticated");
-    router.replace("/sign-in");
   }, [router, token]);
 
   const signIn = useCallback(async (nextToken: string) => {

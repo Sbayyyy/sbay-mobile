@@ -16,7 +16,9 @@ import { AppScreen } from "@/components/layout/AppScreen";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
 import {
+  archiveNotification,
   getNotifications,
+  markNotificationRead,
   markNotificationsRead,
   type AppNotification,
 } from "@/services/notifications";
@@ -27,6 +29,7 @@ export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [busyNotificationId, setBusyNotificationId] = useState<string | null>(null);
   const theme = useAppTheme();
   const { t } = useTranslation();
   const router = useRouter();
@@ -84,6 +87,60 @@ export default function NotificationsScreen() {
       );
     }
   }, [hasUnread, notifications, refreshUnreadCount, t]);
+
+  const handleMarkOneRead = useCallback(
+    async (item: AppNotification) => {
+      if (item.read || busyNotificationId) return;
+      const previous = notifications;
+      setBusyNotificationId(item.id);
+      setNotifications((current) =>
+        current.map((notification) =>
+          notification.id === item.id ? { ...notification, read: true } : notification,
+        ),
+      );
+      try {
+        await markNotificationRead(item.id);
+        await refreshUnreadCount();
+      } catch (error) {
+        setNotifications(previous);
+        Alert.alert(
+          t("notifications.markReadErrorTitle", { defaultValue: "Could not mark read" }),
+          error instanceof Error
+            ? error.message
+            : t("notifications.markReadErrorBody", { defaultValue: "Please try again." }),
+        );
+      } finally {
+        setBusyNotificationId(null);
+      }
+    },
+    [busyNotificationId, notifications, refreshUnreadCount, t],
+  );
+
+  const handleArchive = useCallback(
+    async (item: AppNotification) => {
+      if (busyNotificationId) return;
+      const previous = notifications;
+      setBusyNotificationId(item.id);
+      setNotifications((current) =>
+        current.filter((notification) => notification.id !== item.id),
+      );
+      try {
+        await archiveNotification(item.id);
+        await refreshUnreadCount();
+      } catch (error) {
+        setNotifications(previous);
+        Alert.alert(
+          t("notifications.archiveErrorTitle", { defaultValue: "Could not remove notification" }),
+          error instanceof Error
+            ? error.message
+            : t("notifications.archiveErrorBody", { defaultValue: "Please try again." }),
+        );
+      } finally {
+        setBusyNotificationId(null);
+      }
+    },
+    [busyNotificationId, notifications, refreshUnreadCount, t],
+  );
 
   const openNotification = useCallback(
     (item: AppNotification) => {
@@ -150,19 +207,49 @@ export default function NotificationsScreen() {
             }
           >
             {notifications.map((item) => (
-              <TouchableOpacity
+              <View
                 key={item.id}
                 style={[styles.card, !item.read && styles.unreadCard]}
-                onPress={() => openNotification(item)}
-                activeOpacity={0.85}
               >
                 {!item.read ? <View style={styles.unreadDot} /> : null}
-                <View style={styles.cardBody}>
+                <TouchableOpacity
+                  style={styles.cardBody}
+                  onPress={() => openNotification(item)}
+                  activeOpacity={0.85}
+                >
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardMessage}>{item.body}</Text>
+                </TouchableOpacity>
+                <View style={styles.cardFooter}>
+                  <Text style={styles.cardTime}>{formatRelativeTime(item.createdAt)}</Text>
+                  <View style={styles.cardActions}>
+                    {!item.read ? (
+                      <TouchableOpacity
+                        style={styles.cardActionButton}
+                        onPress={() => {
+                          void handleMarkOneRead(item);
+                        }}
+                        disabled={busyNotificationId === item.id}
+                      >
+                        <Text style={styles.cardActionText}>
+                          {t("notifications.markOneRead", { defaultValue: "Read" })}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : null}
+                    <TouchableOpacity
+                      style={styles.cardActionButton}
+                      onPress={() => {
+                        void handleArchive(item);
+                      }}
+                      disabled={busyNotificationId === item.id}
+                    >
+                      <Text style={styles.cardActionText}>
+                        {t("notifications.archive", { defaultValue: "Remove" })}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-                <Text style={styles.cardTime}>{formatRelativeTime(item.createdAt)}</Text>
-              </TouchableOpacity>
+              </View>
             ))}
           </ScrollView>
         )}
@@ -265,8 +352,32 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.textSecondary,
     },
     cardTime: {
-      marginTop: 10,
       fontSize: 12,
       color: theme.textMuted,
+    },
+    cardFooter: {
+      marginTop: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    cardActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    cardActionButton: {
+      borderRadius: 999,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    cardActionText: {
+      color: theme.primary,
+      fontSize: 12,
+      fontWeight: "700",
     },
   });

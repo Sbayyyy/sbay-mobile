@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
+import { OfferMessageCard } from "@/components/chats/OfferMessageCard";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -58,6 +59,7 @@ import {
   showEmailVerificationRequiredAlert,
   type EmailVerificationStatus,
 } from "@/services/email-verification";
+import { getActionErrorMessage } from "@/services/account-status-errors";
 import { sanitizeInput, validateSafeText } from "@/validation";
 import * as Clipboard from "expo-clipboard";
 
@@ -414,8 +416,9 @@ export default function ChatThreadScreen() {
     }
   };
 
+  const listingStatus = (listing?.status ?? "active").toLowerCase();
   const isListingAvailable =
-    !listing || ((listing.status ?? "active") === "active" && listing.stock > 0);
+    !listing || (listingStatus === "active" && (listing.stock == null || listing.stock > 0));
   const canMakeOffer = Boolean(
     chat?.listingId &&
       listing &&
@@ -472,7 +475,7 @@ export default function ChatThreadScreen() {
         showEmailVerificationRequiredAlert();
         return;
       }
-      setInputError(error instanceof Error ? error.message : "Unable to send offer.");
+      setInputError(getActionErrorMessage(error, "Unable to send offer."));
     } finally {
       setOfferBusyId(null);
     }
@@ -514,7 +517,7 @@ export default function ChatThreadScreen() {
       }
       Alert.alert(
         "Offer unavailable",
-        error instanceof Error ? error.message : "Unable to update this offer.",
+        getActionErrorMessage(error, "Unable to update this offer."),
       );
     } finally {
       setOfferBusyId(null);
@@ -602,6 +605,10 @@ export default function ChatThreadScreen() {
       if (isUnverifiedEmailError(error)) {
         showEmailVerificationRequiredAlert();
         return;
+      }
+      const message = getActionErrorMessage(error, "");
+      if (message) {
+        Alert.alert("Message unavailable", message);
       }
       setInput(text);
     } finally {
@@ -922,61 +929,17 @@ export default function ChatThreadScreen() {
                         offer.status === "pending" && message.receiverId === myUserId;
                       const canAcceptReject = canRespond && myUserId === chat?.sellerId;
                       const canCounter = canRespond;
-                      const statusLabel = offer.status.charAt(0).toUpperCase() + offer.status.slice(1);
                       return (
-                        <View style={styles.offerCard}>
-                          <View style={styles.offerHeader}>
-                            <Text style={styles.offerTitle}>
-                              {offer.parentOfferId ? "Counter offer" : "Offer"}
-                            </Text>
-                            <Text
-                              style={[
-                                styles.offerStatus,
-                                offer.status === "accepted" && styles.offerStatusAccepted,
-                                offer.status === "rejected" && styles.offerStatusRejected,
-                                offer.status === "countered" && styles.offerStatusCountered,
-                              ]}
-                            >
-                              {statusLabel}
-                            </Text>
-                          </View>
-                          <Text style={styles.offerAmount}>
-                            {offer.amount.toLocaleString()} {offer.currency}
-                          </Text>
-                          {canRespond ? (
-                            <View style={styles.offerActions}>
-                              {canAcceptReject ? (
-                                <>
-                                  <TouchableOpacity
-                                    style={[styles.offerActionButton, styles.offerAcceptButton]}
-                                    disabled={offerBusyId === message.id}
-                                    onPress={() => handleOfferAction(message, "accept")}
-                                  >
-                                    <Text style={styles.offerPrimaryActionLabel}>
-                                      {offerBusyId === message.id ? "..." : "Accept"}
-                                    </Text>
-                                  </TouchableOpacity>
-                                  <TouchableOpacity
-                                    style={styles.offerActionButton}
-                                    disabled={offerBusyId === message.id}
-                                    onPress={() => handleOfferAction(message, "reject")}
-                                  >
-                                    <Text style={styles.offerSecondaryActionLabel}>Reject</Text>
-                                  </TouchableOpacity>
-                                </>
-                              ) : null}
-                              {canCounter ? (
-                                <TouchableOpacity
-                                  style={[styles.offerActionButton, styles.offerCounterButton]}
-                                  disabled={offerBusyId === message.id}
-                                  onPress={() => handleOfferAction(message, "counter")}
-                                >
-                                  <Text style={styles.offerPrimaryActionLabel}>Counter</Text>
-                                </TouchableOpacity>
-                              ) : null}
-                            </View>
-                          ) : null}
-                        </View>
+                        <OfferMessageCard
+                          offer={offer}
+                          message={message}
+                          canAcceptReject={canAcceptReject}
+                          canCounter={canCounter}
+                          busy={offerBusyId === message.id}
+                          onAccept={(target) => handleOfferAction(target, "accept")}
+                          onReject={(target) => handleOfferAction(target, "reject")}
+                          onCounter={(target) => handleOfferAction(target, "counter")}
+                        />
                       );
                     }
 

@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiRequest } from "@/services/api";
+import { ApiError, apiRequest } from "@/services/api";
 import { getStoredToken } from "@/services/auth";
 
 export type NotificationPreferences = {
@@ -91,7 +91,10 @@ export async function getNotificationPreferences(): Promise<NotificationPreferen
     const normalized = normalizePreferences(preferences);
     await cachePreferences(normalized);
     return normalized;
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
     return readCachedPreferences();
   }
 }

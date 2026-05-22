@@ -10,6 +10,8 @@ export type ListingImage = {
   height?: number | null;
 };
 
+export type ListingStatus = "active" | "sold" | "hidden";
+
 export type SellerSummary = {
   id: string;
   name: string;
@@ -26,7 +28,7 @@ export type Listing = {
   priceCurrency: string;
   stock: number;
   condition: string;
-  status?: "active" | "sold" | "inactive" | "hidden" | "deleted" | string | null;
+  status?: ListingStatus | "inactive" | "deleted" | string | null;
   categoryPath?: string | null;
   region?: string | null;
   createdAt: string;
@@ -66,6 +68,10 @@ export type CreateListingPayload = {
 };
 
 export type UpdateListingPayload = Partial<CreateListingPayload>;
+
+export type UpdateListingStatusPayload = {
+  status: ListingStatus;
+};
 
 async function authHeader(): Promise<Record<string, string>> {
   const token = await getStoredToken();
@@ -136,22 +142,43 @@ export async function getSellerListings(sellerId: string): Promise<Listing[]> {
 export async function createListing(
   payload: CreateListingPayload,
 ): Promise<Listing> {
-  return apiRequest<Listing>("/api/listings", {
+  const listing = await apiRequest<Listing>("/api/listings", {
     method: "POST",
     headers: await authHeader(),
     body: JSON.stringify(payload),
   });
+  return normalizeListingMedia(listing);
 }
 
 export async function updateListing(
   id: string,
-  payload: UpdateListingPayload,
+  payload: UpdateListingPayload & Partial<UpdateListingStatusPayload>,
 ): Promise<Listing> {
-  return apiRequest<Listing>(`/api/listings/${id}`, {
+  const listing = await apiRequest<Listing>(`/api/listings/${id}`, {
     method: "PUT",
     headers: await authHeader(),
     body: JSON.stringify(payload),
   });
+  return normalizeListingMedia(listing);
+}
+
+export async function updateListingStatus(
+  id: string,
+  status: ListingStatus,
+): Promise<Listing> {
+  return updateListing(id, { status });
+}
+
+export async function markListingSold(id: string): Promise<Listing> {
+  return updateListingStatus(id, "sold");
+}
+
+export async function relistListing(id: string): Promise<Listing> {
+  return updateListingStatus(id, "active");
+}
+
+export async function hideListing(id: string): Promise<Listing> {
+  return updateListingStatus(id, "hidden");
 }
 
 export async function deleteListing(id: string): Promise<void> {

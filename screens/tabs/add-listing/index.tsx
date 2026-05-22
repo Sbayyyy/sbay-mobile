@@ -60,6 +60,7 @@ import {
   isUnverifiedEmailError,
   showEmailVerificationRequiredAlert,
 } from "@/services/email-verification";
+import { getActionErrorMessage } from "@/services/account-status-errors";
 
 const currencyOptions = Array.from(CURRENCY_OPTIONS).map((item) => ({
   id: item,
@@ -557,11 +558,12 @@ export default function AddListingScreen() {
         return;
       }
       showError(
-        error instanceof Error
-          ? error.message
-          : t("addListing.error", {
-              defaultValue: "Unable to publish listing. Please try again.",
-            }),
+        getActionErrorMessage(
+          error,
+          t("addListing.error", {
+            defaultValue: "Unable to publish listing. Please try again.",
+          }),
+        ),
         t("common.errors.title", { defaultValue: "Something went wrong" }),
       );
     } finally {
