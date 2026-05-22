@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-    image: sbay-mobile:dev
+    image: ${DOCKER_IMAGE:-sbay-mobile:dev}
     env_file:
       - .env
     environment:
@@ -23,7 +23,7 @@ services:
   android-build:
     build:
       context: .
-    image: sbay-mobile:dev
+    image: ${DOCKER_IMAGE:-sbay-mobile:dev}
     profiles:
       - build
     env_file:

@@ -40,7 +40,7 @@ See `DOCKER.md` for Android debug APK and signed release AAB commands.
 
 ## Jenkins Android release
 
-`Jenkinsfile` builds a signed Android production AAB that can be uploaded manually to Google Play Console.
+`Jenkinsfile` builds a Docker image, runs checks inside the container, builds a signed Android production AAB inside Docker, archives it, and removes Docker resources afterward.
 
 Required Jenkins credentials:
 
@@ -49,7 +49,7 @@ Required Jenkins credentials:
 - `android-key-alias`: Secret text containing the upload key alias.
 - `android-key-password`: Secret text containing the upload key password.
 
-The pipeline runs `npm ci`, TypeScript, lint, Expo Doctor, high-severity audit, generates the Android project with Expo prebuild, builds `bundleRelease` locally with Gradle, verifies the AAB, and archives it.
+The pipeline uses Docker Compose to run TypeScript, lint, Jest, Expo Doctor, high-severity audit, Expo prebuild, Gradle `bundleRelease`, AAB verification, artifact archival, and Docker cleanup.
 
 In the output, you'll find options to open the app in a
 
