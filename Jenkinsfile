@@ -13,8 +13,11 @@ pipeline {
         AAB_PATH = 'artifacts/SBay-android-production.aab'
         DOCKER_IMAGE = "sbay-mobile:${BUILD_NUMBER}"
         COMPOSE_PROJECT_NAME = "sbay-mobile-${BUILD_NUMBER}"
-        SHOULD_BUILD_AAB = 'false'
-        SKIP_REASON = ''
+        // SHOULD_BUILD_AAB and SKIP_REASON are intentionally NOT declared here.
+        // Declarative pipeline re-applies environment{} at each stage start via
+        // withEnv(), which would reset any dynamic env.VAR = '...' assignment made
+        // in a previous stage's script{} block.  These two are set dynamically in
+        // the "Check Android Version Code" stage and must survive across stages.
     }
 
     stages {
