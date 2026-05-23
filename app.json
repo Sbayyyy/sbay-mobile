@@ -18,7 +18,7 @@
     },
     "android": {
       "package": "com.syrianbay.app",
-      "versionCode": 8,
+      "versionCode": 9,
       "adaptiveIcon": {
         "backgroundColor": "#1F4381",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
