@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import { type ThemeColors } from "@/constants/theme";
@@ -34,12 +35,16 @@ const initialForm = {
   severity: "medium" as BugReportSeverity,
 };
 
+const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 49 : 56;
+
 export function BugReportFab() {
   const { status } = useAuth();
   const pathname = usePathname();
   const theme = useAppTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const fabBottom = insets.bottom + TAB_BAR_HEIGHT + 12;
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(initialForm);
@@ -113,7 +118,7 @@ export function BugReportFab() {
       <TouchableOpacity
         accessibilityLabel={t("settings.help.bugTitle", { defaultValue: "Report a bug" })}
         activeOpacity={0.85}
-        style={styles.fab}
+        style={[styles.fab, { bottom: fabBottom }]}
         onPress={() => setOpen(true)}
         testID="bug-report-fab"
       >
@@ -288,7 +293,7 @@ const createStyles = (theme: ThemeColors) =>
     fab: {
       position: "absolute",
       left: 16,
-      bottom: 88,
+      bottom: 0, // overridden inline with dynamic safe-area + tab-bar offset
       width: 48,
       height: 48,
       borderRadius: 24,

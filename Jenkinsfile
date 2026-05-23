@@ -7,6 +7,14 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '10'))
     }
 
+    parameters {
+        string(
+            name: 'ANDROID_VERSION_CODE',
+            defaultValue: '',
+            description: 'Android versionCode to build. The build log always shows the current value and the next suggested one. Enter a higher number here to force a build with that version code (app.json is patched in the workspace). Leave blank to use auto-detection from git history.'
+        )
+    }
+
     environment {
         EXPO_NO_TELEMETRY = '1'
         CI = '1'
@@ -48,80 +56,109 @@ pipeline {
             steps {
                 dir(env.MOBILE_DIR) {
                     script {
-                        // One shell call does everything: reads both version codes and
-                        // compares them with bash integer arithmetic ([ -gt ]).  This
-                        // avoids fragile Groovy .toInteger() calls on shell-captured
-                        // strings that can have invisible encoding differences.
-                        def output = sh(
-                            script: '''
-                                set -eu
-
-                                read_ver() {
-                                    sed -n 's/.*"versionCode"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p' | head -n 1
-                                }
-
-                                current="$(read_ver < app.json)"
-                                [ -n "$current" ] || { echo "ERROR: versionCode not found in app.json" >&2; exit 1; }
-
-                                head_sha="$(git rev-parse HEAD)"
-                                previous=""
-
-                                # Prefer GIT_PREVIOUS_SUCCESSFUL_COMMIT then GIT_PREVIOUS_COMMIT.
-                                # Skip any ref that equals HEAD — that means this is a rebuild of the
-                                # same commit, so comparing against it would always give "not bumped".
-                                for ref in "${GIT_PREVIOUS_SUCCESSFUL_COMMIT:-}" "${GIT_PREVIOUS_COMMIT:-}"; do
-                                    [ -n "$ref" ]                                 || continue
-                                    [ "$ref" != "$head_sha" ]                     || continue
-                                    git cat-file -e "${ref}:app.json" 2>/dev/null || continue
-                                    v="$(git show "${ref}:app.json" | read_ver)"
-                                    [ -n "$v" ] || continue
-                                    previous="$v"
-                                    break
-                                done
-
-                                # Fall back to the git parent commit
-                                if [ -z "$previous" ] && git cat-file -e HEAD~1:app.json 2>/dev/null; then
-                                    previous="$(git show HEAD~1:app.json | read_ver)"
-                                fi
-
-                                # Integer comparison in bash — avoids Groovy type conversion issues
-                                should_build=false
-                                if [ -z "$previous" ]; then
-                                    should_build=true
-                                elif [ "$current" -gt "$previous" ] 2>/dev/null; then
-                                    should_build=true
-                                fi
-
-                                printf "current=%s\\nprevious=%s\\nshould_build=%s\\n" \
-                                    "$current" "$previous" "$should_build"
-                            ''',
+                        // Always read and display the current versionCode so the user can
+                        // see it in the build log and know what value to enter next time.
+                        def currentInFile = sh(
+                            script: 'sed -n \'s/.*"versionCode"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p\' app.json | head -n 1',
                             returnStdout: true
                         ).trim()
+                        def suggestedNext = currentInFile?.isInteger() ? String.valueOf(currentInFile.toInteger() + 1) : 'N/A'
+                        echo "============================================"
+                        echo "Current versionCode in app.json : ${currentInFile}"
+                        echo "Next suggested versionCode      : ${suggestedNext}"
+                        echo "============================================"
 
-                        def vals = [:]
-                        output.split('\n').each { line ->
-                            def idx = line.indexOf('=')
-                            if (idx > 0) vals[line[0..<idx]] = line[(idx + 1)..-1]
-                        }
-
-                        def currentCode  = vals.current  ?: ''
-                        def previousCode = vals.previous ?: ''
-                        def shouldBuild  = vals.should_build == 'true'
-
-                        env.CURRENT_ANDROID_VERSION_CODE  = currentCode
-                        env.PREVIOUS_ANDROID_VERSION_CODE = previousCode
-                        env.SHOULD_BUILD_AAB = shouldBuild ? 'true' : 'false'
-
-                        echo "Current Android versionCode: ${currentCode}"
-                        echo "Previous Android versionCode: ${previousCode ?: 'none'}"
-                        if (shouldBuild) {
-                            currentBuild.description = "Building Android versionCode ${currentCode}"
-                            echo "Android versionCode increased from ${previousCode ?: 'none'} to ${currentCode}; building signed AAB."
+                        if (params.ANDROID_VERSION_CODE?.trim()) {
+                            // Manual override: patch app.json in-workspace and force the build.
+                            def paramVc = params.ANDROID_VERSION_CODE.trim()
+                            echo "Manual versionCode supplied: ${currentInFile} → ${paramVc}"
+                            sh """
+                                set -eu
+                                cat > /tmp/patch-vc.js << 'JSEOF'
+const fs = require('fs');
+const cfg = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+cfg.expo.android.versionCode = parseInt(process.argv[1]);
+fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2) + '\\n');
+JSEOF
+                                node /tmp/patch-vc.js "${paramVc}"
+                                rm /tmp/patch-vc.js
+                                echo "app.json patched: versionCode is now ${paramVc}"
+                            """
+                            env.CURRENT_ANDROID_VERSION_CODE  = paramVc
+                            env.PREVIOUS_ANDROID_VERSION_CODE = currentInFile
+                            env.SHOULD_BUILD_AAB = 'true'
+                            currentBuild.description = "Building Android versionCode ${paramVc} (manual)"
                         } else {
-                            env.SKIP_REASON = "Android versionCode ${currentCode} did not increase from ${previousCode}"
-                            currentBuild.result = 'NOT_BUILT'
-                            currentBuild.description = "Skipped: ${env.SKIP_REASON}"
-                            echo "Android versionCode stayed at ${currentCode} or did not increase from ${previousCode}; skipping signed AAB build."
+                            echo "No manual versionCode supplied; auto-detecting from git history."
+
+                            // One shell call reads both version codes and compares them with bash
+                            // integer arithmetic ([ -gt ]) to avoid Groovy .toInteger() issues.
+                            def output = sh(
+                                script: '''
+                                    set -eu
+
+                                    read_ver() {
+                                        sed -n 's/.*"versionCode"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p' | head -n 1
+                                    }
+
+                                    current="$(read_ver < app.json)"
+                                    [ -n "$current" ] || { echo "ERROR: versionCode not found in app.json" >&2; exit 1; }
+
+                                    head_sha="$(git rev-parse HEAD)"
+                                    previous=""
+
+                                    for ref in "${GIT_PREVIOUS_SUCCESSFUL_COMMIT:-}" "${GIT_PREVIOUS_COMMIT:-}"; do
+                                        [ -n "$ref" ]                                 || continue
+                                        [ "$ref" != "$head_sha" ]                     || continue
+                                        git cat-file -e "${ref}:app.json" 2>/dev/null || continue
+                                        v="$(git show "${ref}:app.json" | read_ver)"
+                                        [ -n "$v" ] || continue
+                                        previous="$v"
+                                        break
+                                    done
+
+                                    if [ -z "$previous" ] && git cat-file -e HEAD~1:app.json 2>/dev/null; then
+                                        previous="$(git show HEAD~1:app.json | read_ver)"
+                                    fi
+
+                                    should_build=false
+                                    if [ -z "$previous" ]; then
+                                        should_build=true
+                                    elif [ "$current" -gt "$previous" ] 2>/dev/null; then
+                                        should_build=true
+                                    fi
+
+                                    printf "current=%s\\nprevious=%s\\nshould_build=%s\\n" \
+                                        "$current" "$previous" "$should_build"
+                                ''',
+                                returnStdout: true
+                            ).trim()
+
+                            def vals = [:]
+                            output.split('\n').each { line ->
+                                def idx = line.indexOf('=')
+                                if (idx > 0) vals[line[0..<idx]] = line[(idx + 1)..-1]
+                            }
+
+                            def currentCode  = vals.current  ?: ''
+                            def previousCode = vals.previous ?: ''
+                            def shouldBuild  = vals.should_build == 'true'
+
+                            env.CURRENT_ANDROID_VERSION_CODE  = currentCode
+                            env.PREVIOUS_ANDROID_VERSION_CODE = previousCode
+                            env.SHOULD_BUILD_AAB = shouldBuild ? 'true' : 'false'
+
+                            echo "Current Android versionCode: ${currentCode}"
+                            echo "Previous Android versionCode: ${previousCode ?: 'none'}"
+                            if (shouldBuild) {
+                                currentBuild.description = "Building Android versionCode ${currentCode}"
+                                echo "Android versionCode increased from ${previousCode ?: 'none'} to ${currentCode}; building signed AAB."
+                            } else {
+                                env.SKIP_REASON = "Android versionCode ${currentCode} did not increase from ${previousCode}"
+                                currentBuild.result = 'NOT_BUILT'
+                                currentBuild.description = "Skipped: ${env.SKIP_REASON}"
+                                echo "Android versionCode stayed at ${currentCode} or did not increase from ${previousCode}; skipping signed AAB build."
+                            }
                         }
                     }
                 }

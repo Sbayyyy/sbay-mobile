@@ -4,7 +4,7 @@
     "slug": "sbay",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/playstore-icon.png",
     "scheme": "sbay",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -19,10 +19,7 @@
     "android": {
       "package": "com.syrianbay.app",
       "versionCode": 11,
-      "adaptiveIcon": {
-        "backgroundColor": "#1F4381",
-        "foregroundImage": "./assets/images/android-icon-foreground.png"
-      },
+      "icon":"./assets/images/playstore-icon.png",
       "intentFilters": [
         {
           "action": "VIEW",
