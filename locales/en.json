@@ -101,7 +101,7 @@
     "shareMessage": "Check out what I found on SBAY, {{title}}:\n{{url}}"
   },
   "home": {
-    "searchPlaceholder": "Search products, brands, or categories",
+    "searchPlaceholder": "Search products",
     "categoriesTitle": "Categories",
     "recommendedTitle": "Recommended for you",
     "featuredTitle": "Featured",

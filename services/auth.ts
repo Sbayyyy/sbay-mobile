@@ -3,6 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { apiRequest } from "@/services/api";
 import { getAuthToken, setAuthToken } from "@/services/auth-session";
 import { API_BASE_URL } from "@/services/api";
+import { ErrorReporter } from "@/services/error-reporter";
 
 export type AuthUser = {
   id: string;
@@ -144,19 +145,32 @@ export async function refreshStoredToken(): Promise<string | null> {
   const refreshToken = await getStoredRefreshToken();
   if (!refreshToken) return null;
 
-  const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({ refreshToken }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+  } catch {
+    // Network unavailable — preserve stored tokens so the user stays signed in.
+    // The next request after connectivity resumes will retry the refresh.
+    return null;
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    // Server explicitly rejected the refresh token — sign the user out.
+    await clearStoredToken().catch((error) => {
+      ErrorReporter.captureException(error, { context: "clearStoredToken after refresh rejection" });
+    });
+    return null;
+  }
 
   if (!response.ok) {
-    await clearStoredToken().catch((error) => {
-      console.warn("Unable to clear stored auth tokens after refresh failure.", error);
-    });
+    // Transient server error — don't clear the token; let the caller retry later.
     return null;
   }
 

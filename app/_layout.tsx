@@ -19,12 +19,16 @@ import { AppPopupProvider } from "@/providers/AppPopupProvider";
 import { type PushNotificationData } from "@/types/notifications";
 import { getNotificationTarget } from "@/services/notification-links";
 import { BugReportFab } from "@/components/support/BugReportFab";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { ErrorReporter } from "@/services/error-reporter";
 
 const ignoredPromiseErrors = [
   "Unable to activate keep awake",
   "Unable to activate on awake",
   "VirtualizedLists should never be nested",
 ];
+
+ErrorReporter.init();
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const rejectionTracking = require("promise/setimmediate/rejection-tracking");
@@ -36,7 +40,7 @@ rejectionTracking.enable({
     if (ignoredPromiseErrors.some((text) => message.includes(text))) {
       return;
     }
-    console.warn(`Unhandled promise rejection (${id})`, error);
+    ErrorReporter.captureException(error, { rejectionId: id });
   },
   onHandled: () => {},
 });
@@ -59,17 +63,21 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   return (
-    <LocalizationProvider>
-      <AppThemeProvider>
-        <AuthProvider>
-          <NotificationProvider>
-            <AppPopupProvider>
-              <RootLayoutContent />
-            </AppPopupProvider>
-          </NotificationProvider>
-        </AuthProvider>
-      </AppThemeProvider>
-    </LocalizationProvider>
+    <ErrorBoundary>
+      <LocalizationProvider>
+        <AppThemeProvider>
+          <AuthProvider>
+            <NotificationProvider>
+              <AppPopupProvider>
+                <ErrorBoundary>
+                  <RootLayoutContent />
+                </ErrorBoundary>
+              </AppPopupProvider>
+            </NotificationProvider>
+          </AuthProvider>
+        </AppThemeProvider>
+      </LocalizationProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -8,6 +8,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Listing } from "@/types/listing";
 
 import { type ThemeColors } from "@/constants/theme";
@@ -23,14 +24,23 @@ type ListingCardProps = {
 export function ListingCard({ listing, onPress, style }: ListingCardProps) {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const resolvedImage = resolveMediaUrl(listing.image) ?? (listing.image || null);
 
   return (
     <TouchableOpacity
       style={[styles.card, style]}
       activeOpacity={0.9}
       onPress={() => onPress?.(listing)}
+      accessibilityRole="button"
+      accessibilityLabel={listing.title}
     >
-      <Image source={{ uri: resolveMediaUrl(listing.image) ?? listing.image }} style={styles.image} />
+      {resolvedImage ? (
+        <Image source={{ uri: resolvedImage }} style={styles.image} accessibilityLabel={listing.title} />
+      ) : (
+        <View style={[styles.image, styles.imagePlaceholder]}>
+          <FontAwesome name="image" size={28} color={theme.textSubtle} />
+        </View>
+      )}
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={2}>
           {listing.title}
@@ -64,6 +74,11 @@ const createStyles = (theme: ThemeColors) =>
     image: {
       width: "100%",
       height: 110,
+    },
+    imagePlaceholder: {
+      backgroundColor: theme.surfaceMuted,
+      alignItems: "center",
+      justifyContent: "center",
     },
     body: {
       padding: 12,

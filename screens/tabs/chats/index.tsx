@@ -22,6 +22,7 @@ import { archiveChat, getChatSummaries } from "@/services/messages";
 import { getMyProfile, getSellerProfile } from "@/services/user";
 import { getListing } from "@/services/listings";
 import { getFriendlyErrorMessage } from "@/services/account-status-errors";
+import { ConversationRowSkeleton } from "@/components/chats/ConversationRowSkeleton";
 
 type Conversation = {
   id: string;
@@ -222,18 +223,7 @@ export default function ChatsScreen() {
         </View>
 
         {loading ? (
-          <ScrollView
-            contentContainerStyle={styles.loadingState}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => loadChats("refresh")}
-                tintColor={theme.primary}
-              />
-            }
-          >
-            <ActivityIndicator size="small" color={theme.primary} />
-          </ScrollView>
+          <ConversationRowSkeleton count={8} />
         ) : error ? (
           <ScrollView
             contentContainerStyle={styles.emptyState}

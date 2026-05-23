@@ -77,4 +77,36 @@ describe("push notifications service", () => {
     });
     expect(AsyncStorage.removeItem).toHaveBeenCalledWith("sbay.push.token");
   });
+
+  it("removes local token before calling the API", async () => {
+    const callOrder: string[] = [];
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue("expo-token");
+    (AsyncStorage.removeItem as jest.Mock).mockImplementation(async () => {
+      callOrder.push("removeItem");
+    });
+    (apiRequest as jest.Mock).mockImplementation(async () => {
+      callOrder.push("apiRequest");
+    });
+
+    await unregisterPushToken();
+
+    expect(callOrder).toEqual(["removeItem", "apiRequest"]);
+  });
+
+  it("removes local token even when API call fails during unregister", async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue("expo-token");
+    (apiRequest as jest.Mock).mockRejectedValue(new Error("Network error"));
+
+    await expect(unregisterPushToken()).rejects.toThrow("Network error");
+    expect(AsyncStorage.removeItem).toHaveBeenCalledWith("sbay.push.token");
+  });
+
+  it("does nothing when no token is stored", async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+
+    await unregisterPushToken();
+
+    expect(apiRequest).not.toHaveBeenCalled();
+    expect(AsyncStorage.removeItem).not.toHaveBeenCalled();
+  });
 });

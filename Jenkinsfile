@@ -55,7 +55,12 @@ pipeline {
                             returnStdout: true
                         ).trim()
 
-                        def baseCommit = env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?: env.GIT_PREVIOUS_COMMIT ?: ''
+                        // GIT_PREVIOUS_COMMIT is the last *built* commit, not necessarily the git
+                        // parent — on a rebuild it equals GIT_COMMIT (current HEAD), which makes
+                        // previousCode == currentCode and causes a spurious skip.  Only use
+                        // GIT_PREVIOUS_SUCCESSFUL_COMMIT (last successful build) and fall back to
+                        // HEAD~1 in the shell when that is unavailable or also points to HEAD.
+                        def baseCommit = env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?: ''
                         def previousCode = ''
 
                         withEnv(["BASE_COMMIT=${baseCommit}"]) {
@@ -66,7 +71,9 @@ pipeline {
                                         sed -n 's/.*"versionCode"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p' | head -n 1
                                     }
 
-                                    if [ -n "$BASE_COMMIT" ] && git cat-file -e "$BASE_COMMIT:app.json" 2>/dev/null; then
+                                    CURRENT_HEAD="$(git rev-parse HEAD)"
+
+                                    if [ -n "$BASE_COMMIT" ] && [ "$BASE_COMMIT" != "$CURRENT_HEAD" ] && git cat-file -e "$BASE_COMMIT:app.json" 2>/dev/null; then
                                         git show "$BASE_COMMIT:app.json" | read_code
                                         exit 0
                                     fi
