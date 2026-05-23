@@ -10,7 +10,7 @@ ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tool
 
 ARG ANDROID_CMDLINE_TOOLS_VERSION=11076708
 ARG ANDROID_PLATFORM=android-36
-ARG ANDROID_BUILD_TOOLS=36.0.0
+ARG ANDROID_BUILD_TOOLS=35.0.0
 ARG ANDROID_NDK=27.1.12297006
 
 RUN apt-get -o Acquire::Retries=5 -o Acquire::http::Pipeline-Depth=0 update \
