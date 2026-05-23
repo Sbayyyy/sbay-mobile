@@ -74,15 +74,9 @@ pipeline {
                             echo "Manual versionCode supplied: ${currentInFile} → ${paramVc}"
                             sh """
                                 set -eu
-                                cat > /tmp/patch-vc.js << 'JSEOF'
-const fs = require('fs');
-const cfg = JSON.parse(fs.readFileSync('app.json', 'utf8'));
-cfg.expo.android.versionCode = parseInt(process.argv[1]);
-fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2) + '\\n');
-JSEOF
-                                node /tmp/patch-vc.js "${paramVc}"
-                                rm /tmp/patch-vc.js
+                                sed -i 's/"versionCode"[[:space:]]*:[[:space:]]*[0-9][0-9]*/"versionCode": ${paramVc}/' app.json
                                 echo "app.json patched: versionCode is now ${paramVc}"
+                                grep '"versionCode"' app.json
                             """
                             env.CURRENT_ANDROID_VERSION_CODE  = paramVc
                             env.PREVIOUS_ANDROID_VERSION_CODE = currentInFile
