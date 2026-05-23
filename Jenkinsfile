@@ -45,55 +45,73 @@ pipeline {
             steps {
                 dir(env.MOBILE_DIR) {
                     script {
-                        def currentCode = sh(
+                        // One shell call does everything: reads both version codes and
+                        // compares them with bash integer arithmetic ([ -gt ]).  This
+                        // avoids fragile Groovy .toInteger() calls on shell-captured
+                        // strings that can have invisible encoding differences.
+                        def output = sh(
                             script: '''
                                 set -eu
-                                code="$(sed -n 's/.*"versionCode"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p' app.json | head -n 1)"
-                                test -n "$code"
-                                printf '%s' "$code"
+
+                                read_ver() {
+                                    sed -n 's/.*"versionCode"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p' | head -n 1
+                                }
+
+                                current="$(read_ver < app.json)"
+                                [ -n "$current" ] || { echo "ERROR: versionCode not found in app.json" >&2; exit 1; }
+
+                                head_sha="$(git rev-parse HEAD)"
+                                previous=""
+
+                                # Prefer GIT_PREVIOUS_SUCCESSFUL_COMMIT then GIT_PREVIOUS_COMMIT.
+                                # Skip any ref that equals HEAD — that means this is a rebuild of the
+                                # same commit, so comparing against it would always give "not bumped".
+                                for ref in "${GIT_PREVIOUS_SUCCESSFUL_COMMIT:-}" "${GIT_PREVIOUS_COMMIT:-}"; do
+                                    [ -n "$ref" ]                                 || continue
+                                    [ "$ref" != "$head_sha" ]                     || continue
+                                    git cat-file -e "${ref}:app.json" 2>/dev/null || continue
+                                    v="$(git show "${ref}:app.json" | read_ver)"
+                                    [ -n "$v" ] || continue
+                                    previous="$v"
+                                    break
+                                done
+
+                                # Fall back to the git parent commit
+                                if [ -z "$previous" ] && git cat-file -e HEAD~1:app.json 2>/dev/null; then
+                                    previous="$(git show HEAD~1:app.json | read_ver)"
+                                fi
+
+                                # Integer comparison in bash — avoids Groovy type conversion issues
+                                should_build=false
+                                if [ -z "$previous" ]; then
+                                    should_build=true
+                                elif [ "$current" -gt "$previous" ] 2>/dev/null; then
+                                    should_build=true
+                                fi
+
+                                printf "current=%s\\nprevious=%s\\nshould_build=%s\\n" \
+                                    "$current" "$previous" "$should_build"
                             ''',
                             returnStdout: true
                         ).trim()
 
-                        // GIT_PREVIOUS_COMMIT is the last *built* commit, not necessarily the git
-                        // parent — on a rebuild it equals GIT_COMMIT (current HEAD), which makes
-                        // previousCode == currentCode and causes a spurious skip.  Only use
-                        // GIT_PREVIOUS_SUCCESSFUL_COMMIT (last successful build) and fall back to
-                        // HEAD~1 in the shell when that is unavailable or also points to HEAD.
-                        def baseCommit = env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?: ''
-                        def previousCode = ''
-
-                        withEnv(["BASE_COMMIT=${baseCommit}"]) {
-                            previousCode = sh(
-                                script: '''
-                                    set +e
-                                    read_code() {
-                                        sed -n 's/.*"versionCode"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p' | head -n 1
-                                    }
-
-                                    CURRENT_HEAD="$(git rev-parse HEAD)"
-
-                                    if [ -n "$BASE_COMMIT" ] && [ "$BASE_COMMIT" != "$CURRENT_HEAD" ] && git cat-file -e "$BASE_COMMIT:app.json" 2>/dev/null; then
-                                        git show "$BASE_COMMIT:app.json" | read_code
-                                        exit 0
-                                    fi
-
-                                    if git rev-parse HEAD~1 >/dev/null 2>&1 && git cat-file -e HEAD~1:app.json 2>/dev/null; then
-                                        git show HEAD~1:app.json | read_code
-                                        exit 0
-                                    fi
-                                ''',
-                                returnStdout: true
-                            ).trim()
+                        def vals = [:]
+                        output.split('\n').each { line ->
+                            def idx = line.indexOf('=')
+                            if (idx > 0) vals[line[0..<idx]] = line[(idx + 1)..-1]
                         }
 
-                        env.CURRENT_ANDROID_VERSION_CODE = currentCode
+                        def currentCode  = vals.current  ?: ''
+                        def previousCode = vals.previous ?: ''
+                        def shouldBuild  = vals.should_build == 'true'
+
+                        env.CURRENT_ANDROID_VERSION_CODE  = currentCode
                         env.PREVIOUS_ANDROID_VERSION_CODE = previousCode
-                        env.SHOULD_BUILD_AAB = (!previousCode || currentCode.toInteger() > previousCode.toInteger()) ? 'true' : 'false'
+                        env.SHOULD_BUILD_AAB = shouldBuild ? 'true' : 'false'
 
                         echo "Current Android versionCode: ${currentCode}"
                         echo "Previous Android versionCode: ${previousCode ?: 'none'}"
-                        if (env.SHOULD_BUILD_AAB == 'true') {
+                        if (shouldBuild) {
                             currentBuild.description = "Building Android versionCode ${currentCode}"
                             echo "Android versionCode increased from ${previousCode ?: 'none'} to ${currentCode}; building signed AAB."
                         } else {
