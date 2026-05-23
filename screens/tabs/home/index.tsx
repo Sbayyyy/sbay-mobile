@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   Modal,
   Pressable,
@@ -30,6 +29,8 @@ import { searchListings, type Listing as ApiListing } from "@/services/listings"
 import { getSponsoredAds, type SponsoredAd } from "@/services/ads";
 import { useNotificationContext } from "@/providers/NotificationProvider";
 import { getFriendlyErrorMessage } from "@/services/account-status-errors";
+import { ListingCardSkeleton } from "@/components/listings/ListingCardSkeleton";
+import { getCache, setCache } from "@/services/cache";
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
@@ -73,6 +74,20 @@ export default function HomeScreen() {
       setError(null);
 
       const run = async () => {
+        // Serve cached data immediately on initial load so users on slow/no
+        // connections see content right away rather than a skeleton for 15s.
+        if (mode === "initial") {
+          const [cached, cachedFeatured] = await Promise.all([
+            getCache<ApiListing[]>(`listings.${activeCategory}`).catch(() => null),
+            getCache<ApiListing[]>("listings.featured").catch(() => null),
+          ]);
+          if (isMounted && cached) {
+            setListings(cached);
+            setFeaturedListings((cachedFeatured ?? []).filter((l) => l.isBoosted === true));
+            setLoading(false);
+          }
+        }
+
         try {
           const [data, featured, ads] = await Promise.all([
             searchListings({
@@ -88,6 +103,9 @@ export default function HomeScreen() {
           setListings(data);
           setFeaturedListings(featured.filter((listing) => listing.isBoosted === true));
           setSponsoredAds(ads);
+          setError(null);
+          void setCache(`listings.${activeCategory}`, data, 5 * 60 * 1000).catch(() => {});
+          void setCache("listings.featured", featured, 5 * 60 * 1000).catch(() => {});
         } catch (err) {
           if (!isMounted) return;
           setError(getFriendlyErrorMessage(err, t("listings.errorSubtitle")));
@@ -126,7 +144,7 @@ export default function HomeScreen() {
       image:
         listing.thumbnailUrl ??
         listing.imageUrls?.[0] ??
-        "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=60",
+        "",
     }));
   }, [listings, t]);
 
@@ -140,7 +158,7 @@ export default function HomeScreen() {
       image:
         listing.thumbnailUrl ??
         listing.imageUrls?.[0] ??
-        "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=60",
+        "",
     }));
   }, [featuredListings, t]);
 
@@ -234,11 +252,9 @@ export default function HomeScreen() {
             onActionPress={() => router.push("/search?reset=true")}
           />
 
-          {loading ? (
-            <View style={styles.loading}>
-              <ActivityIndicator size="small" color={theme.primary} />
-            </View>
-          ) : error ? (
+          {loading && displayListings.length === 0 ? (
+            <ListingCardSkeleton count={6} />
+          ) : error && displayListings.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>{t("listings.errorTitle")}</Text>
               <Text style={styles.emptySubtitle}>{error}</Text>
@@ -251,15 +267,22 @@ export default function HomeScreen() {
               </Text>
             </View>
           ) : (
-            <View style={styles.grid}>
-              {displayListings.map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={listing}
-                  onPress={() => router.push(`/listings/${listing.id}`)}
-                />
-              ))}
-            </View>
+            <>
+              {error ? (
+                <View style={styles.offlineBanner}>
+                  <Text style={styles.offlineBannerText}>{error}</Text>
+                </View>
+              ) : null}
+              <View style={styles.grid}>
+                {displayListings.map((listing) => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    onPress={() => router.push(`/listings/${listing.id}`)}
+                  />
+                ))}
+              </View>
+            </>
           )}
         </ScrollView>
       </View>
@@ -391,10 +414,6 @@ const createStyles = (theme: ThemeColors) =>
   sponsoredWrapper: {
     paddingHorizontal: 20,
   },
-  loading: {
-    paddingVertical: 24,
-    alignItems: "center",
-  },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -416,5 +435,18 @@ const createStyles = (theme: ThemeColors) =>
   emptySubtitle: {
     fontSize: 14,
     color: theme.textMuted,
+  },
+  offlineBanner: {
+    marginHorizontal: 20,
+    marginBottom: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: theme.surfaceMuted,
+  },
+  offlineBannerText: {
+    fontSize: 13,
+    color: theme.textMuted,
+    textAlign: "center",
   },
 });

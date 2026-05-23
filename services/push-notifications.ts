@@ -83,17 +83,17 @@ export async function syncPushToken(): Promise<void> {
 export async function unregisterPushToken(): Promise<void> {
   const stored = await AsyncStorage.getItem(STORAGE_KEY);
   if (!stored) return;
-  try {
-    const authToken = await getStoredToken();
-    if (authToken) {
-      await apiRequest(`/api/notifications/push-token?token=${encodeURIComponent(stored)}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-    }
-  } finally {
-    await AsyncStorage.removeItem(STORAGE_KEY);
-  }
+
+  // Clear local token first so sign-out always completes cleanly, even if the API call below fails.
+  await AsyncStorage.removeItem(STORAGE_KEY);
+
+  const authToken = await getStoredToken();
+  if (!authToken) return;
+
+  await apiRequest(`/api/notifications/push-token?token=${encodeURIComponent(stored)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
 }

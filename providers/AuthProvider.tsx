@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { clearStoredToken, getStoredToken, refreshStoredToken, revokeStoredRefreshToken, storeToken } from "@/services/auth";
 import { setAuthToken, setTokenRefreshHandler, setUnauthorizedHandler } from "@/services/auth-session";
 import { syncPushToken, unregisterPushToken } from "@/services/push-notifications";
+import { ErrorReporter } from "@/services/error-reporter";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStatus("unauthenticated");
       router.replace("/sign-in");
     } catch (error) {
-      console.warn("Unable to clear stored auth tokens during sign out.", error);
+      ErrorReporter.captureException(error, { context: "signOut" });
       Alert.alert(
         "Sign out failed",
         "We could not remove your saved session from this device. Please try again.",
@@ -100,9 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [signOut]);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      ErrorReporter.setUser(null);
+      return;
+    }
     if (status !== "authenticated") return;
     void syncPushToken().catch((error) => {
-      console.warn("Unable to sync push notification token.", error);
+      ErrorReporter.captureException(error, { context: "syncPushToken" });
     });
   }, [status]);
 

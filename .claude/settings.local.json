@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Projects\\\\sbay-mobile\" -Force)",
+      "Bash(Select-Object Name, Mode)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(git -C \"c:\\\\Projects\\\\sbay-mobile\" log --all --full-history -- \".env.android-signing.local\")",
+      "PowerShell(Get-ChildItem \"c:\\\\Projects\\\\sbay-mobile\\\\app\\\\\\(tabs\\)\" | ForEach-Object { $lines = \\(Get-Content $_.FullName | Measure-Object -Line\\).Lines; \"$lines`t$\\($_.Name\\)\" } | Sort-Object { [int]\\($_ -split \"`t\"\\)[0] } -Descending)",
+      "Bash(node_modules/.bin/jest --testPathPattern=\"email-verification|api.test|push-notifications\" --no-coverage)"
+    ]
+  }
+}

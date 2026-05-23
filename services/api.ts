@@ -32,23 +32,58 @@ export class ApiError extends Error {
   }
 }
 
+const REQUEST_TIMEOUT_MS = 15_000;
+const RETRY_DELAYS_MS = [1_000, 3_000];
+
 type ApiRequestInit = RequestInit & {
   skipAuthRefresh?: boolean;
+  timeoutMs?: number;
+  maxRetries?: number;
 };
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export async function apiRequest<T>(
   path: string,
   options: ApiRequestInit = {},
 ): Promise<T> {
-  const { skipAuthRefresh, ...requestOptions } = options;
+  const { skipAuthRefresh, timeoutMs = REQUEST_TIMEOUT_MS, maxRetries, ...requestOptions } = options;
+
+  const method = requestOptions.method?.toUpperCase() ?? "GET";
+  const isIdempotent = method === "GET" || method === "HEAD";
+  const retries = maxRetries ?? (isIdempotent ? 2 : 0);
+
   const headers = {
     "Content-Type": "application/json",
     ...(requestOptions.headers ?? {}),
   };
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...requestOptions,
-    headers,
-  });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...requestOptions,
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+  } catch (error) {
+    clearTimeout(timeoutId);
+    const isAbort = error instanceof Error && error.name === "AbortError";
+    if (retries > 0) {
+      const delayMs = RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - retries] ?? RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1];
+      await sleep(delayMs);
+      return apiRequest<T>(path, { ...options, maxRetries: retries - 1 });
+    }
+    if (isAbort) {
+      throw new ApiError("Request timed out. Please check your connection and try again.", 408);
+    }
+    throw error;
+  }
 
   if (response.status === 401 && !skipAuthRefresh) {
     const nextToken = await refreshAuthToken();

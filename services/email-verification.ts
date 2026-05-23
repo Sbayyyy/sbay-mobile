@@ -22,7 +22,7 @@ const unverifiedMessages = [
 ];
 
 export function isEmailVerified(value?: EmailVerificationStatus | null): boolean {
-  if (!value) return true;
+  if (!value) return false;
   if (typeof value.verified === "boolean") return value.verified;
   if (typeof value.emailVerified === "boolean") return value.emailVerified;
   if (typeof value.isEmailVerified === "boolean") return value.isEmailVerified;
@@ -30,7 +30,7 @@ export function isEmailVerified(value?: EmailVerificationStatus | null): boolean
   if (typeof value.isVerified === "boolean") return value.isVerified;
   if (value.emailVerifiedAt) return true;
   if (value.emailConfirmedAt) return true;
-  return true;
+  return false;
 }
 
 export function isUnverifiedEmailError(error: unknown): boolean {
