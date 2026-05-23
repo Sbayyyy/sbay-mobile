@@ -34,8 +34,12 @@ RUN yes | sdkmanager --licenses >/dev/null \
         "platform-tools" \
         "platforms;${ANDROID_PLATFORM}" \
         "build-tools;${ANDROID_BUILD_TOOLS}" \
-        "ndk;${ANDROID_NDK}" \
         "cmake;3.22.1"
+
+# NDK is a large download (~700 MB) and prone to transient failures — retry up to 3 times.
+RUN sdkmanager "ndk;${ANDROID_NDK}" \
+    || sdkmanager "ndk;${ANDROID_NDK}" \
+    || sdkmanager "ndk;${ANDROID_NDK}"
 
 WORKDIR /app
 
