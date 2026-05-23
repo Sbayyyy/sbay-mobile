@@ -18,11 +18,12 @@
     },
     "android": {
       "package": "com.syrianbay.app",
-      "versionCode": 11,
+      "versionCode": 12,
       "icon":"./assets/images/playstore-icon.png",
       "intentFilters": [
         {
           "action": "VIEW",
+          "autoVerify": true,
           "data": [
             {
               "scheme": "https",
@@ -33,6 +34,16 @@
               "scheme": "https",
               "host": "www.syrian-bay.com",
               "pathPrefix": "/listing/"
+            },
+            {
+              "scheme": "https",
+              "host": "syrian-bay.com",
+              "pathPrefix": "/listings/"
+            },
+            {
+              "scheme": "https",
+              "host": "www.syrian-bay.com",
+              "pathPrefix": "/listings/"
             },
             {
               "scheme": "https",
