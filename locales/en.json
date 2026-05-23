@@ -319,13 +319,11 @@
     },
     "theme": {
       "title": "Theme",
-      "subtitle": "Choose between light and dark appearance.",
+      "subtitle": "Choose your app appearance.",
       "light": "Light",
       "dark": "Dark",
-      "neon": "Neon",
       "coffee": "Coffee",
-      "starlight": "Starlight",
-      "test": "Test"
+      "starlight": "Starlight"
     },
     "common": {
       "saving": "Saving...",

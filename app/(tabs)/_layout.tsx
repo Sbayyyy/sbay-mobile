@@ -116,7 +116,7 @@ export default function TabsLayout() {
         void connection.stop();
       });
     };
-  }, [loadUnread]);
+  }, [loadUnread, refreshUnreadCount]);
 
   useFocusEffect(
     useCallback(() => {

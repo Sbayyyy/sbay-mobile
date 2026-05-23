@@ -59,6 +59,7 @@ jest.mock("expo-constants", () => ({
 // Mock expo-router
 jest.mock("expo-router", () => ({
   useRouter: jest.fn(),
+  usePathname: jest.fn(() => "/"),
   useSegments: jest.fn(() => []),
   useFocusEffect: jest.fn((callback) => {
     // Call the callback immediately in tests

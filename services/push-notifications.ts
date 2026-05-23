@@ -7,6 +7,7 @@ import { apiRequest } from "@/services/api";
 import { getStoredToken } from "@/services/auth";
 
 const STORAGE_KEY = "sbay.push.token";
+const INSTALLATION_ID_KEY = "sbay.push.installation-id";
 
 const getProjectId = () => {
   const expoConfig = Constants.expoConfig as {
@@ -14,6 +15,19 @@ const getProjectId = () => {
   } | null;
   return Constants.easConfig?.projectId ?? expoConfig?.extra?.easProjectId;
 };
+
+async function getInstallationId(): Promise<string> {
+  const stored = await AsyncStorage.getItem(INSTALLATION_ID_KEY);
+  if (stored) return stored;
+
+  const randomId =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+  const installationId = `sbay-${randomId}`;
+  await AsyncStorage.setItem(INSTALLATION_ID_KEY, installationId);
+  return installationId;
+}
 
 export async function registerForPushNotifications(): Promise<string | null> {
   if (!Device.isDevice) return null;
@@ -49,7 +63,7 @@ export async function syncPushToken(): Promise<void> {
   const authToken = await getStoredToken();
   if (!authToken) return;
 
-  const deviceId = Device.osBuildId ?? Device.modelId ?? null;
+  const deviceId = await getInstallationId();
   await apiRequest("/api/notifications/push-token", {
     method: "POST",
     headers: {

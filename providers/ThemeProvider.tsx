@@ -1,9 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { DarkTheme, LightTheme, NeonTheme, CoffeeTheme, TestTheme, type ThemeColors } from "@/constants/theme";
+import { CoffeeTheme, DarkTheme, LightTheme, type ThemeColors } from "@/constants/theme";
 
-export type ThemeMode = "light" | "dark" | "neon" | "coffee" | "test";
+export type ThemeMode = "light" | "dark" | "coffee";
 
 type ThemeContextValue = {
   mode: ThemeMode;
@@ -13,7 +13,12 @@ type ThemeContextValue = {
 };
 
 const STORAGE_KEY = "sbay.theme.mode";
+const THEME_MODES: readonly ThemeMode[] = ["light", "dark", "coffee"];
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
+
+function isThemeMode(value: string | null): value is ThemeMode {
+  return THEME_MODES.includes(value as ThemeMode);
+}
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const [mode, setModeState] = useState<ThemeMode>("light");
@@ -22,8 +27,10 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     const load = async () => {
       try {
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (stored === "light" || stored === "dark") {
+        if (isThemeMode(stored)) {
           setModeState(stored);
+        } else if (stored) {
+          await AsyncStorage.setItem(STORAGE_KEY, "light");
         }
       } catch {
         // ignore persistence failures
@@ -46,13 +53,9 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     const resolvedTheme =
       mode === "dark"
         ? DarkTheme
-        : mode === "neon"
-          ? NeonTheme
         : mode === "coffee"
           ? CoffeeTheme
-          : mode === "test"
-            ? TestTheme
-            : LightTheme;
+          : LightTheme;
     return {
       mode,
       isDark,

@@ -1,11 +1,10 @@
 import { fireEvent, render } from "@testing-library/react-native";
 
 import { OfferMessageCard } from "../OfferMessageCard";
-import { LightTheme } from "@/constants/theme";
 import { type Message, type OfferMessageData } from "@/services/messages";
 
 jest.mock("@/hooks/use-app-theme", () => ({
-  useAppTheme: () => LightTheme.colors,
+  useAppTheme: () => jest.requireActual("@/constants/theme").LightTheme.colors,
 }));
 
 const message: Message = {

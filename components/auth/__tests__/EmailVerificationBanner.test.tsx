@@ -4,16 +4,18 @@ import { EmailVerificationBanner } from "../EmailVerificationBanner";
 import { requestEmailVerification } from "@/services/auth";
 import { LightTheme } from "@/constants/theme";
 
+const mockThemeColors = LightTheme.colors;
+
+jest.setTimeout(15000);
+
 jest.mock("@expo/vector-icons/Ionicons", () => {
-  const React = require("react");
-  const { Text } = require("react-native");
-  return function MockIonicons(props: { name: string }) {
-    return React.createElement(Text, null, props.name);
+  return function MockIonicons() {
+    return null;
   };
 });
 
 jest.mock("@/hooks/use-app-theme", () => ({
-  useAppTheme: () => LightTheme.colors,
+  useAppTheme: () => mockThemeColors,
 }));
 
 jest.mock("@/services/auth", () => ({

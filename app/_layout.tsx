@@ -18,6 +18,7 @@ import { NotificationProvider } from "@/providers/NotificationProvider";
 import { AppPopupProvider } from "@/providers/AppPopupProvider";
 import { type PushNotificationData } from "@/types/notifications";
 import { getNotificationTarget } from "@/services/notification-links";
+import { BugReportFab } from "@/components/support/BugReportFab";
 
 const ignoredPromiseErrors = [
   "Unable to activate keep awake",
@@ -25,6 +26,7 @@ const ignoredPromiseErrors = [
   "VirtualizedLists should never be nested",
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const rejectionTracking = require("promise/setimmediate/rejection-tracking");
 rejectionTracking.disable();
 rejectionTracking.enable({
@@ -290,6 +292,7 @@ function RootLayoutContent() {
             </>
           )}
         </Stack>
+        <BugReportFab />
         <StatusBar style={statusStyle} translucent backgroundColor="transparent" />
       </ThemeProvider>
     </PaperProvider>

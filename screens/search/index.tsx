@@ -28,6 +28,7 @@ import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { searchListings, type Listing as ApiListing } from "@/services/listings";
 import { getSponsoredAds, type SponsoredAd } from "@/services/ads";
+import { getFriendlyErrorMessage } from "@/services/account-status-errors";
 
 type SortId = "newest" | "price_low" | "price_high";
 type StatusId = "all" | "new" | "used" | "renewed" | "defective";
@@ -145,7 +146,7 @@ export default function SearchScreen() {
         setSponsoredAds(ads);
       } catch (err) {
         if (!isMounted) return;
-        setError(err instanceof Error ? err.message : t("listings.errorSubtitle"));
+        setError(getFriendlyErrorMessage(err, t("listings.errorSubtitle")));
       } finally {
         if (!isMounted) return;
         setLoading(false);

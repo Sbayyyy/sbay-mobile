@@ -24,11 +24,13 @@ import {
 } from "@/services/notifications";
 import { useNotificationContext } from "@/providers/NotificationProvider";
 import { normalizeNotificationHref } from "@/services/notification-links";
+import { getFriendlyErrorMessage } from "@/services/account-status-errors";
 
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busyNotificationId, setBusyNotificationId] = useState<string | null>(null);
   const theme = useAppTheme();
   const { t } = useTranslation();
@@ -62,13 +64,27 @@ export default function NotificationsScreen() {
     }
 
     try {
+      setLoadError(null);
       const data = await getNotifications();
       setNotifications(data);
+      await refreshUnreadCount();
+    } catch (error) {
+      const message = getFriendlyErrorMessage(
+        error,
+        t("notifications.loadErrorBody", {
+          defaultValue: "We could not load your notifications. Please try again.",
+        }),
+      );
+      setLoadError(message);
+      Alert.alert(
+        t("notifications.loadErrorTitle", { defaultValue: "Could not load notifications" }),
+        message,
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [refreshUnreadCount, t]);
 
   const handleMarkAllRead = useCallback(async () => {
     if (!hasUnread) return;
@@ -154,9 +170,12 @@ export default function NotificationsScreen() {
         );
         return;
       }
+      if (!item.read) {
+        void handleMarkOneRead(item);
+      }
       router.push(href);
     },
-    [router, t],
+    [handleMarkOneRead, router, t],
   );
 
   useEffect(() => {
@@ -192,6 +211,7 @@ export default function NotificationsScreen() {
               />
             }
           >
+            {loadError ? <Text style={styles.errorText}>{loadError}</Text> : null}
             <Text style={styles.emptyTitle}>{t("notifications.emptyTitle")}</Text>
             <Text style={styles.emptySubtitle}>{t("notifications.emptySubtitle")}</Text>
           </ScrollView>
@@ -307,6 +327,13 @@ const createStyles = (theme: ThemeColors) =>
     emptySubtitle: {
       fontSize: 14,
       color: theme.textMuted,
+      textAlign: "center",
+      paddingHorizontal: 30,
+    },
+    errorText: {
+      color: theme.danger,
+      fontSize: 14,
+      fontWeight: "600",
       textAlign: "center",
       paddingHorizontal: 30,
     },

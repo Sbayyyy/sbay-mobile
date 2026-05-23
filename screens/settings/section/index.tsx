@@ -29,6 +29,7 @@ import {
   type BugReportSeverity,
 } from "@/services/bug-reports";
 import { sendContactMessage } from "@/services/contact";
+import { getFriendlyErrorMessage } from "@/services/account-status-errors";
 import {
   getNotificationPreferences,
   setNotificationPreferences,
@@ -71,6 +72,9 @@ export default function SettingsDetail() {
     title: "",
     description: "",
     screen: "",
+    steps: "",
+    expected: "",
+    actual: "",
     severity: "medium" as BugReportSeverity,
   });
   const [bugSaving, setBugSaving] = useState(false);
@@ -355,7 +359,12 @@ export default function SettingsDetail() {
       );
       setContactForm((prev) => ({ ...prev, subject: "", message: "" }));
     } catch (error) {
-      setContactError(error instanceof Error ? error.message : "Unable to send message");
+      setContactError(
+        getFriendlyErrorMessage(
+          error,
+          t("settings.help.contactError", { defaultValue: "Unable to send message. Please try again." }),
+        ),
+      );
     } finally {
       setContactSaving(false);
     }
@@ -380,15 +389,32 @@ export default function SettingsDetail() {
       await createBugReport({
         title,
         description,
+        steps: bugForm.steps.trim() || undefined,
+        expected: bugForm.expected.trim() || undefined,
+        actual: bugForm.actual.trim() || undefined,
         pageUrl: `sbay://${screen.replace(/^\/+/, "")}`,
         severity: bugForm.severity,
       });
       setBugSuccess(
         t("settings.help.bugSuccess", { defaultValue: "Bug report sent. Thank you." }),
       );
-      setBugForm((prev) => ({ ...prev, title: "", description: "" }));
+      setBugForm((prev) => ({
+        ...prev,
+        title: "",
+        description: "",
+        steps: "",
+        expected: "",
+        actual: "",
+      }));
     } catch (error) {
-      setBugError(error instanceof Error ? error.message : "Unable to submit bug report");
+      setBugError(
+        getFriendlyErrorMessage(
+          error,
+          t("settings.help.bugError", {
+            defaultValue: "Unable to submit bug report. Please try again.",
+          }),
+        ),
+      );
     } finally {
       setBugSaving(false);
     }
@@ -772,7 +798,7 @@ export default function SettingsDetail() {
               </Text>
               <Text style={styles.body}>
                 {t("settings.theme.subtitle", {
-                  defaultValue: "Choose between light and dark appearance.",
+                  defaultValue: "Choose your app appearance.",
                 })}
               </Text>
               <View style={styles.themeRow}>
@@ -793,27 +819,11 @@ export default function SettingsDetail() {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.themeOption, mode === "neon" && styles.themeOptionActive]}
-                  onPress={() => setMode("neon")}
-                >
-                  <Text style={[styles.themeLabel, mode === "neon" && styles.themeLabelActive]}>
-                    {t("settings.theme.neon", { defaultValue: "Neon" })}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
                   style={[styles.themeOption, mode === "coffee" && styles.themeOptionActive]}
                   onPress={() => setMode("coffee")}
                 >
                   <Text style={[styles.themeLabel, mode === "coffee" && styles.themeLabelActive]}>
                     {t("settings.theme.coffee", { defaultValue: "Coffee" })}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.themeOption, mode === "test" && styles.themeOptionActive]}
-                  onPress={() => setMode("test")}
-                >
-                  <Text style={[styles.themeLabel, mode === "test" && styles.themeLabelActive]}>
-                    {t("settings.theme.test", { defaultValue: "Test" })}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -948,6 +958,51 @@ export default function SettingsDetail() {
                     onChangeText={(description) => setBugForm((prev) => ({ ...prev, description }))}
                     placeholder={t("settings.help.bugDescriptionPlaceholder", {
                       defaultValue: "What did you expect, and what happened instead?",
+                    })}
+                    placeholderTextColor={theme.inputPlaceholder}
+                    multiline
+                  />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>
+                    {t("settings.help.bugSteps", { defaultValue: "Steps to reproduce" })}
+                  </Text>
+                  <TextInput
+                    style={[styles.input, styles.textarea]}
+                    value={bugForm.steps}
+                    onChangeText={(steps) => setBugForm((prev) => ({ ...prev, steps }))}
+                    placeholder={t("settings.help.bugStepsPlaceholder", {
+                      defaultValue: "1. Open... 2. Tap...",
+                    })}
+                    placeholderTextColor={theme.inputPlaceholder}
+                    multiline
+                  />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>
+                    {t("settings.help.bugExpected", { defaultValue: "Expected" })}
+                  </Text>
+                  <TextInput
+                    style={[styles.input, styles.textarea]}
+                    value={bugForm.expected}
+                    onChangeText={(expected) => setBugForm((prev) => ({ ...prev, expected }))}
+                    placeholder={t("settings.help.bugExpectedPlaceholder", {
+                      defaultValue: "What should happen?",
+                    })}
+                    placeholderTextColor={theme.inputPlaceholder}
+                    multiline
+                  />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>
+                    {t("settings.help.bugActual", { defaultValue: "Actual" })}
+                  </Text>
+                  <TextInput
+                    style={[styles.input, styles.textarea]}
+                    value={bugForm.actual}
+                    onChangeText={(actual) => setBugForm((prev) => ({ ...prev, actual }))}
+                    placeholder={t("settings.help.bugActualPlaceholder", {
+                      defaultValue: "What happened instead?",
                     })}
                     placeholderTextColor={theme.inputPlaceholder}
                     multiline

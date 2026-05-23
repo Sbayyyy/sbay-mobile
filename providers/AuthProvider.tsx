@@ -101,7 +101,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    void syncPushToken();
+    void syncPushToken().catch((error) => {
+      console.warn("Unable to sync push notification token.", error);
+    });
   }, [status]);
 
   const value = useMemo<AuthContextValue>(

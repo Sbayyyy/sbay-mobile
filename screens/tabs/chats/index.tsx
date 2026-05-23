@@ -21,6 +21,7 @@ import { type ThemeColors } from "@/constants/theme";
 import { archiveChat, getChatSummaries } from "@/services/messages";
 import { getMyProfile, getSellerProfile } from "@/services/user";
 import { getListing } from "@/services/listings";
+import { getFriendlyErrorMessage } from "@/services/account-status-errors";
 
 type Conversation = {
   id: string;
@@ -136,7 +137,7 @@ export default function ChatsScreen() {
         setConversations(rows);
       } catch (err) {
         if (!isMounted) return;
-        setError(err instanceof Error ? err.message : "Unable to load chats.");
+        setError(getFriendlyErrorMessage(err, "Unable to load chats."));
       } finally {
         if (!isMounted) return;
         setLoading(false);

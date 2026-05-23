@@ -15,6 +15,8 @@ export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, "");
 type ApiErrorPayload = {
   code?: string;
   message?: string;
+  title?: string;
+  errors?: Record<string, string[] | string>;
   [key: string]: unknown;
 };
 
@@ -76,6 +78,19 @@ export async function apiRequest<T>(
           payload = data;
           if (data?.message) {
             message = data.message;
+          } else if (data?.errors && typeof data.errors === "object") {
+            const first = Object.values(data.errors)
+              .flatMap((value) => (Array.isArray(value) ? value : [value]))
+              .find((value) => typeof value === "string" && value.trim().length > 0);
+            if (first) {
+              message = first;
+            } else if (data?.title) {
+              message = data.title;
+            } else {
+              message = text;
+            }
+          } else if (data?.title) {
+            message = data.title;
           } else {
             message = text;
           }

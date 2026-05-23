@@ -21,6 +21,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { getSellerListings, type Listing as ApiListing } from "@/services/listings";
 import { getSellerProfile, type SellerProfile } from "@/services/user";
 import { getSellerReviews, type Review, type ReviewStats } from "@/services/reviews";
+import { getFriendlyErrorMessage } from "@/services/account-status-errors";
 
 type TabId = "listings" | "reviews";
 
@@ -61,11 +62,12 @@ export default function SellerProfileScreen() {
       .catch((err) => {
         if (!isMounted) return;
         setError(
-          err instanceof Error
-            ? err.message
-            : t("sellerProfile.errors.load", {
-                defaultValue: "Unable to load seller.",
-              }),
+          getFriendlyErrorMessage(
+            err,
+            t("sellerProfile.errors.load", {
+              defaultValue: "Unable to load seller.",
+            }),
+          ),
         );
       })
       .finally(() => {

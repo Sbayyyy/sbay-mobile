@@ -41,7 +41,7 @@ import {
   isUnverifiedEmailError,
   showEmailVerificationRequiredAlert,
 } from "@/services/email-verification";
-import { getActionErrorMessage } from "@/services/account-status-errors";
+import { getActionErrorMessage, getFriendlyErrorMessage } from "@/services/account-status-errors";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80";
@@ -117,7 +117,7 @@ export default function ListingDetailScreen() {
       })
       .catch((err) => {
         if (!isMounted) return;
-        setError(err instanceof Error ? err.message : "Unable to load listing.");
+        setError(getFriendlyErrorMessage(err, "Unable to load listing."));
       })
       .finally(() => {
         if (!isMounted) return;

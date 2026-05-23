@@ -49,5 +49,64 @@ export function getAccountStatusErrorMessage(error: unknown): string | null {
 }
 
 export function getActionErrorMessage(error: unknown, fallback: string): string {
-  return getAccountStatusErrorMessage(error) ?? (error instanceof Error ? error.message : fallback);
+  return getAccountStatusErrorMessage(error) ?? getFriendlyErrorMessage(error, fallback);
 }
+
+function isGenericApiMessage(message: string): boolean {
+  const lower = message.trim().toLowerCase();
+  return (
+    lower === "" ||
+    lower === "forbidden" ||
+    lower === "forbidden." ||
+    lower === "not found" ||
+    lower === "not found." ||
+    /^request failed \(\d{3}\)$/.test(lower) ||
+    lower === "an unexpected error occurred."
+  );
+}
+
+export function getFriendlyErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiError) {
+    const message = error.message?.trim() ?? "";
+    const code = getErrorPayloadCode(error);
+
+    if (error.status === 400 && message && !isGenericApiMessage(message)) {
+      return message;
+    }
+    if (error.status === 401) {
+      return "Your session has expired. Please sign in again.";
+    }
+    if (error.status === 403) {
+      if (code.includes("email") || message.toLowerCase().includes("email")) {
+        return "Please verify your email before using this feature.";
+      }
+      return "You do not have permission to do that.";
+    }
+    if (error.status === 404) {
+      return "We could not find that item. It may have been removed or is no longer available.";
+    }
+    if (error.status === 409) {
+      return "This changed while you were working. Refresh and try again.";
+    }
+    if (error.status === 429) {
+      return "You are doing that too quickly. Please wait a moment and try again.";
+    }
+    if (error.status >= 500) {
+      return "Something went wrong on our side. Please try again in a moment.";
+    }
+    if (message && !isGenericApiMessage(message)) {
+      return message;
+    }
+  }
+
+  if (error instanceof TypeError && error.message.toLowerCase().includes("network")) {
+    return "Unable to connect. Check your internet connection and try again.";
+  }
+
+  if (error instanceof Error && error.message && !isGenericApiMessage(error.message)) {
+    return error.message;
+  }
+
+  return fallback || "Something went wrong. Please try again.";
+}
+import { ApiError } from "@/services/api";
