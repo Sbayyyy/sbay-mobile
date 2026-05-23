@@ -1,5 +1,5 @@
 import { DarkTheme as NavigationDarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useMemo, useRef } from "react";
@@ -90,6 +90,8 @@ function RootLayoutContent() {
   const router = useRouter();
   const segments = useSegments();
   const segmentList = useMemo(() => [...segments] as string[], [segments]);
+  const pathname = usePathname();
+  const pendingRouteRef = useRef<string | null>(null);
   const lastBackPressRef = useRef(0);
   const lastHomeBackPressRef = useRef(0);
 
@@ -215,13 +217,23 @@ function RootLayoutContent() {
       (route === "auth" && segmentList[1] === "verify-email") ||
       (route === "api" && segmentList[1] === "auth" && segmentList[2] === "verify-email");
     if (status === "authenticated" && isPublicAuthRoute) {
-      router.replace("/(tabs)");
+      const pending = pendingRouteRef.current;
+      pendingRouteRef.current = null;
+      if (pending) {
+        router.replace(pending as Parameters<typeof router.replace>[0]);
+      } else {
+        router.replace("/(tabs)");
+      }
       return;
     }
     if (status === "unauthenticated" && !isPublicAuthRoute && !isVerificationRoute) {
+      // Preserve the deep-link target so we can return to it after login.
+      if (pathname && pathname !== "/sign-in" && pathname !== "/sign-up") {
+        pendingRouteRef.current = pathname;
+      }
       router.replace("/sign-in");
     }
-  }, [router, segmentList, status]);
+  }, [router, segmentList, status, pathname]);
 
   useEffect(() => {
     if (Platform.OS !== "android") return undefined;
