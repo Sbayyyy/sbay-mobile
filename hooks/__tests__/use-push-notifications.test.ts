@@ -54,7 +54,7 @@ describe("Push Notification Hooks", () => {
       });
     });
 
-    it("should not call handler for chat notifications", () => {
+    it("should call handler for chat notifications", async () => {
       const mockHandler = jest.fn();
 
       renderHook(() => usePushNotificationListener(mockHandler));
@@ -71,7 +71,9 @@ describe("Push Notification Hooks", () => {
         },
       });
 
-      // Handler might still be called depending on implementation
+      await waitFor(() => {
+        expect(mockHandler).toHaveBeenCalled();
+      });
     });
 
     it("should call handler when no type is specified", async () => {

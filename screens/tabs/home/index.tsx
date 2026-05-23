@@ -29,6 +29,7 @@ import { type ThemeColors } from "@/constants/theme";
 import { searchListings, type Listing as ApiListing } from "@/services/listings";
 import { getSponsoredAds, type SponsoredAd } from "@/services/ads";
 import { useNotificationContext } from "@/providers/NotificationProvider";
+import { getFriendlyErrorMessage } from "@/services/account-status-errors";
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
@@ -89,9 +90,7 @@ export default function HomeScreen() {
           setSponsoredAds(ads);
         } catch (err) {
           if (!isMounted) return;
-          setError(
-            err instanceof Error ? err.message : t("listings.errorSubtitle"),
-          );
+          setError(getFriendlyErrorMessage(err, t("listings.errorSubtitle")));
         } finally {
           if (!isMounted) return;
           setLoading(false);

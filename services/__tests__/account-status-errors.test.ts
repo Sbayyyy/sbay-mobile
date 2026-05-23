@@ -2,6 +2,7 @@ import { ApiError } from "@/services/api";
 import {
   getAccountStatusErrorMessage,
   getActionErrorMessage,
+  getFriendlyErrorMessage,
 } from "../account-status-errors";
 
 describe("Account status error helpers", () => {
@@ -28,5 +29,17 @@ describe("Account status error helpers", () => {
       "Network down",
     );
     expect(getAccountStatusErrorMessage(new ApiError("Forbidden", 403))).toBeNull();
+  });
+
+  it("maps generic HTTP status errors to user-friendly copy", () => {
+    expect(getFriendlyErrorMessage(new ApiError("Forbidden.", 403), "Fallback")).toBe(
+      "You do not have permission to do that.",
+    );
+    expect(getFriendlyErrorMessage(new ApiError("Request failed (404)", 404), "Fallback")).toBe(
+      "We could not find that item. It may have been removed or is no longer available.",
+    );
+    expect(getFriendlyErrorMessage(new ApiError("An unexpected error occurred.", 500), "Fallback")).toBe(
+      "Something went wrong on our side. Please try again in a moment.",
+    );
   });
 });

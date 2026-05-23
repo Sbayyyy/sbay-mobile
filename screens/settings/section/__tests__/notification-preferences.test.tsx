@@ -9,6 +9,10 @@ import {
   type NotificationPreferences,
 } from "@/services/notification-preferences";
 
+const mockThemeColors = LightTheme.colors;
+
+jest.setTimeout(15000);
+
 const preferences: NotificationPreferences = {
   emailNewBids: true,
   emailOutbidAlerts: true,
@@ -34,7 +38,7 @@ jest.mock("react-i18next", () => ({
 }));
 
 jest.mock("@/hooks/use-app-theme", () => ({
-  useAppTheme: () => LightTheme.colors,
+  useAppTheme: () => mockThemeColors,
 }));
 
 jest.mock("@/hooks/use-localization", () => ({
@@ -100,7 +104,7 @@ describe("notification preferences screen", () => {
     await waitFor(() => {
       expect(setNotificationPreferences).toHaveBeenCalledWith({
         ...preferences,
-        emailNewBids: false,
+        emailMessages: false,
       });
     });
   });

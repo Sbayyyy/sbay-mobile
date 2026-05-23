@@ -59,7 +59,7 @@ import {
   showEmailVerificationRequiredAlert,
   type EmailVerificationStatus,
 } from "@/services/email-verification";
-import { getActionErrorMessage } from "@/services/account-status-errors";
+import { getActionErrorMessage, getFriendlyErrorMessage } from "@/services/account-status-errors";
 import { sanitizeInput, validateSafeText } from "@/validation";
 import * as Clipboard from "expo-clipboard";
 
@@ -175,6 +175,16 @@ export default function ChatThreadScreen() {
   const [chatId, setChatId] = useState<string | null>(null);
   const [otherUserId, setOtherUserId] = useState<string | null>(null);
   const connectionRef = useRef<Awaited<ReturnType<typeof createChatConnection>> | null>(null);
+  const editingMessageIdRef = useRef<string | null>(null);
+  const replyToIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    editingMessageIdRef.current = editingMessageId;
+  }, [editingMessageId]);
+
+  useEffect(() => {
+    replyToIdRef.current = replyTo?.id ?? null;
+  }, [replyTo?.id]);
 
   const scrollToBottom = (animated: boolean, delayMs = 0) => {
     const run = () => {
@@ -244,7 +254,7 @@ export default function ChatThreadScreen() {
         scrollToBottom(false, 50);
       } catch (err) {
         if (!isMounted) return;
-        setError(err instanceof Error ? err.message : "Unable to load chat.");
+        setError(getFriendlyErrorMessage(err, "Unable to load chat."));
       } finally {
         if (!isMounted) return;
         setLoading(false);
@@ -331,12 +341,12 @@ export default function ChatThreadScreen() {
     const handleDelete = (payload: { id: string; chatId: string }) => {
       if (payload.chatId !== chatId) return;
       setMessages((prev) => prev.filter((msg) => msg.id !== payload.id));
-      if (editingMessageId === payload.id) {
+      if (editingMessageIdRef.current === payload.id) {
         setEditingMessageId(null);
         setEditingReplyId(null);
         setInput("");
       }
-      if (replyTo?.id === payload.id) {
+      if (replyToIdRef.current === payload.id) {
         setReplyTo(null);
       }
     };
@@ -475,7 +485,7 @@ export default function ChatThreadScreen() {
         showEmailVerificationRequiredAlert();
         return;
       }
-      setInputError(getActionErrorMessage(error, "Unable to send offer."));
+      Alert.alert("Offer unavailable", getActionErrorMessage(error, "Unable to send offer."));
     } finally {
       setOfferBusyId(null);
     }
@@ -848,6 +858,11 @@ export default function ChatThreadScreen() {
           style={styles.flex}
           data={messages}
           keyExtractor={(m) => m.id}
+          initialNumToRender={18}
+          maxToRenderPerBatch={12}
+          updateCellsBatchingPeriod={50}
+          windowSize={9}
+          removeClippedSubviews={Platform.OS === "android"}
           renderItem={({ item: message }) => {
             const isMine = myUserId != null && message.senderId === myUserId;
             const readStatus = isMine ? (message.isRead ? "read" : "sent") : null;

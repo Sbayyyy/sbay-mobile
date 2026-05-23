@@ -46,14 +46,14 @@ export async function markNotificationsRead(): Promise<number> {
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
-  await apiRequest<void>(`/api/notifications/${id}/mark-read`, {
+  await apiRequest<void>(`/api/notifications/${encodeURIComponent(id)}/mark-read`, {
     method: "POST",
     headers: await authHeader(),
   });
 }
 
 export async function archiveNotification(id: string): Promise<void> {
-  await apiRequest<void>(`/api/notifications/${id}`, {
+  await apiRequest<void>(`/api/notifications/${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: await authHeader(),
   });

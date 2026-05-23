@@ -20,7 +20,13 @@ pipeline {
     stages {
         stage('Pull Mobile Repo') {
             steps {
+                echo 'Checking out mobile repository from Jenkins SCM...'
                 checkout scm
+                sh '''
+                    set -eu
+                    echo "Checked out commit: $(git rev-parse --short HEAD)"
+                    echo "Branch: ${BRANCH_NAME:-unknown}"
+                '''
             }
         }
 
@@ -29,6 +35,8 @@ pipeline {
                 script {
                     env.MOBILE_DIR = fileExists('package.json') ? '.' : 'sbay-mobile'
                     env.ARTIFACT_PREFIX = env.MOBILE_DIR == '.' ? '' : "${env.MOBILE_DIR}/"
+                    echo "Resolved mobile directory: ${env.MOBILE_DIR}"
+                    echo "Artifact prefix: ${env.ARTIFACT_PREFIX ?: '(workspace root)'}"
                 }
             }
         }
@@ -76,6 +84,8 @@ pipeline {
                         env.PREVIOUS_ANDROID_VERSION_CODE = previousCode
                         env.SHOULD_BUILD_AAB = (!previousCode || currentCode.toInteger() > previousCode.toInteger()) ? 'true' : 'false'
 
+                        echo "Current Android versionCode: ${currentCode}"
+                        echo "Previous Android versionCode: ${previousCode ?: 'none'}"
                         if (env.SHOULD_BUILD_AAB == 'true') {
                             currentBuild.description = "Building Android versionCode ${currentCode}"
                             echo "Android versionCode increased from ${previousCode ?: 'none'} to ${currentCode}; building signed AAB."
@@ -98,10 +108,12 @@ pipeline {
                 dir(env.MOBILE_DIR) {
                     sh '''
                         set -eu
+                        echo "Preparing Docker build inputs..."
                         test -f package.json
                         touch .env
                         touch .env.android-signing.local
                         mkdir -p artifacts
+                        echo "Docker inputs are ready."
                     '''
                 }
             }
@@ -113,20 +125,108 @@ pipeline {
             }
             steps {
                 dir(env.MOBILE_DIR) {
-                    sh 'docker compose build app'
+                    sh '''
+                        set -eu
+                        echo "Building Docker image for mobile release checks and Android build..."
+                        docker compose build app
+                        echo "Docker image built: $DOCKER_IMAGE"
+                    '''
                 }
             }
         }
 
-        stage('Test In Docker') {
+        stage('Validate Release Inputs') {
             when {
                 expression { env.SHOULD_BUILD_AAB == 'true' }
             }
             steps {
                 dir(env.MOBILE_DIR) {
-                    sh 'docker compose run --rm app npm run test:ci'
-                    sh 'docker compose run --rm app npx --yes expo-doctor'
-                    sh 'docker compose run --rm app npm audit --audit-level=high'
+                    sh '''
+                        set -eu
+                        echo "Running release config validation before any AAB build..."
+                        docker compose run --rm app npm run validate:release
+                        echo "Release config validation passed."
+                    '''
+                }
+            }
+        }
+
+        stage('TypeScript Typecheck') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
+            steps {
+                dir(env.MOBILE_DIR) {
+                    sh '''
+                        set -eu
+                        echo "Running TypeScript typecheck..."
+                        docker compose run --rm app npm run typecheck
+                        echo "TypeScript typecheck passed."
+                    '''
+                }
+            }
+        }
+
+        stage('Lint') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
+            steps {
+                dir(env.MOBILE_DIR) {
+                    sh '''
+                        set -eu
+                        echo "Running Expo ESLint checks..."
+                        docker compose run --rm app npm run lint
+                        echo "Lint finished."
+                    '''
+                }
+            }
+        }
+
+        stage('Unit And UI Tests') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
+            steps {
+                dir(env.MOBILE_DIR) {
+                    sh '''
+                        set -eu
+                        echo "Running Jest release tests with coverage..."
+                        docker compose run --rm app npm run test:release
+                        echo "Jest release tests passed."
+                    '''
+                }
+            }
+        }
+
+        stage('Expo Doctor') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
+            steps {
+                dir(env.MOBILE_DIR) {
+                    sh '''
+                        set -eu
+                        echo "Running Expo Doctor dependency/config validation..."
+                        docker compose run --rm app npx --yes expo-doctor
+                        echo "Expo Doctor passed."
+                    '''
+                }
+            }
+        }
+
+        stage('Security Audit') {
+            when {
+                expression { env.SHOULD_BUILD_AAB == 'true' }
+            }
+            steps {
+                dir(env.MOBILE_DIR) {
+                    sh '''
+                        set -eu
+                        echo "Running npm audit. High or critical vulnerabilities fail the release."
+                        docker compose run --rm app npm audit --audit-level=high
+                        echo "npm audit passed."
+                    '''
                 }
             }
         }
@@ -145,6 +245,12 @@ pipeline {
                     ]) {
                         sh '''
                             set -eu
+                            echo "Checking Android signing inputs from Jenkins credentials..."
+                            test -s "$ANDROID_UPLOAD_KEYSTORE_FILE"
+                            test -n "$ANDROID_KEYSTORE_PASSWORD"
+                            test -n "$ANDROID_KEY_ALIAS"
+                            test -n "$ANDROID_KEY_PASSWORD"
+                            echo "Signing inputs present. Building signed Android App Bundle..."
                             docker compose run --rm \
                                 -v "$ANDROID_UPLOAD_KEYSTORE_FILE:/run/secrets/upload-keystore.jks:ro" \
                                 -e ANDROID_UPLOAD_KEYSTORE=/run/secrets/upload-keystore.jks \
@@ -154,6 +260,8 @@ pipeline {
                                 -e AAB_PATH="$AAB_PATH" \
                                 app npm run build:android
                             test -s "$AAB_PATH"
+                            ls -lh "$AAB_PATH"
+                            echo "Signed AAB build completed."
                         '''
                     }
                 }
@@ -168,8 +276,11 @@ pipeline {
                 dir(env.MOBILE_DIR) {
                     sh '''
                         set -eu
+                        echo "Verifying AAB zip integrity..."
                         unzip -t "$AAB_PATH" >/dev/null
+                        echo "Verifying AAB signature..."
                         docker compose run --rm app jarsigner -verify "$AAB_PATH"
+                        echo "AAB verification passed."
                     '''
                 }
             }
@@ -180,6 +291,7 @@ pipeline {
                 expression { env.SHOULD_BUILD_AAB == 'true' }
             }
             steps {
+                echo "Archiving signed AAB artifact from ${env.ARTIFACT_PREFIX}artifacts/*.aab"
                 archiveArtifacts artifacts: "${env.ARTIFACT_PREFIX}artifacts/*.aab", fingerprint: true
             }
         }
@@ -192,9 +304,11 @@ pipeline {
                     dir(env.MOBILE_DIR ?: '.') {
                         sh '''
                             set +e
+                            echo "Cleaning Docker compose resources and generated native folders..."
                             docker compose --profile build down --remove-orphans --volumes --rmi local
                             docker image rm -f "$DOCKER_IMAGE"
                             rm -rf android ios .expo
+                            echo "Cleanup complete."
                         '''
                     }
                 } else {

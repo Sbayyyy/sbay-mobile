@@ -29,7 +29,7 @@ import {
   isUnverifiedEmailError,
   showEmailVerificationRequiredAlert,
 } from "@/services/email-verification";
-import { getActionErrorMessage } from "@/services/account-status-errors";
+import { getActionErrorMessage, getFriendlyErrorMessage } from "@/services/account-status-errors";
 
 export default function FavoritesScreen() {
   const theme = useAppTheme();
@@ -74,9 +74,7 @@ export default function FavoritesScreen() {
           })
           .catch((err) => {
             if (!isMounted) return;
-            setError(
-              err instanceof Error ? err.message : "Unable to load favorites.",
-            );
+            setError(getFriendlyErrorMessage(err, "Unable to load favorites."));
           })
           .finally(() => {
             if (!isMounted) return;

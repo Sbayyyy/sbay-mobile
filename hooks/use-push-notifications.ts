@@ -1,6 +1,6 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import * as Notifications from "expo-notifications";
-import { isChatNotification, type PushNotificationData } from "@/types/notifications";
+import { type PushNotificationData } from "@/types/notifications";
 
 export function usePushNotificationListener(
   onNotificationReceived: () => void,
@@ -12,9 +12,7 @@ export function usePushNotificationListener(
           | PushNotificationData
           | undefined;
 
-        if (!isChatNotification(data)) {
-          onNotificationReceived();
-        }
+        onNotificationReceived();
       },
     );
 
