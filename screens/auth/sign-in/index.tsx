@@ -207,6 +207,7 @@ export default function SignInScreen() {
       <View style={styles.form}>
           <ValidatedInput
             label="Email *"
+            helperText="Use the email address you registered with."
             value={email}
             onChangeText={setEmail}
             validators={emailValidators}
@@ -222,6 +223,7 @@ export default function SignInScreen() {
 
           <ValidatedInput
             label="Password *"
+            helperText="Enter your account password."
             value={password}
             onChangeText={setPassword}
             validators={passwordValidators}

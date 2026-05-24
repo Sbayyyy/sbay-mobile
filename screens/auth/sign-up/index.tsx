@@ -49,15 +49,40 @@ const emailValidator: TextValidator = {
   },
 };
 
-const passwordValidator: TextValidator = {
+const userNameValidator: TextValidator = {
   validate: (value) => {
     const trimmed = value.trim();
-    return trimmed.length >= 8
-      ? { valid: true, issues: [] }
-      : {
-          valid: false,
-          issues: [{ message: "Password must be at least 8 characters" }],
-        };
+    if (trimmed.length < 2) {
+      return {
+        valid: false,
+        issues: [{ message: "User name must be at least 2 characters" }],
+      };
+    }
+    if (trimmed.length > 50) {
+      return {
+        valid: false,
+        issues: [{ message: "User name must be 50 characters or less" }],
+      };
+    }
+    return { valid: true, issues: [] };
+  },
+};
+
+const passwordValidator: TextValidator = {
+  validate: (value) => {
+    if (value.length < 8) {
+      return {
+        valid: false,
+        issues: [{ message: "Password must be at least 8 characters" }],
+      };
+    }
+    if (!/[A-Z]/.test(value) || !/[a-z]/.test(value) || !/[0-9]/.test(value)) {
+      return {
+        valid: false,
+        issues: [{ message: "Password must include uppercase, lowercase, and a number" }],
+      };
+    }
+    return { valid: true, issues: [] };
   },
 };
 
@@ -172,7 +197,7 @@ export default function SignUpScreen() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const nameValidators = useMemo(() => [requiredValidator], []);
+  const nameValidators = useMemo(() => [requiredValidator, userNameValidator], []);
   const emailValidators = useMemo(
     () => [requiredValidator, emailValidator],
     [],
@@ -344,6 +369,7 @@ export default function SignUpScreen() {
         <View style={styles.form}>
           <ValidatedInput
             label="User name *"
+            helperText="Use 2 to 50 characters. This is the name other users will see."
             value={name}
             onChangeText={setName}
             validators={nameValidators}
@@ -357,6 +383,7 @@ export default function SignUpScreen() {
 
           <ValidatedInput
             label="Email *"
+            helperText="Use a valid email like name@example.com."
             value={email}
             onChangeText={setEmail}
             validators={emailValidators}
@@ -373,6 +400,7 @@ export default function SignUpScreen() {
 
           <ValidatedInput
             label="Phone number"
+            helperText="Optional. Use 7 to 15 digits, with country code if needed."
             value={phone}
             onChangeText={setPhone}
             validators={phoneValidators}
@@ -454,6 +482,7 @@ export default function SignUpScreen() {
 
           <ValidatedInput
             label="Password *"
+            helperText="Use at least 8 characters with uppercase, lowercase, and a number."
             value={password}
             onChangeText={setPassword}
             validators={passwordValidators}
@@ -468,6 +497,7 @@ export default function SignUpScreen() {
 
           <ValidatedInput
             label="Confirm password *"
+            helperText="Re-enter the same password exactly."
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             validators={confirmValidators}
@@ -482,9 +512,12 @@ export default function SignUpScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.submitButton, !canSubmit && styles.submitDisabled]}
+          style={[styles.submitButton, isSubmitting && styles.submitDisabled]}
           onPress={handleSubmit}
-          disabled={!canSubmit}
+          disabled={isSubmitting}
+          accessibilityHint={
+            canSubmit ? undefined : "Fill out the required fields to create your account."
+          }
         >
           <Text style={styles.submitLabel}>
             {isSubmitting ? "Creating account..." : "Sign up"}
