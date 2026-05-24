@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -50,6 +50,7 @@ export function ValidatedInput({
   const [result, setResult] = useState<ValidationResult>(emptyResult);
   const [isValidating, setIsValidating] = useState(false);
   const validationRunId = useRef(0);
+  const didForceValidation = useRef(false);
 
   const runValidation = useCallback(
     async (nextValue: string) => {
@@ -110,6 +111,16 @@ export function ValidatedInput({
 
   const shouldShowErrors = showErrors ?? touched;
   const firstIssue = result.issues[0];
+
+  useEffect(() => {
+    if (!showErrors) {
+      didForceValidation.current = false;
+      return;
+    }
+    if (!validators.length || didForceValidation.current) return;
+    didForceValidation.current = true;
+    void runValidation(value);
+  }, [runValidation, showErrors, validators.length, value]);
 
   return (
     <View style={styles.container}>

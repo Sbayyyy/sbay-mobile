@@ -117,6 +117,9 @@ export default function ForgotPasswordScreen() {
 
           <ValidatedInput
             label={t("forgotPassword.emailLabel", { defaultValue: "Email *" })}
+            helperText={t("forgotPassword.emailHint", {
+              defaultValue: "Use the email address connected to your account.",
+            })}
             value={email}
             onChangeText={(value) => {
               setEmail(value);

@@ -152,6 +152,9 @@ export default function ResetPasswordScreen() {
             <>
               <ValidatedInput
                 label={t("resetPassword.passwordLabel", { defaultValue: "New password *" })}
+                helperText={t("resetPassword.passwordHint", {
+                  defaultValue: "Use at least 8 characters with uppercase, lowercase, and a number.",
+                })}
                 value={password}
                 onChangeText={(value) => {
                   setPassword(value);
@@ -165,6 +168,9 @@ export default function ResetPasswordScreen() {
               />
               <ValidatedInput
                 label={t("resetPassword.confirmLabel", { defaultValue: "Confirm password *" })}
+                helperText={t("resetPassword.confirmHint", {
+                  defaultValue: "Re-enter the same password exactly.",
+                })}
                 value={confirmPassword}
                 onChangeText={(value) => {
                   setConfirmPassword(value);

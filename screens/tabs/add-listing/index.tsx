@@ -51,7 +51,7 @@ import {
   type BoostOption,
 } from "@/services/monetization";
 import { uploadImageAsync } from "@/services/uploads";
-import { type TextValidator } from "@/validation";
+import { type TextValidator, validateSafeText } from "@/validation";
 import { useAuth } from "@/providers/AuthProvider";
 import { useAppPopup } from "@/providers/AppPopupProvider";
 import { getMyProfile, type UserProfile } from "@/services/user";
@@ -191,6 +191,79 @@ export default function AddListingScreen() {
     return `${parts[0]}.${parts.slice(1).join("")}`;
   };
 
+  const validateListingText = useCallback(
+    (value: string, label: string, options: { minLength?: number; maxLength: number }) => {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return t("common.errors.required", {
+          defaultValue: `${label} is required.`,
+        });
+      }
+      if (options.minLength && trimmed.length < options.minLength) {
+        return t("common.errors.minLength", {
+          defaultValue: `${label} must be at least ${options.minLength} characters.`,
+          field: label,
+          count: options.minLength,
+        });
+      }
+      if (trimmed.length > options.maxLength) {
+        return t("common.errors.maxLength", {
+          defaultValue: `${label} must be ${options.maxLength} characters or less.`,
+          field: label,
+          count: options.maxLength,
+        });
+      }
+      const safe = validateSafeText(trimmed);
+      if (!safe.valid) {
+        return t("common.errors.unsafeText", {
+          defaultValue: `${label} contains disallowed content. Remove links, scripts, or SQL-like commands.`,
+          field: label,
+        });
+      }
+      return null;
+    },
+    [t],
+  );
+
+  const formErrors = useMemo(() => {
+    const titleLabel = t("addListing.fields.title", { defaultValue: "Listing title" });
+    const descriptionLabel = t("addListing.fields.description", { defaultValue: "Description" });
+    const priceLabel = t("addListing.fields.price", { defaultValue: "Price" });
+    const normalizedPrice = normalizePriceInput(price);
+    const amount = Number(normalizedPrice);
+    const next = {
+      title: validateListingText(title, titleLabel, { minLength: 3, maxLength: 80 }),
+      price: null as string | null,
+      description: validateListingText(description, descriptionLabel, { minLength: 20, maxLength: 2000 }),
+      location: location.trim()
+        ? null
+        : t("common.errors.required", {
+            defaultValue: `${t("addListing.fields.location", { defaultValue: "Location" })} is required.`,
+          }),
+    };
+
+    if (!normalizedPrice.trim()) {
+      next.price = t("common.errors.required", {
+        defaultValue: `${priceLabel} is required.`,
+      });
+    } else if (!Number.isFinite(amount) || amount <= 0) {
+      next.price = t("common.errors.invalidNumber", {
+        defaultValue: "Enter a valid price greater than zero.",
+      });
+    } else if (amount > 1_000_000_000) {
+      next.price = t("common.errors.maxPrice", {
+        defaultValue: "Enter a lower price.",
+      });
+    }
+
+    return next;
+  }, [description, location, price, t, title, validateListingText]);
+
+  const firstFormError = useMemo(
+    () => Object.values(formErrors).find(Boolean) ?? null,
+    [formErrors],
+  );
+
   const requiredValidator = useMemo<TextValidator>(
     () => ({
       validate: (value, context) => {
@@ -212,6 +285,18 @@ export default function AddListingScreen() {
     [t],
   );
 
+  const makeListingTextValidator = useCallback(
+    (label: string, options: { minLength?: number; maxLength: number }): TextValidator => ({
+      validate: (value) => {
+        const message = validateListingText(value, label, options);
+        return message
+          ? { valid: false, issues: [{ message }] }
+          : { valid: true, issues: [] };
+      },
+    }),
+    [validateListingText],
+  );
+
   const priceValidator = useMemo<TextValidator>(
     () => ({
       normalize: normalizePriceInput,
@@ -229,16 +314,41 @@ export default function AddListingScreen() {
             ],
           };
         }
+        if (amount > 1_000_000_000) {
+          return {
+            valid: false,
+            issues: [
+              {
+                message: t("common.errors.maxPrice", {
+                  defaultValue: "Enter a lower price.",
+                }),
+              },
+            ],
+          };
+        }
         return { valid: true, issues: [] };
       },
     }),
     [t],
   );
 
-  const titleValidators = useMemo(() => [requiredValidator], [requiredValidator]);
+  const titleValidators = useMemo(
+    () => [
+      makeListingTextValidator(t("addListing.fields.title", { defaultValue: "Listing title" }), {
+        minLength: 3,
+        maxLength: 80,
+      }),
+    ],
+    [makeListingTextValidator, t],
+  );
   const descriptionValidators = useMemo(
-    () => [requiredValidator],
-    [requiredValidator],
+    () => [
+      makeListingTextValidator(t("addListing.fields.description", { defaultValue: "Description" }), {
+        minLength: 20,
+        maxLength: 2000,
+      }),
+    ],
+    [makeListingTextValidator, t],
   );
   const priceValidators = useMemo(() => [requiredValidator, priceValidator], [
     requiredValidator,
@@ -375,19 +485,14 @@ export default function AddListingScreen() {
   }, [location]);
 
   const isFormValid = useMemo(() => {
-    const priceValue = Number(price);
     return (
-      title.trim().length > 0 &&
-      description.trim().length > 0 &&
-      Number.isFinite(priceValue) &&
-      priceValue > 0 &&
-      location.trim().length > 0 &&
+      !firstFormError &&
       validation.title &&
       validation.price &&
       validation.description &&
       validation.location
     );
-  }, [description, price, title, validation]);
+  }, [firstFormError, validation]);
 
   const selectedBoostOption = useMemo(
     () =>
@@ -717,6 +822,9 @@ export default function AddListingScreen() {
           <View style={styles.section}>
             <ValidatedInput
               label={t("addListing.fields.title")}
+              helperText={t("addListing.fields.titleHint", {
+                defaultValue: "Use 3 to 80 characters. Example: iPhone 13 Pro, 128GB.",
+              })}
               placeholder={t("addListing.fields.titlePlaceholder")}
               value={title}
               onChangeText={setTitle}
@@ -734,6 +842,9 @@ export default function AddListingScreen() {
             <View style={styles.priceField}>
               <ValidatedInput
                 label={t("addListing.fields.price")}
+                helperText={t("addListing.fields.priceHint", {
+                  defaultValue: "Enter numbers only. Decimals are allowed.",
+                })}
                 placeholder={t("addListing.fields.pricePlaceholder")}
                 keyboardType="decimal-pad"
                 value={price}
@@ -772,6 +883,11 @@ export default function AddListingScreen() {
                   {districtMenuVisible ? "^" : "v"}
                 </Text>
               </TouchableOpacity>
+              <Text style={styles.fieldHint}>
+                {t("addListing.fields.locationHint", {
+                  defaultValue: "Choose the city or region where the item is available.",
+                })}
+              </Text>
               <Modal
                 visible={districtMenuVisible}
                 transparent
@@ -824,9 +940,9 @@ export default function AddListingScreen() {
               </Modal>
             </View>
           </View>
-          {showErrors && !validation.location ? (
+          {showErrors && formErrors.location ? (
             <Text style={styles.errorText}>
-              {t("common.errors.required", { defaultValue: "City is required." })}
+              {formErrors.location}
             </Text>
           ) : null}
 
@@ -851,6 +967,9 @@ export default function AddListingScreen() {
           <View style={styles.section}>
             <ValidatedInput
               label={t("addListing.fields.description")}
+              helperText={t("addListing.fields.descriptionHint", {
+                defaultValue: "Use at least 20 characters. Include condition, size, and what is included.",
+              })}
               style={styles.descriptionInput}
               placeholder={t("addListing.fields.descriptionPlaceholder")}
               value={description}
@@ -965,6 +1084,14 @@ export default function AddListingScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
+          {showErrors && firstFormError ? (
+            <View style={styles.validationBanner}>
+              <Text style={styles.validationBannerTitle}>
+                {t("common.errors.fixFieldsTitle", { defaultValue: "Check the highlighted fields" })}
+              </Text>
+              <Text style={styles.validationBannerText}>{firstFormError}</Text>
+            </View>
+          ) : null}
           {id ? (
             <TouchableOpacity
               style={styles.secondaryButton}
@@ -977,10 +1104,10 @@ export default function AddListingScreen() {
           <TouchableOpacity
             style={[
               styles.submitButton,
-              (!isFormValid || isSubmitting) && styles.submitDisabled,
+              isSubmitting && styles.submitDisabled,
             ]}
             onPress={handleSubmit}
-            disabled={!isFormValid || isSubmitting}
+            disabled={isSubmitting}
           >
             <Text style={styles.submitLabel}>
               {isSubmitting
@@ -1095,6 +1222,11 @@ const createStyles = (theme: ThemeColors) =>
     sectionHint: {
       fontSize: 13,
       color: theme.textMuted,
+    },
+    fieldHint: {
+      fontSize: 12,
+      color: theme.textMuted,
+      lineHeight: 16,
     },
     photoGrid: {
       flexDirection: "row",
@@ -1290,6 +1422,25 @@ const createStyles = (theme: ThemeColors) =>
       paddingBottom: 28,
       backgroundColor: theme.background,
       gap: 12,
+    },
+    validationBanner: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.danger,
+      backgroundColor: theme.dangerBackground,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      gap: 4,
+    },
+    validationBannerTitle: {
+      color: theme.danger,
+      fontSize: 13,
+      fontWeight: "800",
+    },
+    validationBannerText: {
+      color: theme.danger,
+      fontSize: 12,
+      lineHeight: 17,
     },
     secondaryButton: {
       width: "100%",
