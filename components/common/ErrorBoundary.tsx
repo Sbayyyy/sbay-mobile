@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ErrorReporter } from "@/services/error-reporter";
 
 type Props = {
   children: React.ReactNode;
@@ -16,6 +17,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    ErrorReporter.captureException(error, {
+      boundary: "mobile-root",
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   reset = () => {

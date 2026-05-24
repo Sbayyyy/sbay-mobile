@@ -212,6 +212,9 @@ function RootLayoutContent() {
     if (status === "loading") return;
     const route = segmentList[0];
     const isPublicAuthRoute = route === "sign-in" || route === "sign-up";
+    const isPasswordResetRoute = route === "forgot-password" || route === "reset-password";
+    const isLegacyPasswordResetRoute =
+      route === "auth" && (segmentList[1] === "resetPassword" || segmentList[1] === "forgetPassword");
     const isVerificationRoute =
       route === "verify-email" ||
       (route === "auth" && segmentList[1] === "verify-email") ||
@@ -226,7 +229,13 @@ function RootLayoutContent() {
       }
       return;
     }
-    if (status === "unauthenticated" && !isPublicAuthRoute && !isVerificationRoute) {
+    if (
+      status === "unauthenticated" &&
+      !isPublicAuthRoute &&
+      !isPasswordResetRoute &&
+      !isLegacyPasswordResetRoute &&
+      !isVerificationRoute
+    ) {
       // Preserve the deep-link target so we can return to it after login.
       if (pathname && pathname !== "/sign-in" && pathname !== "/sign-up") {
         pendingRouteRef.current = pathname;
@@ -293,6 +302,10 @@ function RootLayoutContent() {
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="auth/verify-email" />
               <Stack.Screen name="verify-email" />
+              <Stack.Screen name="forgot-password" />
+              <Stack.Screen name="reset-password" />
+              <Stack.Screen name="auth/forgetPassword" />
+              <Stack.Screen name="auth/resetPassword" />
               <Stack.Screen name="api/auth/verify-email" />
               <Stack.Screen
                 name="modal"
@@ -306,6 +319,10 @@ function RootLayoutContent() {
             <>
               <Stack.Screen name="sign-in" />
               <Stack.Screen name="sign-up" />
+              <Stack.Screen name="forgot-password" />
+              <Stack.Screen name="reset-password" />
+              <Stack.Screen name="auth/forgetPassword" />
+              <Stack.Screen name="auth/resetPassword" />
               <Stack.Screen name="auth/verify-email" />
               <Stack.Screen name="verify-email" />
               <Stack.Screen name="api/auth/verify-email" />

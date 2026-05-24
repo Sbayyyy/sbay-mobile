@@ -57,6 +57,15 @@ export type VerifyEmailPayload = {
   email?: string;
 };
 
+export type ForgotPasswordPayload = {
+  email: string;
+};
+
+export type ResetPasswordPayload = {
+  token: string;
+  newPassword: string;
+};
+
 const TOKEN_STORAGE_KEY = "sbay.auth.token";
 const REFRESH_TOKEN_STORAGE_KEY = "sbay.auth.refreshToken";
 
@@ -91,6 +100,22 @@ export async function requestEmailVerification(): Promise<void> {
 
 export async function verifyEmail(payload: VerifyEmailPayload): Promise<void> {
   await apiRequest<void>("/api/auth/verify-email", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    skipAuthRefresh: true,
+  });
+}
+
+export async function forgotPassword(payload: ForgotPasswordPayload): Promise<void> {
+  await apiRequest<void>("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    skipAuthRefresh: true,
+  });
+}
+
+export async function resetPassword(payload: ResetPasswordPayload): Promise<void> {
+  await apiRequest<void>("/api/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(payload),
     skipAuthRefresh: true,

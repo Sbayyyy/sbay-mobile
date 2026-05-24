@@ -74,6 +74,26 @@
               "scheme": "https",
               "host": "www.syrian-bay.com",
               "pathPrefix": "/api/auth/verify-email"
+            },
+            {
+              "scheme": "https",
+              "host": "syrian-bay.com",
+              "pathPrefix": "/auth/resetPassword"
+            },
+            {
+              "scheme": "https",
+              "host": "www.syrian-bay.com",
+              "pathPrefix": "/auth/resetPassword"
+            },
+            {
+              "scheme": "https",
+              "host": "syrian-bay.com",
+              "pathPrefix": "/reset-password"
+            },
+            {
+              "scheme": "https",
+              "host": "www.syrian-bay.com",
+              "pathPrefix": "/reset-password"
             }
           ],
           "category": [

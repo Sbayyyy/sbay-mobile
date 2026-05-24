@@ -1,0 +1,53 @@
+Mobile feature parity plan
+==========================
+
+Implemented in this pass
+------------------------
+1. Forgot / reset password
+   - Added auth service methods for POST /api/auth/forgot-password and POST /api/auth/reset-password.
+   - Added forgot-password and reset-password mobile screens.
+   - Added web-compatible routes under /auth/forgetPassword and /auth/resetPassword for email links.
+   - Added a "Forgot password?" action to sign in.
+
+2. Personalized recommendations and interest tracking
+   - Added services/recommendations.ts for:
+     - GET /api/recommendations/listings
+     - POST /api/recommendations/track
+   - Home now prefers personalized recommendations when available.
+   - Category clicks, listing views, and favorites are tracked best-effort.
+
+3. Category browsing
+   - Added /category/[slug] route and category browse screen.
+   - Home category taps now open the dedicated category screen.
+
+4. Seller analytics
+   - Added services/user-analytics.ts for user stats and analytics endpoints.
+   - Added a lightweight Analytics tab on the profile/me screen.
+
+5. Listing edit route
+   - Added /listings/[id]/edit as a dedicated edit route backed by the existing add-listing edit mode.
+   - Seller-owned listing detail now opens that route.
+
+6. Push/deep-link targets
+   - Added support for category and order-style notification hrefs.
+
+Already present / confirmed
+---------------------------
+1. Sponsored ads
+   - Home already renders sponsored placements through services/ads.ts.
+
+2. Report entry points
+   - Listing detail reports Listing.
+   - Seller profile reports UserProfile.
+   - Chat thread reports Message.
+
+Still lower priority / later
+----------------------------
+1. Static/info pages
+   - Add terms, privacy, fees, help, seller guide entries through the Help section or a webview shell.
+
+2. Analytics depth
+   - The mobile Analytics tab is intentionally lightweight. If backend returns richer time-series data, add charts once the exact response shape is stable.
+
+3. Extra UI tests
+   - Add focused tests around forgot/reset password, category browsing, recommendations fallback, and analytics graceful failure.
