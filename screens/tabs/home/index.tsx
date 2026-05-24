@@ -27,6 +27,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
 import { searchListings, type Listing as ApiListing } from "@/services/listings";
 import { getSponsoredAds, type SponsoredAd } from "@/services/ads";
+import { getRecommendedListings, trackInteraction } from "@/services/recommendations";
 import { useNotificationContext } from "@/providers/NotificationProvider";
 import { getFriendlyErrorMessage } from "@/services/account-status-errors";
 import { ListingCardSkeleton } from "@/components/listings/ListingCardSkeleton";
@@ -36,6 +37,7 @@ export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [listings, setListings] = useState<ApiListing[]>([]);
+  const [recommendedListings, setRecommendedListings] = useState<ApiListing[]>([]);
   const [featuredListings, setFeaturedListings] = useState<ApiListing[]>([]);
   const [sponsoredAds, setSponsoredAds] = useState<SponsoredAd[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -89,10 +91,13 @@ export default function HomeScreen() {
         }
 
         try {
-          const [data, featured, ads] = await Promise.all([
+          const [data, recommended, featured, ads] = await Promise.all([
             searchListings({
               category: activeCategory === "all" ? undefined : activeCategory,
             }),
+            activeCategory === "all"
+              ? getRecommendedListings(12)
+              : Promise.resolve([]),
             searchListings({
               featured: true,
               pageSize: 8,
@@ -101,6 +106,7 @@ export default function HomeScreen() {
           ]);
           if (!isMounted) return;
           setListings(data);
+          setRecommendedListings(recommended);
           setFeaturedListings(featured.filter((listing) => listing.isBoosted === true));
           setSponsoredAds(ads);
           setError(null);
@@ -135,7 +141,10 @@ export default function HomeScreen() {
   }, [loadListings]);
 
   const displayListings = useMemo(() => {
-    return listings.map((listing) => ({
+    const source = activeCategory === "all" && recommendedListings.length > 0
+      ? recommendedListings
+      : listings;
+    return source.map((listing) => ({
       id: listing.id,
       title: listing.title,
       price: `${listing.priceCurrency} ${listing.priceAmount}`,
@@ -146,7 +155,7 @@ export default function HomeScreen() {
         listing.imageUrls?.[0] ??
         "",
     }));
-  }, [listings, t]);
+  }, [activeCategory, listings, recommendedListings, t]);
 
   const displayFeaturedListings = useMemo(() => {
     return featuredListings.filter((listing) => listing.isBoosted === true).map((listing) => ({
@@ -201,7 +210,8 @@ export default function HomeScreen() {
             onSelect={(categoryId) => {
               setActiveCategory(categoryId);
               if (categoryId !== "all") {
-                router.push(`/search?category=${encodeURIComponent(categoryId)}`);
+                void trackInteraction(categoryId, "category_click");
+                router.push(`/category/${encodeURIComponent(categoryId)}`);
               }
             }}
           />
@@ -310,8 +320,9 @@ export default function HomeScreen() {
                     setActiveCategory(category.id);
                     setCategoryDialogOpen(false);
                     if (category.id !== "all") {
+                      void trackInteraction(category.id, "category_click");
                       router.push(
-                        `/search?category=${encodeURIComponent(category.id)}`,
+                        `/category/${encodeURIComponent(category.id)}`,
                       );
                     }
                   }}

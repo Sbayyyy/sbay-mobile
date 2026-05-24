@@ -10,6 +10,7 @@ import {
 } from "@/services/notification-preferences";
 import { createSettingsStyles } from "./settingsStyles";
 import { StyleSheet } from "react-native";
+import { type ThemeColors } from "@/constants/theme";
 
 export function NotificationsSection() {
   const theme = useAppTheme();
@@ -115,7 +116,7 @@ export function NotificationsSection() {
   );
 }
 
-const createLocalStyles = (theme: { textMuted: string; border: string }) =>
+const createLocalStyles = (theme: ThemeColors) =>
   StyleSheet.create({
     list: { gap: 16 },
     sectionLabel: { fontSize: 13, fontWeight: "800", color: theme.textMuted, textTransform: "uppercase" },

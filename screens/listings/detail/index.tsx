@@ -42,6 +42,7 @@ import {
   showEmailVerificationRequiredAlert,
 } from "@/services/email-verification";
 import { getActionErrorMessage, getFriendlyErrorMessage } from "@/services/account-status-errors";
+import { trackInteraction } from "@/services/recommendations";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80";
@@ -114,6 +115,7 @@ export default function ListingDetailScreen() {
       .then((data) => {
         if (!isMounted) return;
         setListing(data);
+        void trackInteraction(data.categoryPath, "view");
       })
       .catch((err) => {
         if (!isMounted) return;
@@ -384,6 +386,7 @@ export default function ListingDetailScreen() {
               try {
                 if (nextValue) {
                   await addFavorite(listing.id);
+                  void trackInteraction(listing.categoryPath, "favorite");
                 } else {
                   await removeFavorite(listing.id);
                 }
@@ -582,7 +585,7 @@ export default function ListingDetailScreen() {
               </View>
               <TouchableOpacity
                 style={styles.primaryButton}
-                onPress={() => router.push(`/add_listing?id=${listing.id}`)}
+                onPress={() => router.push(`/listings/${listing.id}/edit`)}
               >
                 <Ionicons name="create-outline" size={18} color="#fff" />
                 <Text style={styles.primaryButtonLabel}>Edit listing</Text>

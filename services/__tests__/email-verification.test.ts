@@ -65,8 +65,8 @@ describe("isUnverifiedEmailError", () => {
     expect(isUnverifiedEmailError(error)).toBe(false);
   });
 
-  it("returns false for a 403 with an unrelated message", () => {
+  it("treats a generic 403 forbidden as a verified-only failure", () => {
     const error = Object.assign(new Error("forbidden"), { status: 403 });
-    expect(isUnverifiedEmailError(error)).toBe(false);
+    expect(isUnverifiedEmailError(error)).toBe(true);
   });
 });

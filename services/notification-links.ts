@@ -16,6 +16,9 @@ export function normalizeNotificationHref(href?: string | null): Href | null {
   if (href.startsWith("/chats/thread/")) return href as Href;
   if (href.startsWith("/listings/")) return href as Href;
   if (href.startsWith("/seller/")) return href as Href;
+  if (href.startsWith("/category/")) return href as Href;
+  if (href.startsWith("/orders/")) return href as Href;
+  if (href.startsWith("/dashboard/orders/")) return href as Href;
 
   const messageId = firstPathSegmentAfter(href, "/messages/");
   if (messageId) return `/chats/thread/${messageId}` as Href;
@@ -25,6 +28,9 @@ export function normalizeNotificationHref(href?: string | null): Href | null {
 
   const listingId = firstPathSegmentAfter(href, "/listing/");
   if (listingId) return `/listings/${listingId}` as Href;
+
+  const categorySlug = firstPathSegmentAfter(href, "/category/");
+  if (categorySlug) return `/category/${categorySlug}` as Href;
 
   return null;
 }

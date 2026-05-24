@@ -39,13 +39,14 @@ import { uploadImageAsync } from "@/services/uploads";
 import { resolveMediaUrl } from "@/services/media";
 import { isEmailVerified } from "@/services/email-verification";
 import { getActionErrorMessage } from "@/services/account-status-errors";
+import { getUserStats, type UserStats } from "@/services/user-analytics";
 
 import { AvatarCropModal } from "./components/AvatarCropModal";
 import { BoostPlanModal } from "./components/BoostPlanModal";
 import { MeListingsTab } from "./components/MeListingsTab";
 import { MeOverviewTab } from "./components/MeOverviewTab";
 
-const tabs = ["overview", "listings"] as const;
+const tabs = ["overview", "listings", "analytics"] as const;
 type TabId = (typeof tabs)[number];
 
 const cityOptions = [
@@ -111,6 +112,9 @@ export default function MeScreen() {
   const [boostingListingId, setBoostingListingId] = useState<string | null>(null);
   const [boostPlanListing, setBoostPlanListing] = useState<ApiListing | null>(null);
   const [statusUpdatingListingId, setStatusUpdatingListingId] = useState<string | null>(null);
+  const [analyticsStats, setAnalyticsStats] = useState<UserStats | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
   const loadProfile = useCallback(() => {
     let isMounted = true;
@@ -200,6 +204,38 @@ export default function MeScreen() {
       .catch(() => { if (isMounted) setBoostOptions([]); });
     return () => { isMounted = false; };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!profile?.id) {
+      setAnalyticsStats(null);
+      setAnalyticsError(null);
+      setAnalyticsLoading(false);
+      return () => { isMounted = false; };
+    }
+
+    setAnalyticsLoading(true);
+    getUserStats(profile.id)
+      .then((data) => {
+        if (!isMounted) return;
+        setAnalyticsStats(data);
+        setAnalyticsError(null);
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        setAnalyticsError(
+          error instanceof Error
+            ? error.message
+            : t("profile.analytics.error", { defaultValue: "Unable to load analytics." }),
+        );
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setAnalyticsLoading(false);
+      });
+
+    return () => { isMounted = false; };
+  }, [profile?.id, t]);
 
   const handleBoostListing = useCallback(
     async (listing: ApiListing, option: BoostOption) => {
@@ -655,7 +691,9 @@ export default function MeScreen() {
                 <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                   {tab === "overview"
                     ? t("profile.tabs.overview", { defaultValue: "Overview" })
-                    : t("profile.tabs.listings", { defaultValue: "Listings" })}
+                    : tab === "listings"
+                      ? t("profile.tabs.listings", { defaultValue: "Listings" })
+                      : t("profile.tabs.analytics", { defaultValue: "Analytics" })}
                 </Text>
               </TouchableOpacity>
             );
@@ -675,6 +713,49 @@ export default function MeScreen() {
             onBoostPress={setBoostPlanListing}
             onStatusChange={handleListingStatusChange}
           />
+        ) : null}
+
+        {activeTab === "analytics" ? (
+          <View style={styles.analyticsSection}>
+            <Text style={styles.sectionTitle}>
+              {t("profile.analytics.title", { defaultValue: "Seller analytics" })}
+            </Text>
+            {analyticsLoading ? (
+              <View style={styles.analyticsState}>
+                <ActivityIndicator size="small" color={theme.primary} />
+              </View>
+            ) : analyticsError ? (
+              <View style={styles.analyticsState}>
+                <Text style={styles.errorText}>{analyticsError}</Text>
+              </View>
+            ) : (
+              <View style={styles.statsGrid}>
+                {[
+                  {
+                    label: t("profile.analytics.totalListings", { defaultValue: "Total listings" }),
+                    value: analyticsStats?.totalListings ?? listings.length,
+                  },
+                  {
+                    label: t("profile.analytics.activeListings", { defaultValue: "Active listings" }),
+                    value: analyticsStats?.activeListings ?? listings.filter((item) => (item.status ?? "active").toLowerCase() === "active").length,
+                  },
+                  {
+                    label: t("profile.analytics.soldListings", { defaultValue: "Sold listings" }),
+                    value: analyticsStats?.soldListings ?? listings.filter((item) => (item.status ?? "").toLowerCase() === "sold").length,
+                  },
+                  {
+                    label: t("profile.analytics.rating", { defaultValue: "Rating" }),
+                    value: analyticsStats?.averageRating ?? profile.rating.toFixed(1),
+                  },
+                ].map((item) => (
+                  <View key={item.label} style={styles.statCard}>
+                    <Text style={styles.statValue}>{String(item.value ?? 0)}</Text>
+                    <Text style={styles.statLabel}>{item.label}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         ) : null}
       </ScrollView>
 
@@ -763,4 +844,7 @@ const createStyles = (theme: ThemeColors) =>
     tabPillActive: { backgroundColor: theme.primary, borderColor: theme.primary },
     tabLabel: { fontSize: 13, fontWeight: "600", color: theme.textSecondary },
     tabLabelActive: { color: theme.primaryForeground },
+    analyticsSection: { gap: 12 },
+    sectionTitle: { fontSize: 17, fontWeight: "800", color: theme.text },
+    analyticsState: { padding: 16, borderRadius: 14, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, alignItems: "center" },
   });

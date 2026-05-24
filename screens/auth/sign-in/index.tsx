@@ -246,6 +246,13 @@ export default function SignInScreen() {
       {apiError ? <Text style={styles.errorText}>{apiError}</Text> : null}
 
       <TouchableOpacity
+        style={styles.forgotButton}
+        onPress={() => router.push("/forgot-password")}
+      >
+        <Text style={styles.forgotLabel}>Forgot password?</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         style={styles.secondaryButton}
         onPress={() => router.push("/sign-up")}
       >
@@ -316,6 +323,14 @@ const createStyles = (theme: ReturnType<typeof useAppTheme>) =>
     secondaryButton: {
       paddingVertical: 12,
       alignItems: "center",
+    },
+    forgotButton: {
+      paddingVertical: 4,
+      alignItems: "center",
+    },
+    forgotLabel: {
+      color: theme.primary,
+      fontWeight: "700",
     },
     secondaryLabel: {
       color: theme.primary,
