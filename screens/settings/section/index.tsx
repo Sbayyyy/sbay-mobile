@@ -12,6 +12,10 @@ import { AccountSection } from "./components/AccountSection";
 import { NotificationsSection } from "./components/NotificationsSection";
 import { ThemeSection } from "./components/ThemeSection";
 import { HelpSection } from "./components/HelpSection";
+import { PaymentsSection } from "./components/PaymentsSection";
+import { AboutSection } from "./components/AboutSection";
+
+const implementedSections = ["profile", "account", "payments", "notifications", "theme", "about", "help"];
 
 export default function SettingsDetail() {
   const { section } = useLocalSearchParams<{ section: string }>();
@@ -47,10 +51,12 @@ export default function SettingsDetail() {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {section === "profile" && <ProfileSection />}
           {section === "account" && <AccountSection />}
+          {section === "payments" && <PaymentsSection />}
           {section === "notifications" && <NotificationsSection />}
           {section === "theme" && <ThemeSection />}
+          {section === "about" && <AboutSection />}
           {section === "help" && <HelpSection />}
-          {!["profile", "account", "notifications", "theme", "help"].includes(section ?? "") && (
+          {!implementedSections.includes(section ?? "") && (
             <View style={styles.comingSoonCard}>
               <View style={styles.comingSoonBadge}>
                 <Text style={styles.comingSoonBadgeText}>

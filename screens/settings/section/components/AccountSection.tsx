@@ -158,9 +158,14 @@ export function AccountSection() {
         </TouchableOpacity>
 
         <View style={styles.comingSoonCard}>
-          <Text style={styles.comingSoonTitle}>{t("settings.security.twoFactor", { defaultValue: "Two-factor authentication" })}</Text>
-          <Text style={styles.comingSoonBody}>{t("settings.common.comingSoon", { defaultValue: "Coming soon" })}</Text>
-          <View style={styles.comingSoonBadge}><Text style={styles.comingSoonBadgeText}>{t("settings.common.comingSoon", { defaultValue: "Coming soon" })}</Text></View>
+          <Text style={styles.comingSoonTitle}>
+            {t("settings.security.passwordSignIn", { defaultValue: "Password sign-in" })}
+          </Text>
+          <Text style={styles.comingSoonBody}>
+            {t("settings.security.passwordSignInBody", {
+              defaultValue: "Your account currently uses email and password authentication. Update your password here any time you need to rotate credentials.",
+            })}
+          </Text>
         </View>
 
         <View style={styles.dangerZone}>
