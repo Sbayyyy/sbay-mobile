@@ -18,7 +18,7 @@ import { SectionHeader } from "@/components/common/SectionHeader";
 import { SponsoredAdCard } from "@/components/ads/SponsoredAdCard";
 import { ChipPicker } from "@/components/form/ChipPicker";
 import { ListingCard } from "@/components/listings/ListingCard";
-import { HOME_CATEGORIES } from "@/constants/mockData";
+import { ADD_LISTING_CATEGORIES } from "@/constants/mockData";
 import {
   getRegionLabel,
   SYRIA_REGION_OPTIONS,
@@ -42,6 +42,56 @@ const statusToCondition: Record<Exclude<StatusId, "all">, string> = {
   renewed: "Refurbished",
   defective: "Poor",
 };
+
+const categorySearchAliases: Record<string, string[]> = {
+  electronics: ["electronics", "electronic", "إلكترونيات", "الكترونيات"],
+  fashion: ["fashion", "clothes", "clothing", "ازياء", "ملابس"],
+  home: ["home", "furniture", "house", "منزل", "اثاث", "أثاث", "بيت"],
+  sports: ["sports", "sport", "رياضة", "رياضيه"],
+  toys: ["toys", "toy", "العاب", "ألعاب", "لعب"],
+};
+
+function normalizeSearchValue(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u064b-\u065f\u0670\u0640]/g, "")
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function resolveSearchCategory(searchText: string): { category?: string; text?: string } {
+  const normalizedSearch = normalizeSearchValue(searchText);
+  if (!normalizedSearch) return {};
+
+  for (const categoryId of ADD_LISTING_CATEGORIES.map((item) => item.id)) {
+    const aliases = [categoryId, ...(categorySearchAliases[categoryId] ?? [])]
+      .map(normalizeSearchValue)
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
+
+    const exactAlias = aliases.find((alias) => normalizedSearch === alias);
+    if (exactAlias) return { category: categoryId };
+
+    const containedAlias = aliases.find((alias) => ` ${normalizedSearch} `.includes(` ${alias} `));
+    if (containedAlias) {
+      const remainingText = normalizedSearch
+        .replace(new RegExp(`(^|\\s)${containedAlias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=\\s|$)`), " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      return { category: categoryId, text: remainingText || undefined };
+    }
+  }
+
+  return { text: searchText.trim() || undefined };
+}
 
 export default function SearchScreen() {
   const { query, category: categoryParam, featured: featuredParam, reset } = useLocalSearchParams<{
@@ -95,7 +145,7 @@ export default function SearchScreen() {
   const categoryOptions = useMemo(
     () => [
       { id: "all", label: t("common.actions.all", { defaultValue: "All" }) },
-      ...HOME_CATEGORIES.filter((item) => item.id !== "all").map((item) => ({
+      ...ADD_LISTING_CATEGORIES.map((item) => ({
         id: item.id,
         label: t(item.translationKey ?? `categories.${item.id}`, {
           defaultValue: item.label,
@@ -125,10 +175,13 @@ export default function SearchScreen() {
       try {
         const parsedMin = Number(minPrice);
         const parsedMax = Number(maxPrice);
+        const resolvedSearch = resolveSearchCategory(search);
+        const selectedCategory = category === "all" ? resolvedSearch.category : category;
+        const searchText = category === "all" ? resolvedSearch.text : search.trim() || undefined;
         const [data, ads] = await Promise.all([
           searchListings({
-            text: search.trim() || undefined,
-            category: category === "all" ? undefined : category,
+            text: searchText,
+            category: selectedCategory === "all" ? undefined : selectedCategory,
             region: location === "all" ? undefined : location,
             condition: status === "all" ? undefined : statusToCondition[status],
             featured: featuredFilter === "featured" ? true : undefined,
