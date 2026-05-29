@@ -42,6 +42,83 @@
     "successTitle": "Done",
     "dismiss": "OK"
   },
+  "auth": {
+    "signIn": {
+      "title": "Sign in",
+      "subtitle": "Use your email and password to access your account.",
+      "verifiedSuccess": "Email verified. Sign in to continue.",
+      "registeredSuccess": "Account created. Check your inbox for the verification email, then sign in.",
+      "verifyFailed": "We could not verify that link. Please request a new email.",
+      "emailLabel": "Email",
+      "emailRequiredLabel": "Email *",
+      "emailHint": "Use the email address you registered with.",
+      "emailPlaceholder": "name@example.com",
+      "passwordLabel": "Password",
+      "passwordRequiredLabel": "Password *",
+      "passwordHint": "Enter your account password.",
+      "passwordPlaceholder": "Enter your password",
+      "submitting": "Signing in...",
+      "submit": "Sign in",
+      "forgotPassword": "Forgot password?",
+      "createAccount": "Create an account",
+      "validation": {
+        "emailRequired": "Email is required",
+        "emailInvalid": "Enter a valid email address",
+        "passwordRequired": "Password is required",
+        "passwordMin": "Password must be at least 8 characters"
+      },
+      "errors": {
+        "unable": "Unable to sign in. Try again."
+      }
+    },
+    "signUp": {
+      "title": "Create account",
+      "subtitle": "Add your details to get started with SBay.",
+      "nameLabel": "User name",
+      "nameRequiredLabel": "User name *",
+      "nameHint": "Use 2 to 50 characters. This is the name other users will see.",
+      "namePlaceholder": "Enter your user name",
+      "emailLabel": "Email",
+      "emailRequiredLabel": "Email *",
+      "emailHint": "Use a valid email like name@example.com.",
+      "emailPlaceholder": "name@example.com",
+      "phoneLabel": "Phone number",
+      "phoneHint": "Optional. Use 7 to 15 digits, with country code if needed.",
+      "phonePlaceholder": "Enter your phone number",
+      "cityLabel": "City",
+      "cityPlaceholder": "Select a city",
+      "cityPickerTitle": "Select a city",
+      "passwordLabel": "Password",
+      "passwordRequiredLabel": "Password *",
+      "passwordHint": "Use at least 8 characters with uppercase, lowercase, and a number.",
+      "passwordPlaceholder": "Create a password",
+      "confirmLabel": "Confirm password",
+      "confirmRequiredLabel": "Confirm password *",
+      "confirmHint": "Re-enter the same password exactly.",
+      "confirmPlaceholder": "Re-enter your password",
+      "submitHint": "Fill out the required fields to create your account.",
+      "submitting": "Creating account...",
+      "submit": "Sign up",
+      "existingAccount": "Already have an account? Sign in",
+      "validation": {
+        "nameRequired": "User name is required",
+        "nameMin": "User name must be at least 2 characters",
+        "nameMax": "User name must be 50 characters or less",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Enter a valid email address",
+        "phoneInvalid": "Enter a valid phone number",
+        "cityInvalid": "City is invalid",
+        "passwordRequired": "Password is required",
+        "passwordMin": "Password must be at least 8 characters",
+        "passwordRule": "Password must include uppercase, lowercase, and a number",
+        "confirmRequired": "Confirm password is required",
+        "confirmMismatch": "Passwords do not match"
+      },
+      "errors": {
+        "unable": "Unable to sign up. Try again."
+      }
+    }
+  },
   "categories": {
     "all": "All",
     "allCategories": "All categories",
@@ -102,6 +179,14 @@
   },
   "home": {
     "searchPlaceholder": "Search products",
+    "heroEyebrow": "A local Syrian marketplace",
+    "heroTitle": "Buy and sell anything easily across Syria",
+    "heroSubtitle": "Thousands of listings for cars, homes, electronics, jobs, services, and everyday needs.",
+    "heroSearchPlaceholder": "Search cars, apartments, phones, jobs...",
+    "heroPostListing": "Post listing",
+    "heroBrowseListings": "Browse",
+    "heroTrustSafe": "Clearer than scattered chats",
+    "heroTrustFast": "Fast local discovery",
     "categoriesTitle": "Categories",
     "recommendedTitle": "Recommended for you",
     "featuredTitle": "Featured",
@@ -324,6 +409,22 @@
       "dark": "Dark",
       "coffee": "Coffee",
       "starlight": "Starlight"
+    },
+    "about": {
+      "subtitle": "A marketplace for discovering listings, chatting with sellers, and managing your own sales.",
+      "version": "Version",
+      "build": "Build",
+      "appId": "App ID",
+      "website": "Website",
+      "resources": "Resources",
+      "openWebsite": "Open website",
+      "howItWorks": "How it works",
+      "buyerProtection": "Buyer protection",
+      "sellerGuide": "Seller guide",
+      "sellerProtection": "Seller protection",
+      "fees": "Fees and commissions",
+      "privacy": "Privacy policy",
+      "terms": "Terms of service"
     },
     "common": {
       "saving": "Saving...",

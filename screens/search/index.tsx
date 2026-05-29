@@ -18,9 +18,9 @@ import { SectionHeader } from "@/components/common/SectionHeader";
 import { SponsoredAdCard } from "@/components/ads/SponsoredAdCard";
 import { ChipPicker } from "@/components/form/ChipPicker";
 import { ListingCard } from "@/components/listings/ListingCard";
+import { toListingCardListings } from "@/components/listings/listing-card-presenter";
 import { ADD_LISTING_CATEGORIES } from "@/constants/mockData";
 import {
-  getRegionLabel,
   SYRIA_REGION_OPTIONS,
   type SyriaRegionId,
 } from "@/constants/regions";
@@ -42,6 +42,9 @@ const statusToCondition: Record<Exclude<StatusId, "all">, string> = {
   renewed: "Refurbished",
   defective: "Poor",
 };
+
+const FALLBACK_LISTING_IMAGE =
+  "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=60";
 
 const categorySearchAliases: Record<string, string[]> = {
   electronics: ["electronics", "electronic", "إلكترونيات", "الكترونيات"],
@@ -230,16 +233,9 @@ export default function SearchScreen() {
 
   const displayListings = useMemo(
     () =>
-      sortedListings.map((listing) => ({
-        id: listing.id,
-        title: listing.title,
-        price: `${listing.priceCurrency} ${listing.priceAmount}`,
-        category: listing.categoryPath ?? "other",
-        location: getRegionLabel(listing.region ?? listing.seller?.city, t),
-        image:
-          listing.thumbnailUrl ??
-          listing.imageUrls?.[0] ??
-          "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=60",
+      toListingCardListings(sortedListings, t).map((listing) => ({
+        ...listing,
+        image: listing.image || FALLBACK_LISTING_IMAGE,
       })),
     [sortedListings, t],
   );

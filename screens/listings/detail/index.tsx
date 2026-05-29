@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Linking,
   Modal,
   Platform,
@@ -12,11 +11,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
+import { ListingImageGallery } from "@/components/listings/ListingImageGallery";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { getRegionLabel } from "@/constants/regions";
 import { type ThemeColors } from "@/constants/theme";
@@ -58,7 +59,6 @@ export default function ListingDetailScreen() {
   const [listing, setListing] = useState<ApiListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -217,7 +217,6 @@ export default function ListingDetailScreen() {
             ? await hideListing(listing.id)
             : await relistListing(listing.id);
       setListing(updated);
-      setSelectedImageIndex(0);
     } catch (err) {
       showError(
         getActionErrorMessage(err, "Unable to update listing status."),
@@ -287,62 +286,7 @@ export default function ListingDetailScreen() {
           <Text style={styles.backButtonLabel}>{t("listings.back")}</Text>
         </TouchableOpacity>
 
-        <View style={styles.gallery}>
-          <View style={styles.heroImageWrap}>
-            <Image
-              source={{ uri: imageUrls[selectedImageIndex] ?? imageUrl }}
-              style={styles.heroImage}
-            />
-            {imageUrls.length > 1 ? (
-              <>
-                <TouchableOpacity
-                  style={[styles.navButton, styles.navLeft]}
-                  onPress={() =>
-                    setSelectedImageIndex((prev) =>
-                      prev === 0 ? imageUrls.length - 1 : prev - 1,
-                    )
-                  }
-                >
-                  <Ionicons name="chevron-back" size={22} color={theme.text} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.navButton, styles.navRight]}
-                  onPress={() =>
-                    setSelectedImageIndex((prev) =>
-                      prev === imageUrls.length - 1 ? 0 : prev + 1,
-                    )
-                  }
-                >
-                  <Ionicons name="chevron-forward" size={22} color={theme.text} />
-                </TouchableOpacity>
-                <View style={styles.counterBadge}>
-                  <Text style={styles.counterLabel}>
-                    {selectedImageIndex + 1} / {imageUrls.length}
-                  </Text>
-                </View>
-              </>
-            ) : null}
-          </View>
-
-          {imageUrls.length > 1 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.thumbRow}>
-                {imageUrls.map((url, index) => {
-                  const active = index === selectedImageIndex;
-                  return (
-                    <TouchableOpacity
-                      key={`${url}-${index}`}
-                      onPress={() => setSelectedImageIndex(index)}
-                      style={[styles.thumb, active && styles.thumbActive]}
-                    >
-                      <Image source={{ uri: url }} style={styles.thumbImage} />
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
-          ) : null}
-        </View>
+        <ListingImageGallery imageUrls={imageUrls} title={listing.title} />
 
         <View style={styles.header}>
           <View style={styles.titleRow}>
@@ -532,6 +476,9 @@ export default function ListingDetailScreen() {
                 <Image
                   source={{ uri: listing.seller.avatar }}
                   style={styles.sellerAvatarImage}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  accessibilityLabel={listing.seller.name}
                 />
               ) : (
                 <Text style={styles.sellerInitial}>
@@ -707,73 +654,6 @@ const createStyles = (theme: ThemeColors) =>
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
-    },
-    gallery: {
-      gap: 12,
-    },
-    heroImageWrap: {
-      position: "relative",
-    },
-    heroImage: {
-      width: "100%",
-      height: 260,
-      borderRadius: 18,
-      backgroundColor: theme.surfaceMuted,
-    },
-    navButton: {
-      position: "absolute",
-      top: "45%",
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: theme.surface,
-      alignItems: "center",
-      justifyContent: "center",
-      shadowColor: theme.shadow,
-      shadowOpacity: 0.12,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
-    },
-    navLeft: {
-      left: 12,
-    },
-    navRight: {
-      right: 12,
-    },
-    counterBadge: {
-      position: "absolute",
-      bottom: 12,
-      alignSelf: "center",
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 999,
-      backgroundColor: "rgba(0, 0, 0, 0.6)",
-    },
-    counterLabel: {
-      color: "#fff",
-      fontSize: 12,
-      fontWeight: "600",
-    },
-    thumbRow: {
-      flexDirection: "row",
-      gap: 10,
-      paddingHorizontal: 4,
-    },
-    thumb: {
-      width: 64,
-      height: 64,
-      borderRadius: 12,
-      overflow: "hidden",
-      borderWidth: 2,
-      borderColor: "transparent",
-    },
-    thumbActive: {
-      borderColor: theme.primary,
-    },
-    thumbImage: {
-      width: "100%",
-      height: "100%",
     },
     header: {
       gap: 6,

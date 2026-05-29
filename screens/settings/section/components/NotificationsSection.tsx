@@ -8,9 +8,18 @@ import {
   setNotificationPreferences,
   type NotificationPreferences,
 } from "@/services/notification-preferences";
+import { syncPushToken } from "@/services/push-notifications";
+import { ErrorReporter } from "@/services/error-reporter";
 import { createSettingsStyles } from "./settingsStyles";
 import { StyleSheet } from "react-native";
 import { type ThemeColors } from "@/constants/theme";
+
+const pushPreferenceKeys: ReadonlySet<keyof NotificationPreferences> = new Set([
+  "pushMessages",
+  "pushNewBids",
+  "pushOutbidAlerts",
+  "pushWonAuctions",
+]);
 
 export function NotificationsSection() {
   const theme = useAppTheme();
@@ -43,6 +52,11 @@ export function NotificationsSection() {
     try {
       const saved = await setNotificationPreferences(next);
       setPrefs(saved);
+      if (pushPreferenceKeys.has(key) && saved[key]) {
+        void syncPushToken().catch((syncError) => {
+          ErrorReporter.captureException(syncError, { context: "syncPushToken from notification settings" });
+        });
+      }
     } catch (err) {
       setPrefs(previous);
       const message = err instanceof Error ? err.message : "Unable to save notification settings";

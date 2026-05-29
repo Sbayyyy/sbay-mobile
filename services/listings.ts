@@ -19,6 +19,7 @@ export type SellerSummary = {
   rating: number;
   reviewCount: number;
   city?: string | null;
+  createdAt?: string | null;
 };
 
 export type Listing = {

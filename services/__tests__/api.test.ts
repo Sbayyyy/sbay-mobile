@@ -1,4 +1,5 @@
 import { apiRequest, ApiError } from "../api";
+import { notifyUnauthorized, refreshAuthToken } from "../auth-session";
 
 jest.mock("expo-constants", () => ({
   default: { expoConfig: null, easConfig: null },
@@ -6,7 +7,7 @@ jest.mock("expo-constants", () => ({
 
 jest.mock("../auth-session", () => ({
   notifyUnauthorized: jest.fn(),
-  refreshAuthToken: jest.fn().mockResolvedValue(null),
+  refreshAuthToken: jest.fn().mockResolvedValue({ status: "unavailable" }),
 }));
 
 const mockFetch = jest.fn();
@@ -77,6 +78,70 @@ describe("apiRequest", () => {
       expect.any(String),
       expect.objectContaining({
         headers: expect.objectContaining({ "Content-Type": "application/json" }),
+      }),
+    );
+  });
+
+  it("keeps the user signed in when token refresh is temporarily unavailable", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => "",
+    });
+    (refreshAuthToken as jest.Mock).mockResolvedValueOnce({ status: "unavailable" });
+
+    await expect(apiRequest("/private")).rejects.toMatchObject({
+      name: "ApiError",
+      status: 503,
+      payload: { code: "session_refresh_unavailable" },
+    });
+
+    expect(notifyUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it("notifies unauthorized only when token refresh is explicitly rejected", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => "",
+    });
+    (refreshAuthToken as jest.Mock).mockResolvedValueOnce({ status: "rejected" });
+
+    await expect(apiRequest("/private")).rejects.toMatchObject({
+      name: "ApiError",
+      status: 401,
+    });
+
+    expect(notifyUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries a 401 request with a refreshed token", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: async () => "",
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ ok: true }),
+      });
+    (refreshAuthToken as jest.Mock).mockResolvedValueOnce({
+      status: "refreshed",
+      token: "new-access-token",
+    });
+
+    const result = await apiRequest<{ ok: boolean }>("/private");
+
+    expect(result).toEqual({ ok: true });
+    expect(notifyUnauthorized).not.toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenLastCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer new-access-token",
+        }),
       }),
     );
   });

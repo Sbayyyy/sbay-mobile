@@ -1,7 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 
-import { syncPushToken, unregisterPushToken } from "../push-notifications";
+import {
+  registerForPushNotifications,
+  syncPushToken,
+  unregisterPushToken,
+} from "../push-notifications";
 import { apiRequest } from "@/services/api";
 import { getStoredToken } from "@/services/auth";
 
@@ -19,7 +24,7 @@ jest.mock("expo-notifications", () => ({
 
 jest.mock("expo-constants", () => ({
   easConfig: { projectId: "project-1" },
-  expoConfig: { extra: { easProjectId: "project-1" } },
+  expoConfig: { extra: { eas: { projectId: "project-1" }, easProjectId: "legacy-project-1" } },
 }));
 
 jest.mock("@/services/api", () => ({
@@ -37,6 +42,12 @@ describe("push notifications service", () => {
     (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValue({ status: "granted" });
     (Notifications.getExpoPushTokenAsync as jest.Mock).mockResolvedValue({ data: "expo-token" });
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+    (Constants as unknown as { easConfig: { projectId: string } | null }).easConfig = {
+      projectId: "project-1",
+    };
+    (Constants as unknown as { expoConfig: { extra: { eas: { projectId: string }; easProjectId: string } } }).expoConfig = {
+      extra: { eas: { projectId: "project-1" }, easProjectId: "legacy-project-1" },
+    };
   });
 
   it("registers the Expo push token with a stable installation id", async () => {
@@ -62,6 +73,28 @@ describe("push notifications service", () => {
       deviceId: "install-1",
     });
     expect(AsyncStorage.setItem).toHaveBeenCalledWith("sbay.push.token", "expo-token");
+  });
+
+  it("uses app.json extra.eas.projectId when easConfig is unavailable", async () => {
+    (Constants as unknown as { easConfig: null }).easConfig = null;
+    (Constants as unknown as { expoConfig: { extra: { eas: { projectId: string } } } }).expoConfig = {
+      extra: { eas: { projectId: "app-json-project" } },
+    };
+
+    await registerForPushNotifications();
+
+    expect(Notifications.getExpoPushTokenAsync).toHaveBeenCalledWith({
+      projectId: "app-json-project",
+    });
+  });
+
+  it("does not re-prompt for permissions during background sync", async () => {
+    (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValue({ status: "denied" });
+
+    await syncPushToken({ requestPermissions: false });
+
+    expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
+    expect(apiRequest).not.toHaveBeenCalled();
   });
 
   it("removes the stored push token locally after unregistering", async () => {

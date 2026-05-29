@@ -42,4 +42,17 @@ describe("Account status error helpers", () => {
       "Something went wrong on our side. Please try again in a moment.",
     );
   });
+
+  it("keeps session refresh network failures retryable instead of asking for login", () => {
+    expect(
+      getFriendlyErrorMessage(
+        new ApiError("We could not refresh your session.", 503, {
+          code: "session_refresh_unavailable",
+        }),
+        "Fallback",
+      ),
+    ).toBe(
+      "You are still signed in, but we could not refresh your session. Check your connection and try again.",
+    );
+  });
 });

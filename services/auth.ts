@@ -1,7 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 
 import { apiRequest } from "@/services/api";
-import { getAuthToken, setAuthToken } from "@/services/auth-session";
+import { getAuthToken, setAuthToken, type AuthRefreshResult } from "@/services/auth-session";
 import { API_BASE_URL } from "@/services/api";
 import { ErrorReporter } from "@/services/error-reporter";
 
@@ -166,9 +166,9 @@ export async function getStoredRefreshToken(): Promise<string | null> {
   return SecureStore.getItemAsync(REFRESH_TOKEN_STORAGE_KEY);
 }
 
-export async function refreshStoredToken(): Promise<string | null> {
+export async function refreshStoredToken(): Promise<AuthRefreshResult> {
   const refreshToken = await getStoredRefreshToken();
-  if (!refreshToken) return null;
+  if (!refreshToken) return { status: "rejected" };
 
   let response: Response;
   try {
@@ -183,7 +183,7 @@ export async function refreshStoredToken(): Promise<string | null> {
   } catch {
     // Network unavailable — preserve stored tokens so the user stays signed in.
     // The next request after connectivity resumes will retry the refresh.
-    return null;
+    return { status: "unavailable" };
   }
 
   if (response.status === 401 || response.status === 403) {
@@ -191,17 +191,17 @@ export async function refreshStoredToken(): Promise<string | null> {
     await clearStoredToken().catch((error) => {
       ErrorReporter.captureException(error, { context: "clearStoredToken after refresh rejection" });
     });
-    return null;
+    return { status: "rejected" };
   }
 
   if (!response.ok) {
     // Transient server error — don't clear the token; let the caller retry later.
-    return null;
+    return { status: "unavailable" };
   }
 
   const data = (await response.json()) as AuthResponse;
   await storeAuthTokens(data.token, data.refreshToken ?? null);
-  return data.token;
+  return { status: "refreshed", token: data.token };
 }
 
 export async function revokeStoredRefreshToken(): Promise<void> {

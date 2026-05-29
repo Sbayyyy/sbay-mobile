@@ -47,6 +47,16 @@ export function AboutSection() {
     Platform.OS === "android"
       ? String(appConfig?.android?.versionCode ?? "")
       : appConfig?.ios?.buildNumber ?? "";
+  const infoLinks = [
+    { label: t("settings.about.openWebsite", { defaultValue: "Open website" }), path: "" },
+    { label: t("settings.about.howItWorks", { defaultValue: "How it works" }), path: "/how-it-works" },
+    { label: t("settings.about.buyerProtection", { defaultValue: "Buyer protection" }), path: "/buyer-protection" },
+    { label: t("settings.about.sellerGuide", { defaultValue: "Seller guide" }), path: "/seller-guide" },
+    { label: t("settings.about.sellerProtection", { defaultValue: "Seller protection" }), path: "/seller-protection" },
+    { label: t("settings.about.fees", { defaultValue: "Fees and commissions" }), path: "/fees" },
+    { label: t("settings.about.privacy", { defaultValue: "Privacy policy" }), path: "/privacy-policy" },
+    { label: t("settings.about.terms", { defaultValue: "Terms of service" }), path: "/terms" },
+  ];
 
   return (
     <View style={styles.card}>
@@ -72,12 +82,11 @@ export function AboutSection() {
         />
       </View>
 
+      <Text style={styles.sectionTitle}>
+        {t("settings.about.resources", { defaultValue: "Resources" })}
+      </Text>
       <View style={styles.linkGroup}>
-        {[
-          { label: t("settings.about.openWebsite", { defaultValue: "Open website" }), path: "" },
-          { label: t("settings.about.terms", { defaultValue: "Terms of service" }), path: "/terms" },
-          { label: t("settings.about.privacy", { defaultValue: "Privacy policy" }), path: "/privacy" },
-        ].map((item) => (
+        {infoLinks.map((item) => (
           <TouchableOpacity
             key={item.label}
             style={styles.linkRow}
@@ -96,6 +105,7 @@ export function AboutSection() {
 const createLocalStyles = (theme: ThemeColors) =>
   StyleSheet.create({
     brand: { color: theme.text, fontSize: 26, fontWeight: "800" },
+    sectionTitle: { color: theme.text, fontSize: 15, fontWeight: "800", marginTop: 4 },
     infoBox: {
       borderRadius: 14,
       borderWidth: 1,

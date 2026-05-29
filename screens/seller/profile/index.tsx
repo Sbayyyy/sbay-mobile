@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ListingCard } from "@/components/listings/ListingCard";
+import { toListingCardListing } from "@/components/listings/listing-card-presenter";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { getRegionLabel } from "@/constants/regions";
 import { type ThemeColors } from "@/constants/theme";
@@ -24,6 +25,9 @@ import { getSellerReviews, type Review, type ReviewStats } from "@/services/revi
 import { getFriendlyErrorMessage } from "@/services/account-status-errors";
 
 type TabId = "listings" | "reviews";
+
+const FALLBACK_LISTING_IMAGE =
+  "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=60";
 
 export default function SellerProfileScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -82,18 +86,19 @@ export default function SellerProfileScreen() {
 
   const displayListings = useMemo(
     () =>
-        listings.map((listing) => ({
-          id: listing.id,
-          title: listing.title,
-          price: `${listing.priceCurrency} ${listing.priceAmount}`,
-          category: listing.categoryPath ?? "other",
-          location: getRegionLabel(listing.region ?? listing.seller?.city, t),
-          image:
-            listing.thumbnailUrl ??
-            listing.imageUrls?.[0] ??
-            "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=600&q=60",
-        })),
-    [listings],
+      listings.map((listing) => {
+        const memberSince = listing.seller?.createdAt ?? profile?.createdAt;
+        return {
+          ...toListingCardListing(listing, t),
+          image: listing.thumbnailUrl ?? listing.imageUrls?.[0] ?? FALLBACK_LISTING_IMAGE,
+          sellerRating: listing.seller?.rating ?? profile?.rating ?? null,
+          sellerReviewCount: listing.seller?.reviewCount ?? profile?.reviewCount ?? null,
+          sellerMemberSince: memberSince
+            ? `${t("sellerProfile.stats.memberSince", { defaultValue: "Member since" })} ${new Date(memberSince).toLocaleDateString()}`
+            : null,
+        };
+      }),
+    [listings, profile, t],
   );
 
   const ratingValue = stats?.averageRating ?? profile?.rating ?? 0;

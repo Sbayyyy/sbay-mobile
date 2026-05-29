@@ -1,7 +1,10 @@
 import * as SecureStore from "expo-secure-store";
 
-import { clearStoredToken, storeAuthTokens } from "../auth";
+import { clearStoredToken, refreshStoredToken, storeAuthTokens } from "../auth";
 import { setAuthToken } from "@/services/auth-session";
+
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
 jest.mock("expo-secure-store", () => ({
   deleteItemAsync: jest.fn(),
@@ -23,6 +26,7 @@ describe("auth token storage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (SecureStore.deleteItemAsync as jest.Mock).mockResolvedValue(undefined);
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
     (SecureStore.setItemAsync as jest.Mock).mockResolvedValue(undefined);
   });
 
@@ -43,5 +47,27 @@ describe("auth token storage", () => {
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("sbay.auth.token");
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("sbay.auth.refreshToken");
     expect(setAuthToken).not.toHaveBeenCalled();
+  });
+
+  it("preserves stored tokens when refresh is temporarily unavailable", async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue("refresh-token");
+    mockFetch.mockRejectedValueOnce(new Error("Network unavailable"));
+
+    await expect(refreshStoredToken()).resolves.toEqual({ status: "unavailable" });
+
+    expect(SecureStore.deleteItemAsync).not.toHaveBeenCalled();
+  });
+
+  it("clears stored tokens only when the refresh token is rejected", async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue("refresh-token");
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+    });
+
+    await expect(refreshStoredToken()).resolves.toEqual({ status: "rejected" });
+
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("sbay.auth.token");
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("sbay.auth.refreshToken");
   });
 });

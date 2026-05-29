@@ -14,10 +14,11 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { LocalizationProvider } from "../providers/LocalizationProvider";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { ThemeProvider as AppThemeProvider, useThemeContext } from "@/providers/ThemeProvider";
-import { NotificationProvider } from "@/providers/NotificationProvider";
+import { NotificationProvider, useNotificationContext } from "@/providers/NotificationProvider";
 import { AppPopupProvider } from "@/providers/AppPopupProvider";
 import { type PushNotificationData } from "@/types/notifications";
 import { getNotificationTarget } from "@/services/notification-links";
+import { markNotificationRead } from "@/services/notifications";
 import { BugReportFab } from "@/components/support/BugReportFab";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { ErrorReporter } from "@/services/error-reporter";
@@ -91,6 +92,7 @@ function RootLayoutContent() {
   const segments = useSegments();
   const segmentList = useMemo(() => [...segments] as string[], [segments]);
   const pathname = usePathname();
+  const { refreshUnreadCount } = useNotificationContext();
   const pendingRouteRef = useRef<string | null>(null);
   const lastBackPressRef = useRef(0);
   const lastHomeBackPressRef = useRef(0);
@@ -174,12 +176,20 @@ function RootLayoutContent() {
 
   const openNotificationTarget = useCallback(
     (data?: PushNotificationData | null) => {
+      if (data?.notificationId) {
+        void markNotificationRead(data.notificationId)
+          .then(refreshUnreadCount)
+          .catch((error) => {
+            ErrorReporter.captureException(error, { context: "mark push notification read" });
+          });
+      }
+
       const href = getNotificationTarget(data);
       if (href) {
         router.replace(href);
       }
     },
-    [router],
+    [refreshUnreadCount, router],
   );
 
   useEffect(() => {

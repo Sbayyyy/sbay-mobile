@@ -7,11 +7,7 @@ export function usePushNotificationListener(
 ) {
   useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        const data = notification.request.content.data as
-          | PushNotificationData
-          | undefined;
-
+      () => {
         onNotificationReceived();
       },
     );

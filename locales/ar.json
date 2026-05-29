@@ -6,7 +6,7 @@
       "exploreMore": "اكتشف المزيد",
       "exploreListings": "استكشف الإعلانات",
       "publishListing": "نشر الإعلان",
-      "publishing": "جارٍ النشر...",
+      "publishing": "جار النشر...",
       "edit": "تعديل",
       "message": "مراسلة",
       "logIn": "تسجيل الدخول",
@@ -38,7 +38,84 @@
   "popup": {
     "errorTitle": "حدث خطأ",
     "successTitle": "تم",
-    "dismiss": "حسناً"
+    "dismiss": "حسنا"
+  },
+  "auth": {
+    "signIn": {
+      "title": "تسجيل الدخول",
+      "subtitle": "استخدم بريدك الإلكتروني وكلمة المرور للوصول إلى حسابك.",
+      "verifiedSuccess": "تم تأكيد البريد الإلكتروني. سجل الدخول للمتابعة.",
+      "registeredSuccess": "تم إنشاء الحساب. تحقق من بريدك الإلكتروني ثم سجل الدخول.",
+      "verifyFailed": "تعذر تأكيد هذا الرابط. اطلب رسالة جديدة.",
+      "emailLabel": "البريد الإلكتروني",
+      "emailRequiredLabel": "البريد الإلكتروني *",
+      "emailHint": "استخدم البريد الإلكتروني الذي سجلت به.",
+      "emailPlaceholder": "name@example.com",
+      "passwordLabel": "كلمة المرور",
+      "passwordRequiredLabel": "كلمة المرور *",
+      "passwordHint": "أدخل كلمة مرور حسابك.",
+      "passwordPlaceholder": "أدخل كلمة المرور",
+      "submitting": "جار تسجيل الدخول...",
+      "submit": "تسجيل الدخول",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "createAccount": "إنشاء حساب",
+      "validation": {
+        "emailRequired": "البريد الإلكتروني مطلوب",
+        "emailInvalid": "أدخل بريدا إلكترونيا صحيحا",
+        "passwordRequired": "كلمة المرور مطلوبة",
+        "passwordMin": "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
+      },
+      "errors": {
+        "unable": "تعذر تسجيل الدخول. حاول مرة أخرى."
+      }
+    },
+    "signUp": {
+      "title": "إنشاء حساب",
+      "subtitle": "أضف بياناتك للبدء مع SBay.",
+      "nameLabel": "اسم المستخدم",
+      "nameRequiredLabel": "اسم المستخدم *",
+      "nameHint": "استخدم من 2 إلى 50 حرفا. هذا الاسم سيظهر للمستخدمين الآخرين.",
+      "namePlaceholder": "أدخل اسم المستخدم",
+      "emailLabel": "البريد الإلكتروني",
+      "emailRequiredLabel": "البريد الإلكتروني *",
+      "emailHint": "استخدم بريدا إلكترونيا صحيحا مثل name@example.com.",
+      "emailPlaceholder": "name@example.com",
+      "phoneLabel": "رقم الهاتف",
+      "phoneHint": "اختياري. استخدم من 7 إلى 15 رقما، مع رمز البلد عند الحاجة.",
+      "phonePlaceholder": "أدخل رقم الهاتف",
+      "cityLabel": "المدينة",
+      "cityPlaceholder": "اختر مدينة",
+      "cityPickerTitle": "اختر مدينة",
+      "passwordLabel": "كلمة المرور",
+      "passwordRequiredLabel": "كلمة المرور *",
+      "passwordHint": "استخدم 8 أحرف على الأقل مع حرف كبير وحرف صغير ورقم.",
+      "passwordPlaceholder": "أنشئ كلمة مرور",
+      "confirmLabel": "تأكيد كلمة المرور",
+      "confirmRequiredLabel": "تأكيد كلمة المرور *",
+      "confirmHint": "أعد إدخال كلمة المرور نفسها.",
+      "confirmPlaceholder": "أعد إدخال كلمة المرور",
+      "submitHint": "أكمل الحقول المطلوبة لإنشاء حسابك.",
+      "submitting": "جار إنشاء الحساب...",
+      "submit": "إنشاء الحساب",
+      "existingAccount": "لديك حساب؟ سجل الدخول",
+      "validation": {
+        "nameRequired": "اسم المستخدم مطلوب",
+        "nameMin": "اسم المستخدم يجب أن يكون حرفين على الأقل",
+        "nameMax": "اسم المستخدم يجب أن يكون 50 حرفا أو أقل",
+        "emailRequired": "البريد الإلكتروني مطلوب",
+        "emailInvalid": "أدخل بريدا إلكترونيا صحيحا",
+        "phoneInvalid": "أدخل رقم هاتف صحيحا",
+        "cityInvalid": "المدينة غير صحيحة",
+        "passwordRequired": "كلمة المرور مطلوبة",
+        "passwordMin": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+        "passwordRule": "كلمة المرور يجب أن تتضمن حرفا كبيرا وحرفا صغيرا ورقما",
+        "confirmRequired": "تأكيد كلمة المرور مطلوب",
+        "confirmMismatch": "كلمتا المرور غير متطابقتين"
+      },
+      "errors": {
+        "unable": "تعذر إنشاء الحساب. حاول مرة أخرى."
+      }
+    }
   },
   "categories": {
     "all": "الكل",
@@ -64,7 +141,7 @@
     "title": "العنوان",
     "searchPlaceholder": "ابحث عن الإعلانات",
     "emptyTitle": "لا توجد إعلانات",
-    "emptySubtitle": "جرّب فئة أخرى أو عدّل البحث.",
+    "emptySubtitle": "جرب فئة أخرى أو عدل البحث.",
     "errorTitle": "حدث خطأ",
     "errorSubtitle": "حدث خطأ أثناء تحميل الإعلانات.",
     "resultsCount": "{{count}} نتيجة",
@@ -91,7 +168,7 @@
     "contactSellerTitle": "مراسلة البائع",
     "sellerMissing": "معلومات البائع غير متوفرة.",
     "openChatFailedTitle": "تعذر فتح المحادثة",
-    "tryAgain": "يرجى المحاولة مرة أخرى لاحقاً.",
+    "tryAgain": "يرجى المحاولة مرة أخرى لاحقا.",
     "favoriteFailedTitle": "فشل تحديث المفضلة",
     "favoriteFailedBody": "تعذر تحديث المفضلة.",
     "shareFailedTitle": "فشل المشاركة",
@@ -100,10 +177,18 @@
   },
   "home": {
     "searchPlaceholder": "ابحث عن الإعلانات",
+    "heroEyebrow": "سوق سوري محلي",
+    "heroTitle": "اشتري وبع أي شيء بسهولة داخل سوريا",
+    "heroSubtitle": "آلاف الإعلانات للسيارات والعقارات والإلكترونيات والوظائف والخدمات واحتياجاتك اليومية.",
+    "heroSearchPlaceholder": "ابحث عن سيارات، شقق، موبايلات، وظائف...",
+    "heroPostListing": "أضف إعلانك",
+    "heroBrowseListings": "تصفح",
+    "heroTrustSafe": "أوضح من مجموعات الدردشة",
+    "heroTrustFast": "وصول سريع لإعلانات قريبة",
     "categoriesTitle": "الفئات",
     "recommendedTitle": "مقترحات لك",
     "featuredTitle": "مميز",
-    "emptySubtitle": "جرّب فئة أخرى أو عدّل البحث.",
+    "emptySubtitle": "جرب فئة أخرى أو عدل البحث.",
     "heroCards": {
       "hero-1": {
         "title": "تجديد الأثاث",
@@ -124,26 +209,26 @@
       "new": "جديد هذا الأسبوع"
     },
     "emptyTitle": "لا توجد نتائج الآن",
-    "emptySubtitle": "عدّل عوامل التصفية أو استكشف السوق لحفظ الإعلانات التي تهمك.",
+    "emptySubtitle": "عدل عوامل التصفية أو استكشف السوق لحفظ الإعلانات التي تهمك.",
     "emptyAction": "استكشف الإعلانات",
     "removeAction": "إزالة من المفضلة",
     "removeErrorTitle": "تعذر تحديث المفضلة",
-    "removeError": "يرجى المحاولة مرة أخرى لاحقاً."
+    "removeError": "يرجى المحاولة مرة أخرى لاحقا."
   },
   "favoritesCard": {
     "newBadge": "جديد",
     "updated": "تم التحديث {{time}}"
   },
   "addListing": {
-    "title": "أنشئ إعلاناً",
+    "title": "أنشئ إعلانا",
     "subtitle": "أضف التفاصيل ليعثر الناس على منتجك ويشترونه.",
-    "authRequiredTitle": "سجّل الدخول لإنشاء إعلان",
+    "authRequiredTitle": "سجل الدخول لإنشاء إعلان",
     "authRequiredSubtitle": "يمكن للجميع تصفح SBay بحرية. يحتاج البائعون إلى حساب قبل نشر الإعلانات.",
     "editTitle": "تعديل الإعلان",
     "save": "حفظ التغييرات",
     "validation": {
       "fieldRequired": "{{field}} مطلوب.",
-      "priceInvalid": "أدخل سعراً صحيحاً."
+      "priceInvalid": "أدخل سعرا صحيحا."
     },
     "errors": {
       "loadListing": "تعذر تحميل الإعلان.",
@@ -159,9 +244,9 @@
     "boost": {
       "title": "تعزيز هذا الإعلان بعد النشر",
       "description": "الإعلانات الأساسية مجانية. يتم تفعيل التعزيز فقط بعد تأكيد الدفع.",
-      "unavailable": "خيارات التعزيز غير متاحة حالياً.",
+      "unavailable": "خيارات التعزيز غير متاحة حاليا.",
       "durationDays": "{{count}} أيام",
-      "submitting": "جارٍ النشر وإنشاء الدفع..."
+      "submitting": "جار النشر وإنشاء الدفع..."
     },
     "photos": {
       "title": "الصور",
@@ -192,7 +277,7 @@
     "title": "المحادثات",
     "searchPlaceholder": "ابحث في المحادثات",
     "emptyTitle": "لا توجد محادثات",
-    "emptySubtitle": "ابدأ محادثة من إعلان أو عدّل البحث.",
+    "emptySubtitle": "ابدأ محادثة من إعلان أو عدل البحث.",
     "generalChat": "محادثة عامة",
     "listingFallback": "إعلان",
     "unknownUser": "مستخدم",
@@ -208,10 +293,10 @@
   },
   "profile": {
     "title": "حسابي",
-    "welcomeBack": "مرحباً بعودتك",
-    "authSubtitle": "سجّل الدخول أو أنشئ حساباً لإدارة إعلاناتك.",
-    "authRequiredTitle": "سجّل الدخول للمتابعة",
-    "authRequiredSubtitle": "يمكنك تصفح SBay بحرية. سجّل الدخول أو أنشئ حساباً لإدارة الإعلانات والمفضلة والمحادثات وملفك الشخصي.",
+    "welcomeBack": "مرحبا بعودتك",
+    "authSubtitle": "سجل الدخول أو أنشئ حسابا لإدارة إعلاناتك.",
+    "authRequiredTitle": "سجل الدخول للمتابعة",
+    "authRequiredSubtitle": "يمكنك تصفح SBay بحرية. سجل الدخول أو أنشئ حسابا لإدارة الإعلانات والمفضلة والمحادثات وملفك الشخصي.",
     "myListings": "إعلاناتي",
     "emptyListingsSubtitle": "ابدأ بنشر أول عنصر للبيع.",
     "cityUnknown": "المدينة غير معروفة",
@@ -237,7 +322,7 @@
     "validation": {
       "displayNameRequired": "الاسم الكامل مطلوب",
       "phoneInvalid": "رقم الهاتف غير صحيح",
-      "cityTooLong": "المدينة طويلة جداً"
+      "cityTooLong": "المدينة طويلة جدا"
     },
     "errors": {
       "loadTitle": "حدث خطأ أثناء التحميل",
@@ -309,25 +394,41 @@
     "placeholderBody": "هنا يمكنك ضبط {{section}}. استبدل هذا النص بالمحتوى أو النماذج الخاصة بهذا القسم.",
     "language": {
       "title": "اللغة",
-      "subtitle": "اختر لغة العرض. تُطبق التغييرات فوراً.",
+      "subtitle": "اختر لغة العرض. تطبق التغييرات فورا.",
       "rtlNote": "قد تحتاج بعض تغييرات الاتجاه إلى إعادة تشغيل التطبيق."
     },
     "theme": {
       "title": "المظهر",
-      "subtitle": "اختر مظهر التطبيق. تُطبق التغييرات فوراً.",
+      "subtitle": "اختر مظهر التطبيق. تطبق التغييرات فورا.",
       "light": "فاتح",
       "dark": "داكن",
       "coffee": "قهوة",
       "starlight": "ضوء النجمة"
     },
+    "about": {
+      "subtitle": "سوق لاكتشاف الإعلانات ومحادثة البائعين وإدارة مبيعاتك.",
+      "version": "الإصدار",
+      "build": "البناء",
+      "appId": "معرف التطبيق",
+      "website": "الموقع",
+      "resources": "روابط مهمة",
+      "openWebsite": "فتح الموقع",
+      "howItWorks": "كيف يعمل SBay",
+      "buyerProtection": "حماية المشتري",
+      "sellerGuide": "دليل البائع",
+      "sellerProtection": "حماية البائع",
+      "fees": "الرسوم والعمولات",
+      "privacy": "سياسة الخصوصية",
+      "terms": "شروط الخدمة"
+    },
     "common": {
-      "saving": "جارٍ الحفظ...",
+      "saving": "جار الحفظ...",
       "saveChanges": "حفظ التغييرات",
-      "comingSoon": "قريباً"
+      "comingSoon": "قريبا"
     },
     "profile": {
       "title": "إعدادات الملف الشخصي",
-      "uploading": "جارٍ الرفع...",
+      "uploading": "جار الرفع...",
       "changePhoto": "تغيير الصورة",
       "firstName": "الاسم الأول",
       "lastName": "الكنية",
@@ -338,7 +439,7 @@
       "phonePlaceholder": "أضف رقم هاتف",
       "bio": "نبذة",
       "language": "اللغة",
-      "comingSoon": "قريباً",
+      "comingSoon": "قريبا",
       "displayNameRequired": "اسم العرض مطلوب.",
       "displayNameInvalid": "اسم العرض يحتوي على محتوى غير مسموح.",
       "phoneInvalid": "رقم الهاتف يحتوي على محتوى غير مسموح."
@@ -381,24 +482,24 @@
   },
   "monetization": {
     "alreadyBoostedTitle": "الإعلان معزز بالفعل",
-    "alreadyBoostedBody": "هذا الإعلان مروج حالياً.",
+    "alreadyBoostedBody": "هذا الإعلان مروج حاليا.",
     "paymentPendingTitle": "الدفع قيد الانتظار",
     "paymentPendingBody": "يتم تفعيل التعزيز بعد تأكيد الدفع.",
     "boostErrorTitle": "تعذر التعزيز",
     "boostErrorBody": "يرجى المحاولة مرة أخرى.",
     "boosted": "معزز",
-    "creatingPayment": "جارٍ إنشاء الدفع...",
+    "creatingPayment": "جار إنشاء الدفع...",
     "boostListing": "تعزيز الإعلان",
     "boost": "تعزيز",
     "chooseBoost": "اختر مدة التعزيز",
-    "chooseBoostSubtitle": "اختر مدة بقاء الإعلان مروجاً.",
+    "chooseBoostSubtitle": "اختر مدة بقاء الإعلان مروجا.",
     "durationDays": "{{count}} أيام"
   },
   "sellerProfile": {
     "errors": {
       "load": "حدث خطأ أثناء التحميل.",
       "unavailableTitle": "البائع غير متاح",
-      "unavailableSubtitle": "البائع غير متاح حالياً."
+      "unavailableSubtitle": "البائع غير متاح حاليا."
     },
     "actions": {
       "goBack": "العودة",
@@ -408,8 +509,8 @@
       "report": "ابلغ"
     },
     "messages": {
-      "messagingUnavailable": "الرسائل غير متوفرة حالياً.",
-      "reportingUnavailable": "الابلاغ غير متوفر حالياً."
+      "messagingUnavailable": "الرسائل غير متوفرة حاليا.",
+      "reportingUnavailable": "الابلاغ غير متوفر حاليا."
     },
     "reviewsCount": "{{count}} مراجعات",
     "stats": {
@@ -445,9 +546,9 @@
     },
     "actions": {
       "addEvidence": "إضافة صور",
-      "uploading": "جارٍ الرفع...",
+      "uploading": "جار الرفع...",
       "submit": "إرسال البلاغ",
-      "submitting": "جارٍ الإرسال...",
+      "submitting": "جار الإرسال...",
       "cancel": "إلغاء",
       "report": "إبلاغ"
     },
