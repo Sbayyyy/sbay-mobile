@@ -2,7 +2,8 @@ import { Tabs, useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { GlobalEmailVerificationPrompt } from "@/components/auth/GlobalEmailVerificationPrompt";
@@ -22,6 +23,7 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = 60 + insets.bottom;
   const theme = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const router = useRouter();
   const { t } = useTranslation();
   const [unreadTotal, setUnreadTotal] = useState(0);
@@ -176,9 +178,13 @@ export default function TabsLayout() {
           name="add_listing"
           options={{
             title: t("navigation.tabs.addListing"),
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="add-circle-outline" size={size} color={color} />
+            tabBarIcon: () => (
+              <View style={styles.addListingIcon}>
+                <Ionicons name="add" size={30} color={theme.primaryForeground} />
+              </View>
             ),
+            tabBarLabelStyle: styles.addListingLabel,
+            tabBarItemStyle: styles.addListingItem,
           }}
           listeners={{
             tabPress: (event) => {
@@ -223,3 +229,32 @@ export default function TabsLayout() {
     </>
   );
 }
+
+const createStyles = (theme: ReturnType<typeof useAppTheme>) =>
+  StyleSheet.create({
+    addListingItem: {
+      paddingBottom: 0,
+    },
+    addListingIcon: {
+      width: 50,
+      height: 50,
+      marginTop: -18,
+      borderRadius: 25,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.primary,
+      borderWidth: 3,
+      borderColor: theme.navigationBackground,
+      shadowColor: theme.shadow,
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 6,
+    },
+    addListingLabel: {
+      fontSize: 11,
+      fontWeight: "800",
+      color: theme.primary,
+      marginTop: 2,
+    },
+  });
