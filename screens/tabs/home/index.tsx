@@ -14,11 +14,10 @@ import { useNotificationContext } from "@/providers/NotificationProvider";
 import { trackInteraction } from "@/services/recommendations";
 import { FeaturedListingsCarousel } from "./components/FeaturedListingsCarousel";
 import { HomeCategoryPicker } from "./components/HomeCategoryPicker";
-import { HomeHero } from "./components/HomeHero";
 import { HomeListingsSection } from "./components/HomeListingsSection";
 import { useHomeListings } from "./hooks/useHomeListings";
 
-const STICKY_SEARCH_INDICES = [1];
+const STICKY_SEARCH_INDICES = [0];
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
@@ -115,8 +114,6 @@ export default function HomeScreen() {
             />
           }
         >
-          <HomeHero />
-
           <View style={styles.stickySearch}>
             <SearchBar
               value={search}
