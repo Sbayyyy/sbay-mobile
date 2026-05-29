@@ -86,20 +86,26 @@ export async function apiRequest<T>(
   }
 
   if (response.status === 401 && !skipAuthRefresh) {
-    const nextToken = await refreshAuthToken();
-    if (nextToken) {
+    const refreshResult = await refreshAuthToken();
+    if (refreshResult.status === "refreshed") {
       return apiRequest<T>(path, {
         ...requestOptions,
         headers: {
           ...(requestOptions.headers ?? {}),
-          Authorization: `Bearer ${nextToken}`,
+          Authorization: `Bearer ${refreshResult.token}`,
         },
         skipAuthRefresh: true,
       });
     }
-    notifyUnauthorized();
-  } else if (response.status === 401) {
-    notifyUnauthorized();
+    if (refreshResult.status === "rejected") {
+      notifyUnauthorized();
+    } else {
+      throw new ApiError(
+        "We could not refresh your session. Check your connection and try again.",
+        503,
+        { code: "session_refresh_unavailable" },
+      );
+    }
   }
 
   if (!response.ok) {

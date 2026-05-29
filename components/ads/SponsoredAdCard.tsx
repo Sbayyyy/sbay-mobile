@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from "react";
 import {
-  Image,
   Linking,
   StyleProp,
   StyleSheet,
@@ -9,6 +8,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import { Image } from "expo-image";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -64,7 +64,13 @@ export function SponsoredAdCard({ ad, style }: SponsoredAdCardProps) {
     >
       <View style={styles.imageWrap}>
         {ad.imageUrl ? (
-          <Image source={{ uri: ad.imageUrl }} style={styles.image} />
+          <Image
+            source={{ uri: ad.imageUrl }}
+            style={styles.image}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            accessibilityLabel={ad.title}
+          />
         ) : (
           <View style={styles.placeholder}>
             <Text style={styles.placeholderText}>

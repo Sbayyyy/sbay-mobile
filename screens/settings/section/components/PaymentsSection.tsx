@@ -49,7 +49,7 @@ export function PaymentsSection() {
   }, [loadBoostOptions]);
 
   const openBillingHelp = useCallback(() => {
-    void Linking.openURL(`${WEB_BASE_URL}/support/payments`);
+    void Linking.openURL(`${WEB_BASE_URL}/help`);
   }, []);
 
   return (

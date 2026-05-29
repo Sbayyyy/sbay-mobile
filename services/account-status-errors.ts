@@ -73,6 +73,9 @@ export function getFriendlyErrorMessage(error: unknown, fallback: string): strin
     if (error.status === 400 && message && !isGenericApiMessage(message)) {
       return message;
     }
+    if (code === "session_refresh_unavailable") {
+      return "You are still signed in, but we could not refresh your session. Check your connection and try again.";
+    }
     if (error.status === 401) {
       return "Your session has expired. Please sign in again.";
     }

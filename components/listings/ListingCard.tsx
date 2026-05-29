@@ -1,6 +1,5 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import {
-  Image,
   StyleProp,
   StyleSheet,
   Text,
@@ -8,6 +7,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import { Image } from "expo-image";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Listing } from "@/types/listing";
 
@@ -21,10 +21,13 @@ type ListingCardProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-export function ListingCard({ listing, onPress, style }: ListingCardProps) {
+function ListingCardComponent({ listing, onPress, style }: ListingCardProps) {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const resolvedImage = resolveMediaUrl(listing.image) ?? (listing.image || null);
+  const sellerReviewCount = listing.sellerReviewCount ?? 0;
+  const sellerRating = listing.sellerRating ?? 0;
+  const showSellerRating = sellerReviewCount >= 3 && sellerRating > 0;
 
   return (
     <TouchableOpacity
@@ -35,7 +38,13 @@ export function ListingCard({ listing, onPress, style }: ListingCardProps) {
       accessibilityLabel={listing.title}
     >
       {resolvedImage ? (
-        <Image source={{ uri: resolvedImage }} style={styles.image} accessibilityLabel={listing.title} />
+        <Image
+          source={{ uri: resolvedImage }}
+          style={styles.image}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          accessibilityLabel={listing.title}
+        />
       ) : (
         <View style={[styles.image, styles.imagePlaceholder]}>
           <FontAwesome name="image" size={28} color={theme.textSubtle} />
@@ -51,10 +60,27 @@ export function ListingCard({ listing, onPress, style }: ListingCardProps) {
             {listing.location}
           </Text>
         ) : null}
+        {showSellerRating || listing.sellerMemberSince ? (
+          <View style={styles.sellerMetaRow}>
+            {showSellerRating ? (
+              <View style={styles.ratingPill}>
+                <FontAwesome name="star" size={11} color="#FBBF24" />
+                <Text style={styles.ratingText}>{sellerRating.toFixed(1)}/5</Text>
+              </View>
+            ) : null}
+            {listing.sellerMemberSince ? (
+              <Text style={styles.memberText} numberOfLines={1}>
+                {listing.sellerMemberSince}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
 }
+
+export const ListingCard = memo(ListingCardComponent);
 
 const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
@@ -96,6 +122,27 @@ const createStyles = (theme: ThemeColors) =>
     },
     location: {
       fontSize: 12,
+      color: theme.textMuted,
+    },
+    sellerMetaRow: {
+      minHeight: 20,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    ratingPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+    },
+    ratingText: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: theme.textSecondary,
+    },
+    memberText: {
+      flex: 1,
+      fontSize: 11,
       color: theme.textMuted,
     },
   });

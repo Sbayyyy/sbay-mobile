@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "expo-router";
@@ -6,7 +7,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { type ThemeColors } from "@/constants/theme";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import { ListingCard } from "@/components/listings/ListingCard";
-import { getRegionLabel } from "@/constants/regions";
+import { toListingCardListing } from "@/components/listings/listing-card-presenter";
 import { type Listing, type ListingStatus } from "@/services/listings";
 import { type BoostOption } from "@/services/monetization";
 
@@ -47,7 +48,7 @@ export function MeListingsTab({
   const theme = useAppTheme();
   const { t } = useTranslation();
   const router = useRouter();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View>
@@ -87,14 +88,7 @@ export function MeListingsTab({
             return (
               <View key={item.id} style={styles.manageCard}>
                 <ListingCard
-                  listing={{
-                    id: item.id,
-                    title: item.title,
-                    price: `${item.priceCurrency} ${item.priceAmount}`,
-                    category: item.categoryPath ?? "other",
-                    location: getRegionLabel(item.region ?? item.seller?.city, t),
-                    image: item.thumbnailUrl ?? item.imageUrls[0] ?? "",
-                  }}
+                  listing={toListingCardListing(item, t)}
                   onPress={() => router.push(`/listings/${item.id}`)}
                   style={styles.cardFull}
                 />

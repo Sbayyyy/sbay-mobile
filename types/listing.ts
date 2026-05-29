@@ -12,6 +12,9 @@ export type Listing = {
   category: string;
   image: string;
   location?: string;
+  sellerRating?: number | null;
+  sellerReviewCount?: number | null;
+  sellerMemberSince?: string | null;
 };
 
 export type FavoriteListing = Listing & {

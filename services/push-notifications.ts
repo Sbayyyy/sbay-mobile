@@ -11,9 +11,13 @@ const INSTALLATION_ID_KEY = "sbay.push.installation-id";
 
 const getProjectId = () => {
   const expoConfig = Constants.expoConfig as {
-    extra?: { easProjectId?: string };
+    extra?: { easProjectId?: string; eas?: { projectId?: string } };
   } | null;
-  return Constants.easConfig?.projectId ?? expoConfig?.extra?.easProjectId;
+  return (
+    Constants.easConfig?.projectId ??
+    expoConfig?.extra?.eas?.projectId ??
+    expoConfig?.extra?.easProjectId
+  );
 };
 
 async function getInstallationId(): Promise<string> {
@@ -29,7 +33,14 @@ async function getInstallationId(): Promise<string> {
   return installationId;
 }
 
-export async function registerForPushNotifications(): Promise<string | null> {
+type RegisterForPushNotificationsOptions = {
+  requestPermissions?: boolean;
+};
+
+export async function registerForPushNotifications(
+  options: RegisterForPushNotificationsOptions = {},
+): Promise<string | null> {
+  const { requestPermissions = true } = options;
   if (!Device.isDevice) return null;
 
   if (Platform.OS === "android") {
@@ -43,7 +54,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
   const settings = await Notifications.getPermissionsAsync();
   let status = settings.status;
-  if (status !== "granted") {
+  if (status !== "granted" && requestPermissions) {
     const request = await Notifications.requestPermissionsAsync();
     status = request.status;
   }
@@ -56,8 +67,10 @@ export async function registerForPushNotifications(): Promise<string | null> {
   return response.data;
 }
 
-export async function syncPushToken(): Promise<void> {
-  const token = await registerForPushNotifications();
+type SyncPushTokenOptions = RegisterForPushNotificationsOptions;
+
+export async function syncPushToken(options: SyncPushTokenOptions = {}): Promise<void> {
+  const token = await registerForPushNotifications(options);
   if (!token) return;
 
   const authToken = await getStoredToken();

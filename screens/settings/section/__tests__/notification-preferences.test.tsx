@@ -8,6 +8,7 @@ import {
   setNotificationPreferences,
   type NotificationPreferences,
 } from "@/services/notification-preferences";
+import { syncPushToken } from "@/services/push-notifications";
 
 const mockThemeColors = LightTheme.colors;
 
@@ -54,6 +55,14 @@ jest.mock("@/services/notification-preferences", () => ({
   setNotificationPreferences: jest.fn(),
 }));
 
+jest.mock("@/services/push-notifications", () => ({
+  syncPushToken: jest.fn(),
+}));
+
+jest.mock("@/services/error-reporter", () => ({
+  ErrorReporter: { captureException: jest.fn() },
+}));
+
 jest.mock("@/services/user", () => ({
   getMyProfile: jest.fn(),
   requestAccountDeletion: jest.fn(),
@@ -88,6 +97,7 @@ describe("notification preferences screen", () => {
     jest.clearAllMocks();
     (getNotificationPreferences as jest.Mock).mockResolvedValue(preferences);
     (setNotificationPreferences as jest.Mock).mockImplementation(async (next) => next);
+    (syncPushToken as jest.Mock).mockResolvedValue(undefined);
   });
 
   it("loads preferences and saves an optimistic toggle", async () => {
@@ -106,6 +116,28 @@ describe("notification preferences screen", () => {
         ...preferences,
         emailMessages: false,
       });
+    });
+    expect(syncPushToken).not.toHaveBeenCalled();
+  });
+
+  it("syncs the push token when enabling a push preference", async () => {
+    const screen = render(<SettingsDetail />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Push messages")).toBeTruthy();
+    });
+
+    const switches = screen.UNSAFE_getAllByType(Switch);
+    fireEvent(switches[6], "valueChange", true);
+
+    await waitFor(() => {
+      expect(setNotificationPreferences).toHaveBeenCalledWith({
+        ...preferences,
+        pushMessages: true,
+      });
+    });
+    await waitFor(() => {
+      expect(syncPushToken).toHaveBeenCalledTimes(1);
     });
   });
 });

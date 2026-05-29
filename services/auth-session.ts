@@ -1,6 +1,12 @@
 let currentToken: string | null = null;
 let unauthorizedHandler: (() => void) | null = null;
-let refreshHandler: (() => Promise<string | null>) | null = null;
+
+export type AuthRefreshResult =
+  | { status: "refreshed"; token: string }
+  | { status: "rejected" }
+  | { status: "unavailable" };
+
+let refreshHandler: (() => Promise<AuthRefreshResult>) | null = null;
 
 export function setAuthToken(token: string | null) {
   currentToken = token;
@@ -18,10 +24,10 @@ export function notifyUnauthorized() {
   unauthorizedHandler?.();
 }
 
-export function setTokenRefreshHandler(handler: (() => Promise<string | null>) | null) {
+export function setTokenRefreshHandler(handler: (() => Promise<AuthRefreshResult>) | null) {
   refreshHandler = handler;
 }
 
 export async function refreshAuthToken() {
-  return refreshHandler ? refreshHandler() : null;
+  return refreshHandler ? refreshHandler() : { status: "unavailable" as const };
 }

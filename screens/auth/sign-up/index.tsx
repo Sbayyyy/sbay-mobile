@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ValidatedInput } from "@/components/ValidatedInput";
@@ -25,68 +26,67 @@ import {
   type ValidationResult,
 } from "@/validation";
 
-const requiredValidator: TextValidator = {
+const makeRequiredValidator = (message: string): TextValidator => ({
   validate: (value, context) => {
     const trimmed = value.trim();
     if (trimmed.length === 0) {
-      const label = context?.label ?? "This field";
       return {
         valid: false,
-        issues: [{ message: `${label} is required` }],
+        issues: [{ message: message || `${context?.label ?? "This field"} is required` }],
       };
     }
     return { valid: true, issues: [] };
   },
-};
+});
 
-const emailValidator: TextValidator = {
+const makeEmailValidator = (message: string): TextValidator => ({
   validate: (value) => {
     const trimmed = value.trim();
     const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
     return isValid
       ? { valid: true, issues: [] }
-      : { valid: false, issues: [{ message: "Enter a valid email address" }] };
+      : { valid: false, issues: [{ message }] };
   },
-};
+});
 
-const userNameValidator: TextValidator = {
+const makeUserNameValidator = (minMessage: string, maxMessage: string): TextValidator => ({
   validate: (value) => {
     const trimmed = value.trim();
     if (trimmed.length < 2) {
       return {
         valid: false,
-        issues: [{ message: "User name must be at least 2 characters" }],
+        issues: [{ message: minMessage }],
       };
     }
     if (trimmed.length > 50) {
       return {
         valid: false,
-        issues: [{ message: "User name must be 50 characters or less" }],
+        issues: [{ message: maxMessage }],
       };
     }
     return { valid: true, issues: [] };
   },
-};
+});
 
-const passwordValidator: TextValidator = {
+const makePasswordValidator = (minMessage: string, ruleMessage: string): TextValidator => ({
   validate: (value) => {
     if (value.length < 8) {
       return {
         valid: false,
-        issues: [{ message: "Password must be at least 8 characters" }],
+        issues: [{ message: minMessage }],
       };
     }
     if (!/[A-Z]/.test(value) || !/[a-z]/.test(value) || !/[0-9]/.test(value)) {
       return {
         valid: false,
-        issues: [{ message: "Password must include uppercase, lowercase, and a number" }],
+        issues: [{ message: ruleMessage }],
       };
     }
     return { valid: true, issues: [] };
   },
-};
+});
 
-const phoneValidator: TextValidator = {
+const makePhoneValidator = (message: string): TextValidator => ({
   validate: (value) => {
     const trimmed = value.trim();
     if (trimmed.length === 0) {
@@ -96,9 +96,9 @@ const phoneValidator: TextValidator = {
     const isValid = digits.length >= 7 && digits.length <= 15;
     return isValid
       ? { valid: true, issues: [] }
-      : { valid: false, issues: [{ message: "Enter a valid phone number" }] };
+      : { valid: false, issues: [{ message }] };
   },
-};
+});
 
 const SYRIA_DISTRICTS = [
   "Damascus",
@@ -125,11 +125,11 @@ const districtOptions = SYRIA_DISTRICTS.map((district) => ({
   label: district,
 }));
 
-const makeConfirmPasswordValidator = (password: string): TextValidator => ({
+const makeConfirmPasswordValidator = (password: string, message: string): TextValidator => ({
   validate: (value) => {
     return value === password
       ? { valid: true, issues: [] }
-      : { valid: false, issues: [{ message: "Passwords do not match" }] };
+      : { valid: false, issues: [{ message }] };
   },
 });
 
@@ -160,6 +160,7 @@ export default function SignUpScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const router = useRouter();
+  const { t } = useTranslation();
   const { signIn } = useAuth();
   const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
@@ -197,45 +198,74 @@ export default function SignUpScreen() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const nameValidators = useMemo(() => [requiredValidator, userNameValidator], []);
-  const emailValidators = useMemo(
-    () => [requiredValidator, emailValidator],
-    [],
+  const nameValidators = useMemo(
+    () => [
+      makeRequiredValidator(t("auth.signUp.validation.nameRequired", { defaultValue: "User name is required" })),
+      makeUserNameValidator(
+        t("auth.signUp.validation.nameMin", { defaultValue: "User name must be at least 2 characters" }),
+        t("auth.signUp.validation.nameMax", { defaultValue: "User name must be 50 characters or less" }),
+      ),
+    ],
+    [t],
   );
-  const phoneValidators = useMemo(() => [phoneValidator], []);
+  const emailValidators = useMemo(
+    () => [
+      makeRequiredValidator(t("auth.signUp.validation.emailRequired", { defaultValue: "Email is required" })),
+      makeEmailValidator(t("auth.signUp.validation.emailInvalid", { defaultValue: "Enter a valid email address" })),
+    ],
+    [t],
+  );
+  const phoneValidators = useMemo(
+    () => [makePhoneValidator(t("auth.signUp.validation.phoneInvalid", { defaultValue: "Enter a valid phone number" }))],
+    [t],
+  );
   const districtValidators = useMemo(() => [], []);
   const passwordValidators = useMemo(
-    () => [requiredValidator, passwordValidator],
-    [],
+    () => [
+      makeRequiredValidator(t("auth.signUp.validation.passwordRequired", { defaultValue: "Password is required" })),
+      makePasswordValidator(
+        t("auth.signUp.validation.passwordMin", { defaultValue: "Password must be at least 8 characters" }),
+        t("auth.signUp.validation.passwordRule", {
+          defaultValue: "Password must include uppercase, lowercase, and a number",
+        }),
+      ),
+    ],
+    [t],
   );
   const confirmValidators = useMemo(
-    () => [requiredValidator, makeConfirmPasswordValidator(password)],
-    [password],
+    () => [
+      makeRequiredValidator(t("auth.signUp.validation.confirmRequired", { defaultValue: "Confirm password is required" })),
+      makeConfirmPasswordValidator(
+        password,
+        t("auth.signUp.validation.confirmMismatch", { defaultValue: "Passwords do not match" }),
+      ),
+    ],
+    [password, t],
   );
 
   const nameContext = useMemo<ValidationContext>(
-    () => ({ field: "name", label: "User name" }),
-    [],
+    () => ({ field: "name", label: t("auth.signUp.nameLabel", { defaultValue: "User name" }) }),
+    [t],
   );
   const emailContext = useMemo<ValidationContext>(
-    () => ({ field: "email", label: "Email" }),
-    [],
+    () => ({ field: "email", label: t("auth.signUp.emailLabel", { defaultValue: "Email" }) }),
+    [t],
   );
   const phoneContext = useMemo<ValidationContext>(
-    () => ({ field: "phone", label: "Phone number" }),
-    [],
+    () => ({ field: "phone", label: t("auth.signUp.phoneLabel", { defaultValue: "Phone number" }) }),
+    [t],
   );
   const districtContext = useMemo<ValidationContext>(
-    () => ({ field: "district", label: "City" }),
-    [],
+    () => ({ field: "district", label: t("auth.signUp.cityLabel", { defaultValue: "City" }) }),
+    [t],
   );
   const passwordContext = useMemo<ValidationContext>(
-    () => ({ field: "password", label: "Password" }),
-    [],
+    () => ({ field: "password", label: t("auth.signUp.passwordLabel", { defaultValue: "Password" }) }),
+    [t],
   );
   const confirmContext = useMemo<ValidationContext>(
-    () => ({ field: "confirmPassword", label: "Confirm password" }),
-    [],
+    () => ({ field: "confirmPassword", label: t("auth.signUp.confirmLabel", { defaultValue: "Confirm password" }) }),
+    [t],
   );
 
   const handleDistrictChange = useCallback(
@@ -306,7 +336,9 @@ export default function SignUpScreen() {
       });
     } catch (error) {
       setApiError(
-        error instanceof Error ? error.message : "Unable to sign up. Try again.",
+        error instanceof Error
+          ? error.message
+          : t("auth.signUp.errors.unable", { defaultValue: "Unable to sign up. Try again." }),
       );
     } finally {
       setIsSubmitting(false);
@@ -333,6 +365,7 @@ export default function SignUpScreen() {
     passwordValidators,
     router,
     signIn,
+    t,
   ]);
 
   const canSubmit =
@@ -360,21 +393,23 @@ export default function SignUpScreen() {
           nestedScrollEnabled
         >
         <View style={styles.header}>
-          <Text style={styles.title}>Create account</Text>
+          <Text style={styles.title}>{t("auth.signUp.title", { defaultValue: "Create account" })}</Text>
           <Text style={styles.subtitle}>
-            Add your details to get started with sbay.
+            {t("auth.signUp.subtitle", { defaultValue: "Add your details to get started with SBay." })}
           </Text>
         </View>
 
         <View style={styles.form}>
           <ValidatedInput
-            label="User name *"
-            helperText="Use 2 to 50 characters. This is the name other users will see."
+            label={t("auth.signUp.nameRequiredLabel", { defaultValue: "User name *" })}
+            helperText={t("auth.signUp.nameHint", {
+              defaultValue: "Use 2 to 50 characters. This is the name other users will see.",
+            })}
             value={name}
             onChangeText={setName}
             validators={nameValidators}
             validationContext={nameContext}
-            placeholder="Enter your user name"
+            placeholder={t("auth.signUp.namePlaceholder", { defaultValue: "Enter your user name" })}
             showErrors={showErrors}
             onValidationChange={setNameResult}
             validateOnChange
@@ -382,8 +417,8 @@ export default function SignUpScreen() {
           />
 
           <ValidatedInput
-            label="Email *"
-            helperText="Use a valid email like name@example.com."
+            label={t("auth.signUp.emailRequiredLabel", { defaultValue: "Email *" })}
+            helperText={t("auth.signUp.emailHint", { defaultValue: "Use a valid email like name@example.com." })}
             value={email}
             onChangeText={setEmail}
             validators={emailValidators}
@@ -391,7 +426,7 @@ export default function SignUpScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
-            placeholder="name@example.com"
+            placeholder={t("auth.signUp.emailPlaceholder", { defaultValue: "name@example.com" })}
             showErrors={showErrors}
             onValidationChange={setEmailResult}
             validateOnChange
@@ -399,14 +434,16 @@ export default function SignUpScreen() {
           />
 
           <ValidatedInput
-            label="Phone number"
-            helperText="Optional. Use 7 to 15 digits, with country code if needed."
+            label={t("auth.signUp.phoneLabel", { defaultValue: "Phone number" })}
+            helperText={t("auth.signUp.phoneHint", {
+              defaultValue: "Optional. Use 7 to 15 digits, with country code if needed.",
+            })}
             value={phone}
             onChangeText={setPhone}
             validators={phoneValidators}
             validationContext={phoneContext}
             keyboardType="phone-pad"
-            placeholder="Enter your phone number"
+            placeholder={t("auth.signUp.phonePlaceholder", { defaultValue: "Enter your phone number" })}
             showErrors={showErrors}
             onValidationChange={setPhoneResult}
             validateOnChange
@@ -414,14 +451,14 @@ export default function SignUpScreen() {
           />
 
           <View style={styles.menuField}>
-            <Text style={styles.label}>City</Text>
+            <Text style={styles.label}>{t("auth.signUp.cityLabel", { defaultValue: "City" })}</Text>
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={() => setDistrictMenuVisible((prev) => !prev)}
               style={styles.menuButton}
             >
               <Text style={styles.menuButtonLabel}>
-                {district || "Select a city"}
+                {district || t("auth.signUp.cityPlaceholder", { defaultValue: "Select a city" })}
               </Text>
               <Text style={styles.menuChevron}>
                 {districtMenuVisible ? "^" : "v"}
@@ -439,7 +476,7 @@ export default function SignUpScreen() {
               >
                 <Pressable style={styles.modalCard} onPress={() => {}}>
                   <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Select a city</Text>
+                    <Text style={styles.modalTitle}>{t("auth.signUp.cityPickerTitle", { defaultValue: "Select a city" })}</Text>
                   </View>
                   <FlatList
                     data={districtOptions}
@@ -476,19 +513,21 @@ export default function SignUpScreen() {
           </View>
           {showErrors && !districtResult.valid ? (
             <Text style={styles.errorText}>
-              {districtResult.issues[0]?.message ?? "City is invalid"}
+              {districtResult.issues[0]?.message ?? t("auth.signUp.validation.cityInvalid", { defaultValue: "City is invalid" })}
             </Text>
           ) : null}
 
           <ValidatedInput
-            label="Password *"
-            helperText="Use at least 8 characters with uppercase, lowercase, and a number."
+            label={t("auth.signUp.passwordRequiredLabel", { defaultValue: "Password *" })}
+            helperText={t("auth.signUp.passwordHint", {
+              defaultValue: "Use at least 8 characters with uppercase, lowercase, and a number.",
+            })}
             value={password}
             onChangeText={setPassword}
             validators={passwordValidators}
             validationContext={passwordContext}
             secureTextEntry
-            placeholder="Create a password"
+            placeholder={t("auth.signUp.passwordPlaceholder", { defaultValue: "Create a password" })}
             showErrors={showErrors}
             onValidationChange={setPasswordResult}
             validateOnChange
@@ -496,14 +535,14 @@ export default function SignUpScreen() {
           />
 
           <ValidatedInput
-            label="Confirm password *"
-            helperText="Re-enter the same password exactly."
+            label={t("auth.signUp.confirmRequiredLabel", { defaultValue: "Confirm password *" })}
+            helperText={t("auth.signUp.confirmHint", { defaultValue: "Re-enter the same password exactly." })}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             validators={confirmValidators}
             validationContext={confirmContext}
             secureTextEntry
-            placeholder="Re-enter your password"
+            placeholder={t("auth.signUp.confirmPlaceholder", { defaultValue: "Re-enter your password" })}
             showErrors={showErrors}
             onValidationChange={setConfirmResult}
             validateOnChange
@@ -516,11 +555,15 @@ export default function SignUpScreen() {
           onPress={handleSubmit}
           disabled={isSubmitting}
           accessibilityHint={
-            canSubmit ? undefined : "Fill out the required fields to create your account."
+            canSubmit
+              ? undefined
+              : t("auth.signUp.submitHint", { defaultValue: "Fill out the required fields to create your account." })
           }
         >
           <Text style={styles.submitLabel}>
-            {isSubmitting ? "Creating account..." : "Sign up"}
+            {isSubmitting
+              ? t("auth.signUp.submitting", { defaultValue: "Creating account..." })
+              : t("auth.signUp.submit", { defaultValue: "Sign up" })}
           </Text>
         </TouchableOpacity>
         {apiError ? <Text style={styles.errorText}>{apiError}</Text> : null}
@@ -529,7 +572,9 @@ export default function SignUpScreen() {
           style={styles.secondaryButton}
           onPress={() => router.replace("/sign-in")}
         >
-          <Text style={styles.secondaryLabel}>Already have an account? Sign in</Text>
+          <Text style={styles.secondaryLabel}>
+            {t("auth.signUp.existingAccount", { defaultValue: "Already have an account? Sign in" })}
+          </Text>
         </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Alert } from "react-native";
+import { Alert, AppState } from "react-native";
 import { useRouter } from "expo-router";
 
 import { clearStoredToken, getStoredToken, refreshStoredToken, revokeStoredRefreshToken, storeToken } from "@/services/auth";
@@ -83,13 +83,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setTokenRefreshHandler(async () => {
-      const nextToken = await refreshStoredToken();
-      if (nextToken) {
-        setToken(nextToken);
+      const result = await refreshStoredToken();
+      if (result.status === "refreshed") {
+        setToken(result.token);
         setStatus("authenticated");
-        return nextToken;
+        return result;
       }
-      return null;
+      if (result.status === "unavailable" && token) {
+        setStatus("authenticated");
+      }
+      return result;
     });
     setUnauthorizedHandler(() => {
       void signOut();
@@ -98,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setTokenRefreshHandler(null);
       setUnauthorizedHandler(null);
     };
-  }, [signOut]);
+  }, [signOut, token]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -109,6 +112,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void syncPushToken().catch((error) => {
       ErrorReporter.captureException(error, { context: "syncPushToken" });
     });
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return undefined;
+
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state !== "active") return;
+      void syncPushToken({ requestPermissions: false }).catch((error) => {
+        ErrorReporter.captureException(error, { context: "syncPushToken on app active" });
+      });
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, [status]);
 
   const value = useMemo<AuthContextValue>(

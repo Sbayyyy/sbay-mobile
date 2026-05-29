@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ValidatedInput } from "@/components/ValidatedInput";
@@ -22,41 +23,40 @@ import {
 import { login } from "@/services/auth";
 import { useAuth } from "@/providers/AuthProvider";
 
-const requiredValidator: TextValidator = {
+const makeRequiredValidator = (message: string): TextValidator => ({
   validate: (value, context) => {
     const trimmed = value.trim();
     if (trimmed.length === 0) {
-      const label = context?.label ?? "This field";
       return {
         valid: false,
-        issues: [{ message: `${label} is required` }],
+        issues: [{ message: message || `${context?.label ?? "This field"} is required` }],
       };
     }
     return { valid: true, issues: [] };
   },
-};
+});
 
-const emailValidator: TextValidator = {
+const makeEmailValidator = (message: string): TextValidator => ({
   validate: (value) => {
     const trimmed = value.trim();
     const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
     return isValid
       ? { valid: true, issues: [] }
-      : { valid: false, issues: [{ message: "Enter a valid email address" }] };
+      : { valid: false, issues: [{ message }] };
   },
-};
+});
 
-const passwordValidator: TextValidator = {
+const makePasswordValidator = (message: string): TextValidator => ({
   validate: (value) => {
     const trimmed = value.trim();
     return trimmed.length >= 8
       ? { valid: true, issues: [] }
       : {
           valid: false,
-          issues: [{ message: "Password must be at least 8 characters" }],
+          issues: [{ message }],
         };
   },
-};
+});
 
 async function runValidators(
   value: string,
@@ -85,6 +85,7 @@ export default function SignInScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const router = useRouter();
+  const { t } = useTranslation();
   const { registered, verified } = useLocalSearchParams<{
     registered?: string;
     verified?: string;
@@ -106,21 +107,27 @@ export default function SignInScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const emailValidators = useMemo(
-    () => [requiredValidator, emailValidator],
-    [],
+    () => [
+      makeRequiredValidator(t("auth.signIn.validation.emailRequired", { defaultValue: "Email is required" })),
+      makeEmailValidator(t("auth.signIn.validation.emailInvalid", { defaultValue: "Enter a valid email address" })),
+    ],
+    [t],
   );
   const passwordValidators = useMemo(
-    () => [requiredValidator, passwordValidator],
-    [],
+    () => [
+      makeRequiredValidator(t("auth.signIn.validation.passwordRequired", { defaultValue: "Password is required" })),
+      makePasswordValidator(t("auth.signIn.validation.passwordMin", { defaultValue: "Password must be at least 8 characters" })),
+    ],
+    [t],
   );
 
   const emailContext = useMemo<ValidationContext>(
-    () => ({ field: "email", label: "Email" }),
-    [],
+    () => ({ field: "email", label: t("auth.signIn.emailLabel", { defaultValue: "Email" }) }),
+    [t],
   );
   const passwordContext = useMemo<ValidationContext>(
-    () => ({ field: "password", label: "Password" }),
-    [],
+    () => ({ field: "password", label: t("auth.signIn.passwordLabel", { defaultValue: "Password" }) }),
+    [t],
   );
 
   const handleSubmit = useCallback(async () => {
@@ -144,7 +151,9 @@ export default function SignInScreen() {
       await signIn(response.token);
     } catch (error) {
       setApiError(
-        error instanceof Error ? error.message : "Unable to sign in. Try again.",
+        error instanceof Error
+          ? error.message
+          : t("auth.signIn.errors.unable", { defaultValue: "Unable to sign in. Try again." }),
       );
     } finally {
       setIsSubmitting(false);
@@ -178,36 +187,38 @@ export default function SignInScreen() {
           keyboardShouldPersistTaps="handled"
         >
         <View style={styles.header}>
-          <Text style={styles.title}>Sign in</Text>
+          <Text style={styles.title}>{t("auth.signIn.title", { defaultValue: "Sign in" })}</Text>
           <Text style={styles.subtitle}>
-            Use your email and password to access your account.
+            {t("auth.signIn.subtitle", { defaultValue: "Use your email and password to access your account." })}
           </Text>
         </View>
 
       {verified === "1" ? (
         <View style={styles.successBanner}>
           <Text style={styles.successBannerText}>
-            Email verified. Sign in to continue.
+            {t("auth.signIn.verifiedSuccess", { defaultValue: "Email verified. Sign in to continue." })}
           </Text>
         </View>
       ) : registered === "1" ? (
         <View style={styles.successBanner}>
           <Text style={styles.successBannerText}>
-            Account created. Check your inbox for the verification email, then sign in.
+            {t("auth.signIn.registeredSuccess", {
+              defaultValue: "Account created. Check your inbox for the verification email, then sign in.",
+            })}
           </Text>
         </View>
       ) : verified === "0" ? (
         <View style={styles.errorBanner}>
           <Text style={styles.errorBannerText}>
-            We could not verify that link. Please request a new email.
+            {t("auth.signIn.verifyFailed", { defaultValue: "We could not verify that link. Please request a new email." })}
           </Text>
         </View>
       ) : null}
 
       <View style={styles.form}>
           <ValidatedInput
-            label="Email *"
-            helperText="Use the email address you registered with."
+            label={t("auth.signIn.emailRequiredLabel", { defaultValue: "Email *" })}
+            helperText={t("auth.signIn.emailHint", { defaultValue: "Use the email address you registered with." })}
             value={email}
             onChangeText={setEmail}
             validators={emailValidators}
@@ -215,21 +226,21 @@ export default function SignInScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
-            placeholder="name@example.com"
+            placeholder={t("auth.signIn.emailPlaceholder", { defaultValue: "name@example.com" })}
             showErrors={showErrors}
             onValidationChange={setEmailResult}
             validateOnChange
           />
 
           <ValidatedInput
-            label="Password *"
-            helperText="Enter your account password."
+            label={t("auth.signIn.passwordRequiredLabel", { defaultValue: "Password *" })}
+            helperText={t("auth.signIn.passwordHint", { defaultValue: "Enter your account password." })}
             value={password}
             onChangeText={setPassword}
             validators={passwordValidators}
             validationContext={passwordContext}
             secureTextEntry
-            placeholder="Enter your password"
+            placeholder={t("auth.signIn.passwordPlaceholder", { defaultValue: "Enter your password" })}
             showErrors={showErrors}
             onValidationChange={setPasswordResult}
             validateOnChange
@@ -242,7 +253,9 @@ export default function SignInScreen() {
         disabled={!canSubmit}
       >
         <Text style={styles.submitLabel}>
-          {isSubmitting ? "Signing in..." : "Sign in"}
+          {isSubmitting
+            ? t("auth.signIn.submitting", { defaultValue: "Signing in..." })
+            : t("auth.signIn.submit", { defaultValue: "Sign in" })}
         </Text>
       </TouchableOpacity>
       {apiError ? <Text style={styles.errorText}>{apiError}</Text> : null}
@@ -251,14 +264,18 @@ export default function SignInScreen() {
         style={styles.forgotButton}
         onPress={() => router.push("/forgot-password")}
       >
-        <Text style={styles.forgotLabel}>Forgot password?</Text>
+        <Text style={styles.forgotLabel}>
+          {t("auth.signIn.forgotPassword", { defaultValue: "Forgot password?" })}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.secondaryButton}
         onPress={() => router.push("/sign-up")}
       >
-        <Text style={styles.secondaryLabel}>Create an account</Text>
+        <Text style={styles.secondaryLabel}>
+          {t("auth.signIn.createAccount", { defaultValue: "Create an account" })}
+        </Text>
       </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

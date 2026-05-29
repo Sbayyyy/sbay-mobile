@@ -6,16 +6,13 @@ import { API_BASE_URL } from "@/services/api";
 
 type Extras = Record<string, unknown>;
 
-declare global {
-  // React Native exposes ErrorUtils globally, but the type is not available in every test/runtime target.
-  // eslint-disable-next-line no-var
-  var ErrorUtils:
-    | {
-        getGlobalHandler?: () => ((error: Error, isFatal?: boolean) => void) | undefined;
-        setGlobalHandler?: (handler: (error: Error, isFatal?: boolean) => void) => void;
-      }
-    | undefined;
-}
+type GlobalErrorUtils = {
+  getGlobalHandler?: () => ((error: Error, isFatal?: boolean) => void) | undefined;
+  setGlobalHandler?: (handler: (error: Error, isFatal?: boolean) => void) => void;
+};
+
+const getGlobalErrorUtils = () =>
+  (globalThis as typeof globalThis & { ErrorUtils?: GlobalErrorUtils }).ErrorUtils;
 
 const TOKEN_STORAGE_KEY = "sbay.auth.token";
 const MAX_QUEUE_SIZE = 20;
@@ -130,8 +127,9 @@ export const ErrorReporter = {
   init(): void {
     if (initialized) return;
     initialized = true;
-    const previousHandler = global.ErrorUtils?.getGlobalHandler?.();
-    global.ErrorUtils?.setGlobalHandler?.((error, isFatal) => {
+    const errorUtils = getGlobalErrorUtils();
+    const previousHandler = errorUtils?.getGlobalHandler?.();
+    errorUtils?.setGlobalHandler?.((error: Error, isFatal?: boolean) => {
       enqueue({
         level: isFatal ? "critical" : "error",
         message: isFatal ? "Fatal mobile exception" : "Unhandled mobile exception",

@@ -13,14 +13,15 @@ import { useTranslation } from "react-i18next";
 
 import { SponsoredAdCard } from "@/components/ads/SponsoredAdCard";
 import { ListingCard } from "@/components/listings/ListingCard";
+import { toListingCardListings } from "@/components/listings/listing-card-presenter";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { HOME_CATEGORIES } from "@/constants/mockData";
-import { getRegionLabel } from "@/constants/regions";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { getSponsoredAds, type SponsoredAd } from "@/services/ads";
 import { searchListings, type Listing } from "@/services/listings";
 import { trackInteraction } from "@/services/recommendations";
 import { getFriendlyErrorMessage } from "@/services/account-status-errors";
+import { type Listing as ListingCardModel } from "@/types/listing";
 
 export default function CategoryBrowseScreen() {
   const { slug } = useLocalSearchParams<{ slug?: string }>();
@@ -72,16 +73,14 @@ export default function CategoryBrowseScreen() {
   }, [category, load]);
 
   const displayListings = useMemo(
-    () =>
-      listings.map((listing) => ({
-        id: listing.id,
-        title: listing.title,
-        price: `${listing.priceCurrency} ${listing.priceAmount}`,
-        category: listing.categoryPath ?? category,
-        location: getRegionLabel(listing.region ?? listing.seller?.city, t),
-        image: listing.thumbnailUrl ?? listing.imageUrls?.[0] ?? "",
-      })),
+    () => toListingCardListings(listings, t, category),
     [category, listings, t],
+  );
+  const openListing = useCallback(
+    (listing: ListingCardModel) => {
+      router.push(`/listings/${listing.id}`);
+    },
+    [router],
   );
 
   return (
@@ -130,7 +129,7 @@ export default function CategoryBrowseScreen() {
               <ListingCard
                 key={listing.id}
                 listing={listing}
-                onPress={() => router.push(`/listings/${listing.id}`)}
+                onPress={openListing}
               />
             ))}
           </View>
