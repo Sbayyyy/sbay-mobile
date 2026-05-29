@@ -6,6 +6,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { SponsoredAdCard } from "@/components/ads/SponsoredAdCard";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { toListingCardListings } from "@/components/listings/listing-card-presenter";
+import { SearchBar } from "@/components/common/SearchBar";
 import { HOME_CATEGORIES } from "@/constants/mockData";
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -16,6 +17,8 @@ import { HomeCategoryPicker } from "./components/HomeCategoryPicker";
 import { HomeHero } from "./components/HomeHero";
 import { HomeListingsSection } from "./components/HomeListingsSection";
 import { useHomeListings } from "./hooks/useHomeListings";
+
+const STICKY_SEARCH_INDICES = [1];
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
@@ -76,10 +79,6 @@ export default function HomeScreen() {
     router.push("/search?reset=true");
   }, [router]);
 
-  const openAddListing = useCallback(() => {
-    router.push("/add_listing?mode=create");
-  }, [router]);
-
   const openFeaturedSearch = useCallback(() => {
     router.push("/search?featured=true");
   }, [router]);
@@ -107,6 +106,7 @@ export default function HomeScreen() {
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          stickyHeaderIndices={STICKY_SEARCH_INDICES}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -115,14 +115,17 @@ export default function HomeScreen() {
             />
           }
         >
-          <HomeHero
-            search={search}
-            notificationCount={unreadCount}
-            onSearchChange={setSearch}
-            onSubmitSearch={submitSearch}
-            onPostListing={openAddListing}
-            onBrowseListings={openSearch}
-          />
+          <HomeHero />
+
+          <View style={styles.stickySearch}>
+            <SearchBar
+              value={search}
+              onChange={setSearch}
+              placeholder={t("home.searchPlaceholder")}
+              onSubmit={submitSearch}
+              notificationCount={unreadCount}
+            />
+          </View>
 
           <HomeCategoryPicker
             categories={categories}
@@ -164,6 +167,12 @@ const createStyles = (theme: ThemeColors) =>
       paddingBottom: 40,
       paddingTop: 12,
       gap: 12,
+    },
+    stickySearch: {
+      backgroundColor: theme.background,
+      paddingVertical: 8,
+      zIndex: 10,
+      elevation: 4,
     },
     sponsoredWrapper: {
       paddingHorizontal: 20,
