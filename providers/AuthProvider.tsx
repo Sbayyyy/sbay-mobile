@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Alert, AppState } from "react-native";
 import { useRouter } from "expo-router";
 
-import { clearStoredToken, getStoredToken, refreshStoredToken, revokeStoredRefreshToken, storeToken } from "@/services/auth";
+import { clearStoredToken, getStoredToken, refreshStoredToken, revokeStoredRefreshToken, storeAuthTokens } from "@/services/auth";
 import { setAuthToken, setTokenRefreshHandler, setUnauthorizedHandler } from "@/services/auth-session";
 import { syncPushToken, unregisterPushToken } from "@/services/push-notifications";
 import { ErrorReporter } from "@/services/error-reporter";
@@ -12,7 +12,7 @@ type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 type AuthContextValue = {
   status: AuthStatus;
   token: string | null;
-  signIn: (token: string) => Promise<void>;
+  signIn: (token: string, refreshToken?: string | null) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -48,8 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [router, token]);
 
-  const signIn = useCallback(async (nextToken: string) => {
-    await storeToken(nextToken);
+  const signIn = useCallback(async (nextToken: string, refreshToken?: string | null) => {
+    await storeAuthTokens(nextToken, refreshToken ?? null);
     setAuthToken(nextToken);
     setToken(nextToken);
     setStatus("authenticated");

@@ -148,7 +148,7 @@ export default function SignInScreen() {
     setIsSubmitting(true);
     try {
       const response = await login({ email, password });
-      await signIn(response.token);
+      await signIn(response.token, response.refreshToken ?? null);
     } catch (error) {
       setApiError(
         error instanceof Error

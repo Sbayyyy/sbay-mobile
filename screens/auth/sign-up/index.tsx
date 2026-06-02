@@ -327,7 +327,7 @@ export default function SignUpScreen() {
         city: district || undefined,
       });
       if (response.token) {
-        await signIn(response.token);
+        await signIn(response.token, response.refreshToken ?? null);
         return;
       }
       router.replace({

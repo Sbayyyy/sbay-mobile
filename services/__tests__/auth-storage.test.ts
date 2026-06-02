@@ -25,6 +25,7 @@ jest.mock("@/services/auth-session", () => ({
 describe("auth token storage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFetch.mockReset();
     (SecureStore.deleteItemAsync as jest.Mock).mockResolvedValue(undefined);
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
     (SecureStore.setItemAsync as jest.Mock).mockResolvedValue(undefined);
@@ -35,6 +36,13 @@ describe("auth token storage", () => {
 
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith("sbay.auth.token", "access-token");
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("sbay.auth.refreshToken");
+  });
+
+  it("stores access and refresh tokens together", async () => {
+    await storeAuthTokens("access-token", "refresh-token");
+
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith("sbay.auth.token", "access-token");
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith("sbay.auth.refreshToken", "refresh-token");
   });
 
   it("attempts to remove both stored tokens before reporting clear failure", async () => {
@@ -69,5 +77,54 @@ describe("auth token storage", () => {
 
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("sbay.auth.token");
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("sbay.auth.refreshToken");
+  });
+
+  it("stores the rotated token pair after a successful refresh", async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue("old-refresh-token");
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        token: "new-access-token",
+        refreshToken: "new-refresh-token",
+      }),
+    });
+
+    await expect(refreshStoredToken()).resolves.toEqual({
+      status: "refreshed",
+      token: "new-access-token",
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith("https://api.example.test/api/auth/refresh", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ refreshToken: "old-refresh-token" }),
+    });
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith("sbay.auth.token", "new-access-token");
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith("sbay.auth.refreshToken", "new-refresh-token");
+  });
+
+  it("shares one in-flight refresh request across concurrent callers", async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue("old-refresh-token");
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        token: "new-access-token",
+        refreshToken: "new-refresh-token",
+      }),
+    });
+
+    const [first, second] = await Promise.all([
+      refreshStoredToken(),
+      refreshStoredToken(),
+    ]);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(first).toEqual({ status: "refreshed", token: "new-access-token" });
+    expect(second).toEqual(first);
   });
 });

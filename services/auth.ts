@@ -70,25 +70,19 @@ const TOKEN_STORAGE_KEY = "sbay.auth.token";
 const REFRESH_TOKEN_STORAGE_KEY = "sbay.auth.refreshToken";
 
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
-  const response = await apiRequest<AuthResponse>("/api/auth/login", {
+  return apiRequest<AuthResponse>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify(payload),
     skipAuthRefresh: true,
   });
-  await storeAuthTokens(response.token, response.refreshToken ?? null);
-  return response;
 }
 
 export async function register(payload: RegisterPayload): Promise<RegisterResponse> {
-  const response = await apiRequest<RegisterResponse>("/api/auth/register", {
+  return apiRequest<RegisterResponse>("/api/auth/register", {
     method: "POST",
     body: JSON.stringify(payload),
     skipAuthRefresh: true,
   });
-  if (response.token) {
-    await storeAuthTokens(response.token, response.refreshToken ?? null);
-  }
-  return response;
 }
 
 export async function requestEmailVerification(): Promise<void> {
@@ -122,13 +116,13 @@ export async function resetPassword(payload: ResetPasswordPayload): Promise<void
   });
 }
 
-export async function storeToken(token: string): Promise<void> {
+async function storeAccessToken(token: string): Promise<void> {
   await SecureStore.setItemAsync(TOKEN_STORAGE_KEY, token);
   setAuthToken(token);
 }
 
 export async function storeAuthTokens(token: string, refreshToken?: string | null): Promise<void> {
-  await storeToken(token);
+  await storeAccessToken(token);
   if (refreshToken) {
     await SecureStore.setItemAsync(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
   } else {
@@ -142,10 +136,6 @@ export async function getStoredToken(): Promise<string | null> {
   const token = await SecureStore.getItemAsync(TOKEN_STORAGE_KEY);
   if (token) setAuthToken(token);
   return token;
-}
-
-export async function logout(): Promise<void> {
-  await clearStoredToken();
 }
 
 export async function clearStoredToken(): Promise<void> {
@@ -162,11 +152,24 @@ export async function clearStoredToken(): Promise<void> {
   setAuthToken(null);
 }
 
-export async function getStoredRefreshToken(): Promise<string | null> {
+async function getStoredRefreshToken(): Promise<string | null> {
   return SecureStore.getItemAsync(REFRESH_TOKEN_STORAGE_KEY);
 }
 
-export async function refreshStoredToken(): Promise<AuthRefreshResult> {
+// Single-flight guard: the backend rotates refresh tokens. If several requests
+// 401 at once and each starts its own refresh, only the first can succeed.
+// Sharing one in-flight refresh promise prevents that race.
+let inflightRefresh: Promise<AuthRefreshResult> | null = null;
+
+export function refreshStoredToken(): Promise<AuthRefreshResult> {
+  if (inflightRefresh) return inflightRefresh;
+  inflightRefresh = performTokenRefresh().finally(() => {
+    inflightRefresh = null;
+  });
+  return inflightRefresh;
+}
+
+async function performTokenRefresh(): Promise<AuthRefreshResult> {
   const refreshToken = await getStoredRefreshToken();
   if (!refreshToken) return { status: "rejected" };
 
@@ -181,13 +184,13 @@ export async function refreshStoredToken(): Promise<AuthRefreshResult> {
       body: JSON.stringify({ refreshToken }),
     });
   } catch {
-    // Network unavailable — preserve stored tokens so the user stays signed in.
+    // Network unavailable: preserve stored tokens so the user stays signed in.
     // The next request after connectivity resumes will retry the refresh.
     return { status: "unavailable" };
   }
 
   if (response.status === 401 || response.status === 403) {
-    // Server explicitly rejected the refresh token — sign the user out.
+    // Server explicitly rejected the refresh token: sign the user out.
     await clearStoredToken().catch((error) => {
       ErrorReporter.captureException(error, { context: "clearStoredToken after refresh rejection" });
     });
@@ -195,7 +198,7 @@ export async function refreshStoredToken(): Promise<AuthRefreshResult> {
   }
 
   if (!response.ok) {
-    // Transient server error — don't clear the token; let the caller retry later.
+    // Transient server error: don't clear the token; let the caller retry later.
     return { status: "unavailable" };
   }
 
