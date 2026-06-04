@@ -3,7 +3,7 @@ import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { ActivityIndicator, BackHandler, LogBox, Platform, ToastAndroid, View } from "react-native";
+import { BackHandler, LogBox, Platform, ToastAndroid } from "react-native";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
 import * as Notifications from "expo-notifications";
@@ -21,6 +21,7 @@ import { getNotificationTarget } from "@/services/notification-links";
 import { markNotificationRead } from "@/services/notifications";
 import { BugReportFab } from "@/components/support/BugReportFab";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { StartupLoadingScreen } from "@/components/common/StartupLoadingScreen";
 import { ErrorReporter } from "@/services/error-reporter";
 
 const ignoredPromiseErrors = [
@@ -294,10 +295,8 @@ function RootLayoutContent() {
     return (
       <PaperProvider theme={paperTheme}>
         <ThemeProvider value={navigationTheme}>
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-            <ActivityIndicator size="small" color={colors.primary} />
-          </View>
-          <StatusBar style={statusStyle} translucent backgroundColor="transparent" />
+          <StartupLoadingScreen colors={colors} />
+          <StatusBar style="light" translucent backgroundColor="transparent" />
         </ThemeProvider>
       </PaperProvider>
     );
