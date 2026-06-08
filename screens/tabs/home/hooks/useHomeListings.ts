@@ -46,6 +46,7 @@ export function useHomeListings(activeCategory: string) {
           const [nextListings, recommended, featured, ads] = await Promise.all([
             searchListings({
               category: activeCategory === "all" ? undefined : activeCategory,
+              pageSize: 24,
             }),
             activeCategory === "all" ? getRecommendedListings(12) : Promise.resolve([]),
             searchListings({

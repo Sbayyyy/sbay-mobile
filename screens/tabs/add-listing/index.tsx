@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -139,9 +139,20 @@ export default function AddListingScreen() {
     });
   }, []);
 
+  const hasInitializedRef = useRef(false);
+
+  // Reset only on screen unmount so camera return doesn't re-trigger form reset
+  useEffect(() => {
+    return () => {
+      hasInitializedRef.current = false;
+    };
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       if (id) return undefined;
+      if (hasInitializedRef.current) return undefined;
+      hasInitializedRef.current = true;
       resetCreateForm();
       return undefined;
     }, [id, mode, resetCreateForm]),
@@ -531,10 +542,14 @@ export default function AddListingScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.8,
+      allowsMultipleSelection: true,
+      selectionLimit: PHOTO_SLOTS.length,
     });
     if (result.canceled || result.assets.length === 0) return;
-    setPendingPhoto({ uri: result.assets[0].uri, index });
-  }, [t]);
+    result.assets.forEach((asset, i) => {
+      addPhotoAtIndex(index + i, asset.uri);
+    });
+  }, [t, addPhotoAtIndex]);
 
   const pickFromCamera = useCallback(async (index: number) => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -690,11 +705,11 @@ export default function AddListingScreen() {
       } else {
         showSuccess(
           id
-            ? t("addListing.updated", {
+            ? t("addListing.messages.updated", {
                 defaultValue: "Your listing has been updated.",
               })
-            : t("addListing.success", {
-                defaultValue: "Your listing has been published.",
+            : t("addListing.messages.published", {
+                defaultValue: "Your listing has been published. It may take a few minutes to appear on the home screen.",
               }),
           t("common.actions.success", { defaultValue: "Success" }),
         );
