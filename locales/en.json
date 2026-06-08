@@ -201,6 +201,7 @@
     "recommendedTitle": "Recommended for you",
     "featuredTitle": "Featured",
     "emptySubtitle": "Try another category or adjust your search.",
+    "loadMore": "Browse all listings",
     "heroCards": {
       "hero-1": {
         "title": "Furniture refresh",
@@ -251,7 +252,7 @@
       "boostPending": "Your listing was published and the boost payment is pending.",
       "boostCheckout": "Your listing was published. Continue to payment to activate the boost.",
       "updated": "Your listing has been updated.",
-      "published": "Your listing has been published."
+      "published": "Your listing has been published. It may take a few minutes to appear on the home screen."
     },
     "boost": {
       "title": "Boost this listing after publishing",

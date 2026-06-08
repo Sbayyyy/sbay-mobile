@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { SectionHeader } from "@/components/common/SectionHeader";
@@ -70,6 +70,11 @@ export const HomeListingsSection = memo(function HomeListingsSection({
               />
             ))}
           </View>
+          <View style={styles.loadMoreWrapper}>
+            <TouchableOpacity style={styles.loadMoreButton} onPress={onExploreMore} activeOpacity={0.8}>
+              <Text style={styles.loadMoreLabel}>{t("home.loadMore")}</Text>
+            </TouchableOpacity>
+          </View>
         </>
       )}
     </>
@@ -112,5 +117,22 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 13,
       color: theme.textMuted,
       textAlign: "center",
+    },
+    loadMoreWrapper: {
+      paddingHorizontal: 20,
+      paddingTop: 8,
+      paddingBottom: 4,
+    },
+    loadMoreButton: {
+      borderRadius: 14,
+      borderWidth: 1.5,
+      borderColor: theme.primary,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
+    loadMoreLabel: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: theme.primary,
     },
   });

@@ -705,11 +705,11 @@ export default function AddListingScreen() {
       } else {
         showSuccess(
           id
-            ? t("addListing.updated", {
+            ? t("addListing.messages.updated", {
                 defaultValue: "Your listing has been updated.",
               })
-            : t("addListing.success", {
-                defaultValue: "Your listing has been published.",
+            : t("addListing.messages.published", {
+                defaultValue: "Your listing has been published. It may take a few minutes to appear on the home screen.",
               }),
           t("common.actions.success", { defaultValue: "Success" }),
         );
