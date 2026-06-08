@@ -522,20 +522,20 @@ export default function ListingDetailScreen() {
                 <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
               )}
               <Text style={styles.primaryButtonLabel}>
-                {openingChat ? "Opening..." : "Contact seller"}
+                {openingChat ? t("listings.opening", { defaultValue: "Opening..." }) : t("listings.contactSellerTitle", { defaultValue: "Contact seller" })}
               </Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.ownerActions}>
               <View style={styles.noticeBannerInfo}>
-                <Text style={styles.noticeInfoText}>This is your listing.</Text>
+                <Text style={styles.noticeInfoText}>{t("listings.yourListing", { defaultValue: "This is your listing." })}</Text>
               </View>
               <TouchableOpacity
                 style={styles.primaryButton}
                 onPress={() => router.push(`/listings/${listing.id}/edit`)}
               >
                 <Ionicons name="create-outline" size={18} color="#fff" />
-                <Text style={styles.primaryButtonLabel}>Edit listing</Text>
+                <Text style={styles.primaryButtonLabel}>{t("listings.editListing", { defaultValue: "Edit listing" })}</Text>
               </TouchableOpacity>
               {isSold || isHidden ? (
                 <TouchableOpacity
@@ -549,7 +549,7 @@ export default function ListingDetailScreen() {
                     <Ionicons name="refresh-outline" size={18} color="#fff" />
                   )}
                   <Text style={styles.primaryButtonLabel}>
-                    {statusUpdating ? "Updating..." : "Relist"}
+                    {statusUpdating ? t("listings.updating", { defaultValue: "Updating..." }) : t("listings.relist", { defaultValue: "Relist" })}
                   </Text>
                 </TouchableOpacity>
               ) : (
@@ -565,7 +565,7 @@ export default function ListingDetailScreen() {
                   >
                     <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
                     <Text style={styles.primaryButtonLabel}>
-                      {statusUpdating ? "Updating..." : "Mark sold"}
+                      {statusUpdating ? t("listings.updating", { defaultValue: "Updating..." }) : t("listings.markSold", { defaultValue: "Mark sold" })}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -579,7 +579,7 @@ export default function ListingDetailScreen() {
                   >
                     <Ionicons name="eye-off-outline" size={18} color="#fff" />
                     <Text style={styles.primaryButtonLabel}>
-                      {statusUpdating ? "Updating..." : "Hide listing"}
+                      {statusUpdating ? t("listings.updating", { defaultValue: "Updating..." }) : t("listings.hideListing", { defaultValue: "Hide listing" })}
                     </Text>
                   </TouchableOpacity>
                 </>

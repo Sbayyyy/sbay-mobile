@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.syrianbay.app",
-      "versionCode": 18,
+      "versionCode": 21,
       "icon":"./assets/images/playstore-icon.png",
       "intentFilters": [
         {
@@ -117,12 +117,29 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "imageWidth": 430,
+          "resizeMode": "cover",
+          "backgroundColor": "#0f448f",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#0f448f"
           }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to upload listing images.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use your camera to take listing photos."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#2563eb",
+          "defaultChannel": "default",
+          "androidMode": "default",
+          "androidCollapsedTitle": "#{unread_notifications} new notifications"
         }
       ],
       "expo-localization",

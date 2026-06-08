@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ErrorReporter } from "@/services/error-reporter";
+import i18n from "@/localization/i18n";
 
 type Props = {
   children: React.ReactNode;
@@ -37,12 +38,12 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Something went wrong</Text>
+        <Text style={styles.title}>{i18n.t("common.errors.title", { defaultValue: "Something went wrong" })}</Text>
         <Text style={styles.message}>
-          {this.props.fallbackMessage ?? "An unexpected error occurred. Please try again."}
+          {this.props.fallbackMessage ?? i18n.t("common.errors.unexpectedError", { defaultValue: "An unexpected error occurred. Please try again." })}
         </Text>
-        <TouchableOpacity style={styles.button} onPress={this.reset} accessibilityRole="button" accessibilityLabel="Try again">
-          <Text style={styles.buttonText}>Try again</Text>
+        <TouchableOpacity style={styles.button} onPress={this.reset} accessibilityRole="button" accessibilityLabel={i18n.t("common.errors.tryAgain", { defaultValue: "Try again" })}>
+          <Text style={styles.buttonText}>{i18n.t("common.errors.tryAgain", { defaultValue: "Try again" })}</Text>
         </TouchableOpacity>
       </View>
     );

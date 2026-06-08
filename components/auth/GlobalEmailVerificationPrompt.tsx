@@ -9,6 +9,7 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -19,6 +20,7 @@ import { getMyProfile, type UserProfile } from "@/services/user";
 
 export function GlobalEmailVerificationPrompt() {
   const theme = useAppTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme, insets.top), [theme, insets.top]);
   const { status } = useAuth();
@@ -76,7 +78,7 @@ export function GlobalEmailVerificationPrompt() {
       await requestEmailVerification();
       setSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to send verification email.");
+      setError(err instanceof Error ? err.message : t("emailVerification.sendError", { defaultValue: "Unable to send verification email." }));
     } finally {
       setSending(false);
     }
@@ -93,13 +95,13 @@ export function GlobalEmailVerificationPrompt() {
           <Ionicons name="mail-unread-outline" size={17} color={theme.primary} />
         </View>
         <View style={styles.copy}>
-          <Text style={styles.title}>Verify your email</Text>
+          <Text style={styles.title}>{t("emailVerification.title", { defaultValue: "Verify your email" })}</Text>
           <Text style={[styles.body, error && styles.error, sent && styles.success]} numberOfLines={2}>
             {error
               ? error
               : sent
-                ? "Email sent. Check your inbox."
-                : "Create listings and message sellers after verification."}
+                ? t("emailVerification.emailSent", { defaultValue: "Email sent. Check your inbox." })
+                : t("emailVerification.afterVerification", { defaultValue: "Create listings and message sellers after verification." })}
           </Text>
         </View>
         <TouchableOpacity
@@ -110,13 +112,13 @@ export function GlobalEmailVerificationPrompt() {
           {sending ? (
             <ActivityIndicator size="small" color={theme.primaryForeground} />
           ) : (
-            <Text style={styles.sendLabel}>Send</Text>
+            <Text style={styles.sendLabel}>{t("emailVerification.send", { defaultValue: "Send" })}</Text>
           )}
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.dismissButton}
           onPress={() => setDismissed(true)}
-          accessibilityLabel="Dismiss verification prompt"
+          accessibilityLabel={t("emailVerification.dismiss", { defaultValue: "Dismiss" })}
         >
           <Ionicons name="close" size={16} color={theme.textMuted} />
         </TouchableOpacity>
