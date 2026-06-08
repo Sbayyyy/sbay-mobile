@@ -7,6 +7,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -1070,6 +1071,31 @@ export default function ChatThreadScreen() {
                 </TouchableOpacity>
               </View>
             ) : null}
+            {isListingAvailable && !editingMessageId && !input.trim() ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.quickRepliesScroll}
+                contentContainerStyle={styles.quickRepliesContent}
+                keyboardShouldPersistTaps="handled"
+              >
+                {([
+                  t("chats.quickReplies.isAvailable"),
+                  t("chats.quickReplies.lowestPrice"),
+                  t("chats.quickReplies.canDeliver"),
+                  t("chats.quickReplies.interested"),
+                  t("chats.quickReplies.illTakeIt"),
+                ] as string[]).map((text) => (
+                  <TouchableOpacity
+                    key={text}
+                    style={styles.quickReplyChip}
+                    onPress={() => setInput(text)}
+                  >
+                    <Text style={styles.quickReplyLabel}>{text}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : null}
             {canMakeOffer ? (
               <TouchableOpacity
                 style={styles.offerComposerButton}
@@ -1440,6 +1466,27 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 16,
       color: theme.textMuted,
       paddingHorizontal: 6,
+    },
+    quickRepliesScroll: {
+      width: "100%",
+      marginBottom: 6,
+    },
+    quickRepliesContent: {
+      gap: 8,
+      paddingHorizontal: 2,
+    },
+    quickReplyChip: {
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: theme.primary,
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+      backgroundColor: theme.primaryMuted,
+    },
+    quickReplyLabel: {
+      color: theme.primary,
+      fontSize: 13,
+      fontWeight: "600",
     },
     offerComposerButton: {
       height: 44,

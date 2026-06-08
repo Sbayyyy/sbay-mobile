@@ -25,8 +25,11 @@
     "errors": {
       "title": "Something went wrong",
       "required": "This field is required.",
-      "permissionTitle": "Permission needed"
+      "permissionTitle": "Permission needed",
+      "unexpectedError": "An unexpected error occurred. Please try again.",
+      "tryAgain": "Try again"
     },
+    "validating": "Validating...",
     "placeholders": {
       "email": "Email address",
       "password": "Password"
@@ -175,7 +178,14 @@
     "favoriteFailedBody": "Unable to update favorite.",
     "shareFailedTitle": "Share failed",
     "shareFailedBody": "Unable to share this listing.",
-    "shareMessage": "Check out what I found on SBAY, {{title}}:\n{{url}}"
+    "shareMessage": "Check out what I found on SBAY, {{title}}:\n{{url}}",
+    "opening": "Opening...",
+    "yourListing": "This is your listing.",
+    "editListing": "Edit listing",
+    "updating": "Updating...",
+    "relist": "Relist",
+    "markSold": "Mark sold",
+    "hideListing": "Hide listing"
   },
   "home": {
     "searchPlaceholder": "Search products",
@@ -294,7 +304,37 @@
       "deleteBody": "This action can't be undone.",
       "deleteCancel": "Cancel",
       "deleteConfirm": "Delete"
+    },
+    "offer": {
+      "title": "Offer",
+      "counterTitle": "Counter offer",
+      "accept": "Accept",
+      "reject": "Reject",
+      "counter": "Counter",
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "countered": "Countered"
+      }
+    },
+    "quickReplies": {
+      "isAvailable": "Is this available?",
+      "lowestPrice": "What's the lowest price?",
+      "canDeliver": "Can you deliver?",
+      "interested": "I'm interested",
+      "illTakeIt": "I'll take it!"
     }
+  },
+  "emailVerification": {
+    "title": "Verify your email",
+    "body": "Verify your email to create listings and message sellers.",
+    "send": "Send",
+    "sent": "Verification email sent. Open the link in your inbox to finish.",
+    "emailSent": "Email sent. Check your inbox.",
+    "afterVerification": "Create listings and message sellers after verification.",
+    "sendError": "Unable to send verification email.",
+    "dismiss": "Dismiss"
   },
   "profile": {
     "title": "My Profile",

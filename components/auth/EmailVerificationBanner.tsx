@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useTranslation } from "react-i18next";
 
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -18,6 +19,7 @@ type EmailVerificationBannerProps = {
 
 export function EmailVerificationBanner({ onSent }: EmailVerificationBannerProps) {
   const theme = useAppTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -30,10 +32,10 @@ export function EmailVerificationBanner({ onSent }: EmailVerificationBannerProps
     setError(null);
     try {
       await requestEmailVerification();
-      setMessage("Verification email sent. Open the link in your inbox to finish.");
+      setMessage(t("emailVerification.sent", { defaultValue: "Verification email sent. Open the link in your inbox to finish." }));
       onSent?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to send verification email.");
+      setError(err instanceof Error ? err.message : t("emailVerification.sendError", { defaultValue: "Unable to send verification email." }));
     } finally {
       setSending(false);
     }
@@ -45,9 +47,9 @@ export function EmailVerificationBanner({ onSent }: EmailVerificationBannerProps
         <Ionicons name="mail-unread-outline" size={20} color={theme.primary} />
       </View>
       <View style={styles.copy}>
-        <Text style={styles.title}>Verify your email</Text>
+        <Text style={styles.title}>{t("emailVerification.title", { defaultValue: "Verify your email" })}</Text>
         <Text style={styles.body}>
-          Verify your email to create listings and message sellers.
+          {t("emailVerification.body", { defaultValue: "Verify your email to create listings and message sellers." })}
         </Text>
         {message ? <Text style={styles.success}>{message}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -60,7 +62,7 @@ export function EmailVerificationBanner({ onSent }: EmailVerificationBannerProps
         {sending ? (
           <ActivityIndicator size="small" color={theme.primaryForeground} />
         ) : (
-          <Text style={styles.buttonLabel}>Send</Text>
+          <Text style={styles.buttonLabel}>{t("emailVerification.send", { defaultValue: "Send" })}</Text>
         )}
       </TouchableOpacity>
     </View>

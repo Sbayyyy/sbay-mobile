@@ -23,8 +23,11 @@
     "errors": {
       "title": "حدث خطأ",
       "required": "هذا الحقل مطلوب.",
-      "permissionTitle": "الإذن مطلوب"
+      "permissionTitle": "الإذن مطلوب",
+      "unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+      "tryAgain": "حاول مرة أخرى"
     },
+    "validating": "جاري التحقق...",
     "placeholders": {
       "email": "البريد الإلكتروني",
       "password": "كلمة المرور"
@@ -173,7 +176,14 @@
     "favoriteFailedBody": "تعذر تحديث المفضلة.",
     "shareFailedTitle": "فشل المشاركة",
     "shareFailedBody": "تعذر مشاركة هذا الإعلان.",
-    "shareMessage": "شاهد ما وجدته على SBAY، {{title}}:\n{{url}}"
+    "shareMessage": "شاهد ما وجدته على SBAY، {{title}}:\n{{url}}",
+    "opening": "جاري الفتح...",
+    "yourListing": "هذا إعلانك.",
+    "editListing": "تعديل الإعلان",
+    "updating": "جاري التحديث...",
+    "relist": "إعادة نشر",
+    "markSold": "تمييز كمباع",
+    "hideListing": "إخفاء الإعلان"
   },
   "home": {
     "searchPlaceholder": "ابحث عن الإعلانات",
@@ -289,7 +299,37 @@
       "deleteBody": "لا يمكن التراجع عن هذا الإجراء.",
       "deleteCancel": "إلغاء",
       "deleteConfirm": "حذف"
+    },
+    "offer": {
+      "title": "عرض",
+      "counterTitle": "عرض مضاد",
+      "accept": "قبول",
+      "reject": "رفض",
+      "counter": "رد",
+      "status": {
+        "pending": "قيد الانتظار",
+        "accepted": "مقبول",
+        "rejected": "مرفوض",
+        "countered": "تم الرد"
+      }
+    },
+    "quickReplies": {
+      "isAvailable": "هل هو متاح؟",
+      "lowestPrice": "ما أقل سعر؟",
+      "canDeliver": "هل يمكنك التوصيل؟",
+      "interested": "أنا مهتم",
+      "illTakeIt": "سآخذه!"
     }
+  },
+  "emailVerification": {
+    "title": "تحقق من بريدك الإلكتروني",
+    "body": "تحقق من بريدك الإلكتروني لإنشاء الإعلانات ومراسلة البائعين.",
+    "send": "إرسال",
+    "sent": "تم إرسال بريد التحقق. افتح الرابط في صندوق الوارد للإنهاء.",
+    "emailSent": "تم إرسال البريد. تحقق من صندوق الوارد.",
+    "afterVerification": "أنشئ الإعلانات وراسل البائعين بعد التحقق.",
+    "sendError": "تعذر إرسال بريد التحقق.",
+    "dismiss": "إغلاق"
   },
   "profile": {
     "title": "حسابي",

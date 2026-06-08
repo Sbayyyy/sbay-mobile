@@ -41,7 +41,8 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       void refreshUnreadCount();
-    }, [refreshUnreadCount]),
+      refreshListings();
+    }, [refreshUnreadCount, refreshListings]),
   );
 
   const categories = useMemo(() => {

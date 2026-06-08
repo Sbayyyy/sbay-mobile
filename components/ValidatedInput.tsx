@@ -6,6 +6,7 @@ import {
   TextInputProps,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
 import {
@@ -45,6 +46,7 @@ export function ValidatedInput({
   ...rest
 }: ValidatedInputProps) {
   const theme = useAppTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [touched, setTouched] = useState(false);
   const [result, setResult] = useState<ValidationResult>(emptyResult);
@@ -142,7 +144,7 @@ export function ValidatedInput({
       ) : helperText ? (
         <Text style={styles.helperText}>{helperText}</Text>
       ) : isValidating ? (
-        <Text style={styles.helperText}>Validating...</Text>
+        <Text style={styles.helperText}>{t("common.validating", { defaultValue: "Validating..." })}</Text>
       ) : null}
     </View>
   );

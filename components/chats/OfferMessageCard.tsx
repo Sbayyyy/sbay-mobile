@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -27,14 +28,18 @@ export function OfferMessageCard({
   onCounter,
 }: OfferMessageCardProps) {
   const theme = useAppTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const statusLabel = offer.status.charAt(0).toUpperCase() + offer.status.slice(1);
+  const statusKey = `chats.offer.status.${offer.status}` as const;
+  const statusLabel = t(statusKey, { defaultValue: offer.status.charAt(0).toUpperCase() + offer.status.slice(1) });
 
   return (
     <View style={styles.offerCard}>
       <View style={styles.offerHeader}>
         <Text style={styles.offerTitle}>
-          {offer.parentOfferId ? "Counter offer" : "Offer"}
+          {offer.parentOfferId
+            ? t("chats.offer.counterTitle", { defaultValue: "Counter offer" })
+            : t("chats.offer.title", { defaultValue: "Offer" })}
         </Text>
         <Text
           style={[
@@ -55,33 +60,33 @@ export function OfferMessageCard({
           {canAcceptReject ? (
             <>
               <TouchableOpacity
-                accessibilityLabel="Accept offer"
+                accessibilityLabel={t("chats.offer.accept", { defaultValue: "Accept" })}
                 style={[styles.offerActionButton, styles.offerAcceptButton]}
                 disabled={busy}
                 onPress={() => onAccept(message)}
               >
                 <Text style={styles.offerPrimaryActionLabel}>
-                  {busy ? "..." : "Accept"}
+                  {busy ? "..." : t("chats.offer.accept", { defaultValue: "Accept" })}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                accessibilityLabel="Reject offer"
+                accessibilityLabel={t("chats.offer.reject", { defaultValue: "Reject" })}
                 style={styles.offerActionButton}
                 disabled={busy}
                 onPress={() => onReject(message)}
               >
-                <Text style={styles.offerSecondaryActionLabel}>Reject</Text>
+                <Text style={styles.offerSecondaryActionLabel}>{t("chats.offer.reject", { defaultValue: "Reject" })}</Text>
               </TouchableOpacity>
             </>
           ) : null}
           {canCounter ? (
             <TouchableOpacity
-              accessibilityLabel="Counter offer"
+              accessibilityLabel={t("chats.offer.counterTitle", { defaultValue: "Counter offer" })}
               style={[styles.offerActionButton, styles.offerCounterButton]}
               disabled={busy}
               onPress={() => onCounter(message)}
             >
-              <Text style={styles.offerPrimaryActionLabel}>Counter</Text>
+              <Text style={styles.offerPrimaryActionLabel}>{t("chats.offer.counter", { defaultValue: "Counter" })}</Text>
             </TouchableOpacity>
           ) : null}
         </View>

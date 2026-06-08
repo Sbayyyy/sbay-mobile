@@ -50,6 +50,7 @@ import {
   getBoostOptions,
   type BoostOption,
 } from "@/services/monetization";
+import { clearCache } from "@/services/cache";
 import { uploadImageAsync } from "@/services/uploads";
 import { type TextValidator, validateSafeText } from "@/validation";
 import { useAuth } from "@/providers/AuthProvider";
@@ -507,35 +508,70 @@ export default function AddListingScreen() {
     setDistrictMenuVisible(false);
   }, []);
 
-  const handlePickPhoto = async (index: number) => {
+  const addPhotoAtIndex = useCallback((index: number, uri: string) => {
+    setPhotos((prev) => {
+      const filled = prev.filter(Boolean) as string[];
+      const next = [...filled, ...Array(prev.length - filled.length).fill(null)];
+      next[index] = uri;
+      const compacted = next.filter(Boolean) as string[];
+      return [...compacted, ...Array(prev.length - compacted.length).fill(null)];
+    });
+  }, []);
+
+  const pickFromLibrary = useCallback(async (index: number) => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert(
         t("common.errors.permissionTitle", { defaultValue: "Permission needed" }),
-        t("common.errors.permissionPhotos", {
-          defaultValue: "Please allow photo access to continue.",
-        }),
+        t("common.errors.permissionPhotos", { defaultValue: "Please allow photo access to continue." }),
       );
       return;
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
       quality: 0.8,
     });
-
     if (result.canceled || result.assets.length === 0) return;
-    const asset = result.assets[0];
-    setPhotos((prev) => {
-      const filled = prev.filter(Boolean) as string[];
-      const next = [...filled, ...Array(prev.length - filled.length).fill(null)];
-      next[index] = asset.uri;
-      const compacted = next.filter(Boolean) as string[];
-      return [...compacted, ...Array(prev.length - compacted.length).fill(null)];
+    addPhotoAtIndex(index, result.assets[0].uri);
+  }, [addPhotoAtIndex, t]);
+
+  const pickFromCamera = useCallback(async (index: number) => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        t("common.errors.permissionTitle", { defaultValue: "Permission needed" }),
+        t("common.errors.permissionCamera", { defaultValue: "Please allow camera access to continue." }),
+      );
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
     });
-  };
+    if (result.canceled || result.assets.length === 0) return;
+    addPhotoAtIndex(index, result.assets[0].uri);
+  }, [addPhotoAtIndex, t]);
+
+  const handlePickPhoto = useCallback((index: number) => {
+    Alert.alert(
+      t("addListing.photos.sourceTitle", { defaultValue: "Add photo" }),
+      undefined,
+      [
+        {
+          text: t("addListing.photos.sourceCamera", { defaultValue: "Camera" }),
+          onPress: () => { void pickFromCamera(index); },
+        },
+        {
+          text: t("addListing.photos.sourceLibrary", { defaultValue: "Photo library" }),
+          onPress: () => { void pickFromLibrary(index); },
+        },
+        {
+          text: t("common.actions.cancel", { defaultValue: "Cancel" }),
+          style: "cancel",
+        },
+      ],
+    );
+  }, [pickFromCamera, pickFromLibrary, t]);
 
   const movePhoto = useCallback((fromIndex: number, direction: "left" | "right") => {
     setPhotos((prev) => {
@@ -622,6 +658,13 @@ export default function AddListingScreen() {
       const listing = id
         ? await updateListing(id, updatePayload)
         : await createListing(payload);
+
+      if (!id) {
+        void Promise.all([
+          clearCache("listings.all"),
+          clearCache("listings.featured"),
+        ]).catch(() => {});
+      }
 
       if (!id && boostAfterPublish && selectedBoostOption) {
         const transaction = await createBoostPayment(listing.id, selectedBoostOption.id, `/listings/${listing.id}`);
