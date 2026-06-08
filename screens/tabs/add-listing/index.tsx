@@ -95,6 +95,7 @@ export default function AddListingScreen() {
     currency: CurrencyId;
     photos: (string | null)[];
   } | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<{ uri: string; index: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -532,8 +533,8 @@ export default function AddListingScreen() {
       quality: 0.8,
     });
     if (result.canceled || result.assets.length === 0) return;
-    addPhotoAtIndex(index, result.assets[0].uri);
-  }, [addPhotoAtIndex, t]);
+    setPendingPhoto({ uri: result.assets[0].uri, index });
+  }, [t]);
 
   const pickFromCamera = useCallback(async (index: number) => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -549,8 +550,8 @@ export default function AddListingScreen() {
       quality: 0.8,
     });
     if (result.canceled || result.assets.length === 0) return;
-    addPhotoAtIndex(index, result.assets[0].uri);
-  }, [addPhotoAtIndex, t]);
+    setPendingPhoto({ uri: result.assets[0].uri, index });
+  }, [t]);
 
   const handlePickPhoto = useCallback((index: number) => {
     Alert.alert(
@@ -1166,6 +1167,48 @@ export default function AddListingScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={pendingPhoto !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPendingPhoto(null)}
+      >
+        <View style={styles.photoPreviewBackdrop}>
+          <View style={styles.photoPreviewCard}>
+            {pendingPhoto ? (
+              <Image
+                source={{ uri: pendingPhoto.uri }}
+                style={styles.photoPreviewImage}
+                resizeMode="contain"
+              />
+            ) : null}
+            <View style={styles.photoPreviewActions}>
+              <TouchableOpacity
+                style={styles.photoPreviewCancel}
+                onPress={() => setPendingPhoto(null)}
+              >
+                <Text style={styles.photoPreviewCancelLabel}>
+                  {t("common.actions.cancel", { defaultValue: "Cancel" })}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.photoPreviewConfirm}
+                onPress={() => {
+                  if (pendingPhoto) {
+                    addPhotoAtIndex(pendingPhoto.index, pendingPhoto.uri);
+                    setPendingPhoto(null);
+                  }
+                }}
+              >
+                <Text style={styles.photoPreviewConfirmLabel}>
+                  {t("addListing.photos.usePhoto", { defaultValue: "Use photo" })}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </AppScreen>
   );
 }
@@ -1459,6 +1502,56 @@ const createStyles = (theme: ThemeColors) =>
     },
     modalList: {
       maxHeight: 360,
+    },
+    photoPreviewBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.85)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+    },
+    photoPreviewCard: {
+      width: "100%",
+      borderRadius: 18,
+      backgroundColor: theme.surface,
+      overflow: "hidden",
+      gap: 0,
+    },
+    photoPreviewImage: {
+      width: "100%",
+      aspectRatio: 1,
+      backgroundColor: theme.surfaceMuted,
+    },
+    photoPreviewActions: {
+      flexDirection: "row",
+      gap: 10,
+      padding: 14,
+    },
+    photoPreviewCancel: {
+      flex: 1,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceMuted,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
+    photoPreviewCancelLabel: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: theme.text,
+    },
+    photoPreviewConfirm: {
+      flex: 1,
+      borderRadius: 14,
+      backgroundColor: theme.primary,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
+    photoPreviewConfirmLabel: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: theme.primaryForeground,
     },
     footer: {
       padding: 20,

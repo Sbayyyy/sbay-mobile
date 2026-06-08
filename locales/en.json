@@ -263,7 +263,11 @@
     "photos": {
       "title": "Photos",
       "hint": "Add up to 5 photos",
-      "add": "Add"
+      "add": "Add",
+      "usePhoto": "Use photo",
+      "sourceTitle": "Add photo",
+      "sourceCamera": "Camera",
+      "sourceLibrary": "Photo library"
     },
     "fields": {
       "title": "Listing title",

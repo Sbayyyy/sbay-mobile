@@ -261,7 +261,11 @@
     "photos": {
       "title": "الصور",
       "hint": "أضف حتى 5 صور",
-      "add": "إضافة"
+      "add": "إضافة",
+      "usePhoto": "استخدام الصورة",
+      "sourceTitle": "إضافة صورة",
+      "sourceCamera": "الكاميرا",
+      "sourceLibrary": "مكتبة الصور"
     },
     "fields": {
       "title": "عنوان الإعلان",
