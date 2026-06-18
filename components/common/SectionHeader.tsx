@@ -1,5 +1,9 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import {
+  MarketplaceSpacing,
+  MarketplaceTypography,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 type SectionHeaderProps = {
@@ -29,19 +33,19 @@ export function SectionHeader({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 24,
-    marginBottom: 12,
-    paddingHorizontal: 20,
+    marginTop: MarketplaceSpacing.lg,
+    marginBottom: MarketplaceSpacing.sm,
+    paddingHorizontal: MarketplaceSpacing.lg,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: MarketplaceTypography.title,
+    fontWeight: "800",
   },
   action: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: MarketplaceTypography.bodySmall,
+    fontWeight: "700",
   },
 });

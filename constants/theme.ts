@@ -139,6 +139,60 @@ export const CoffeeTheme = {
 
 export type ThemeColors = typeof LightTheme.colors;
 
+export const MarketplaceSpacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+} as const;
+
+export const MarketplaceRadius = {
+  xs: 8,
+  sm: 10,
+  md: 12,
+  lg: 14,
+  xl: 16,
+  xxl: 18,
+  card: 16,
+  sheet: 20,
+  pill: 999,
+} as const;
+
+export const MarketplaceTypography = {
+  caption: 11,
+  meta: 12,
+  bodySmall: 13,
+  body: 14,
+  input: 15,
+  title: 18,
+  screenTitle: 22,
+  hero: 26,
+} as const;
+
+export const MarketplaceShadow = {
+  subtle: {
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  card: {
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  raised: {
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  },
+} as const;
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

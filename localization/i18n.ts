@@ -22,7 +22,7 @@ export const supportedLanguages = {
     code: "ar",
     label: "Arabic",
     nativeName: "العربية",
-    isRTL: false,
+    isRTL: true,
   },
 } as const;
 
@@ -58,7 +58,7 @@ export const getBestLanguage = (): SupportedLanguage => {
 };
 
 export const syncLanguageDirection = (language: SupportedLanguage) => {
-  const shouldUseRTL = false;
+  const shouldUseRTL = supportedLanguages[language]?.isRTL ?? false;
 
   if (I18nManager.isRTL !== shouldUseRTL) {
     I18nManager.allowRTL(shouldUseRTL);

@@ -18,7 +18,10 @@
       "apply": "تطبيق",
       "success": "تم بنجاح",
       "save": "حفظ التغييرات",
-      "continueBrowsing": "متابعة التصفح"
+      "continueBrowsing": "متابعة التصفح",
+      "cancel": "إلغاء",
+      "delete": "حذف",
+      "discardChanges": "تجاهل التغييرات"
     },
     "errors": {
       "title": "حدث خطأ",
@@ -31,6 +34,16 @@
     "placeholders": {
       "email": "البريد الإلكتروني",
       "password": "كلمة المرور"
+    },
+    "passwordVisibility": {
+      "show": "إظهار كلمة المرور",
+      "hide": "إخفاء كلمة المرور"
+    },
+    "time": {
+      "now": "الآن",
+      "minutesAgo": "قبل {{count}} د",
+      "hoursAgo": "قبل {{count}} س",
+      "daysAgo": "قبل {{count}} ي"
     },
     "empty": {
       "noMatches": "لا توجد نتائج",
@@ -127,7 +140,22 @@
     "fashion": "أزياء",
     "home": "منزل",
     "sports": "رياضة",
-    "toys": "ألعاب"
+    "toys": "ألعاب",
+    "other": "أخرى",
+    "kitchen": "مطبخ",
+    "furniture": "أثاث",
+    "appliances": "أجهزة منزلية",
+    "mobiles": "موبايلات",
+    "computers": "كمبيوتر",
+    "vehicles": "مركبات",
+    "cars": "سيارات",
+    "motorcycles": "دراجات نارية",
+    "bikes": "دراجات",
+    "realEstate": "عقارات",
+    "apartments": "شقق",
+    "services": "خدمات",
+    "accessories": "إكسسوارات",
+    "baby": "أطفال"
   },
   "navigation": {
     "settings": "الإعدادات",
@@ -149,12 +177,15 @@
     "errorSubtitle": "حدث خطأ أثناء تحميل الإعلانات.",
     "resultsCount": "{{count}} نتيجة",
     "resultsTitle": "النتائج",
+    "sortBySummary": "مرتبة حسب {{sort}}",
     "sortBy": "ترتيب حسب",
     "sortNewest": "الأحدث",
+    "sortPriceLow": "السعر: من الأقل إلى الأعلى",
+    "sortPriceHigh": "السعر: من الأعلى إلى الأقل",
     "sortPriceLowHigh": "السعر: من الأقل إلى الأعلى",
     "sortPriceHighLow": "السعر: من الأعلى إلى الأقل",
     "type": "النوع",
-    "status": "الحالة",
+    "statusLabel": "الحالة",
     "category": "الفئة",
     "location": "الموقع",
     "minPrice": "أقل سعر",
@@ -165,6 +196,8 @@
     "back": "رجوع",
     "deleteFailedTitle": "فشل الحذف",
     "deleteFailedBody": "تعذر حذف الإعلان.",
+    "updateFailedTitle": "فشل تحديث الإعلان",
+    "updateFailedBody": "تعذر تحديث حالة الإعلان.",
     "signInRequiredTitle": "تسجيل الدخول مطلوب",
     "signInMessageSeller": "يرجى تسجيل الدخول لمراسلة البائع.",
     "signInFavorite": "يرجى تسجيل الدخول لإضافة العناصر إلى المفضلة.",
@@ -183,7 +216,35 @@
     "updating": "جاري التحديث...",
     "relist": "إعادة نشر",
     "markSold": "تمييز كمباع",
-    "hideListing": "إخفاء الإعلان"
+    "hideListing": "إخفاء الإعلان",
+    "unavailableTitle": "الإعلان غير متاح",
+    "unavailableMessage": "هذا الإعلان غير متاح حاليا.",
+    "unavailableNotice": "العنصر غير متاح حاليا.",
+    "description": "الوصف",
+    "details": "التفاصيل",
+    "seller": "البائع",
+    "unknownSeller": "بائع غير معروف",
+    "uncategorized": "غير مصنف",
+    "condition": "الحالة",
+    "stock": "المخزون",
+    "soldUntil": "مباع حتى",
+    "sellerRatingLine": "التقييم {{rating}} · {{count}} مراجعة",
+    "deleteListing": "حذف الإعلان",
+    "deleting": "جار الحذف...",
+    "deleteTitle": "حذف الإعلان؟",
+    "deleteBody": "لا يمكن التراجع عن هذا الإجراء.",
+    "status": {
+      "active": "نشط",
+      "sold": "مباع",
+      "hidden": "مخفي",
+      "deleted": "محذوف",
+      "unavailable": "غير متاح"
+    },
+    "actions": {
+      "relist": "إعادة نشر",
+      "markSold": "تمييز كمباع",
+      "hide": "إخفاء"
+    }
   },
   "home": {
     "searchPlaceholder": "ابحث عن الإعلانات",
@@ -241,6 +302,14 @@
       "fieldRequired": "{{field}} مطلوب.",
       "priceInvalid": "أدخل سعرا صحيحا."
     },
+    "progress": {
+      "title": "جاهزية الإعلان",
+      "photos": "الصور",
+      "titleStep": "العنوان",
+      "price": "السعر",
+      "location": "الموقع",
+      "description": "الوصف"
+    },
     "errors": {
       "loadListing": "تعذر تحميل الإعلان.",
       "photoPermission": "يرجى السماح بالوصول إلى الصور للمتابعة.",
@@ -264,6 +333,10 @@
       "hint": "أضف حتى 5 صور",
       "add": "إضافة",
       "usePhoto": "استخدام الصورة",
+      "primary": "الرئيسية",
+      "remove": "إزالة الصورة",
+      "moveEarlier": "نقل الصورة للخلف",
+      "moveLater": "نقل الصورة للأمام",
       "sourceTitle": "إضافة صورة",
       "sourceCamera": "الكاميرا",
       "sourceLibrary": "مكتبة الصور"
@@ -285,11 +358,16 @@
       "new": "جديد",
       "like_new": "شبه جديد",
       "good": "جيد",
-      "fair": "مقبول"
+      "fair": "مقبول",
+      "used": "مستعمل",
+      "refurbished": "مجدد",
+      "poor": "بحالة ضعيفة"
     }
   },
   "chats": {
     "title": "المحادثات",
+    "errorTitle": "تعذر تحميل المحادثات",
+    "errorSubtitle": "يرجى المحاولة مرة أخرى.",
     "searchPlaceholder": "ابحث في المحادثات",
     "emptyTitle": "لا توجد محادثات",
     "emptySubtitle": "ابدأ محادثة من إعلان أو عدل البحث.",
@@ -504,7 +582,24 @@
       "currentRequired": "كلمة المرور الحالية مطلوبة.",
       "newRequired": "كلمة المرور الجديدة مطلوبة.",
       "passwordRule": "يجب أن تكون كلمة المرور 8 أحرف على الأقل وتحتوي على حرف كبير وحرف صغير ورقم.",
-      "confirmMismatch": "كلمتا المرور غير متطابقتين."
+      "confirmMismatch": "كلمتا المرور غير متطابقتين.",
+      "updateFailed": "تعذر تحديث كلمة المرور.",
+      "passwordSignIn": "تسجيل الدخول بكلمة المرور",
+      "passwordSignInBody": "يستخدم حسابك حاليا البريد الإلكتروني وكلمة المرور. يمكنك تحديث كلمة المرور هنا عند الحاجة."
+    },
+    "accountDeletion": {
+      "title": "حذف الحساب",
+      "body": "اطلب حذف الحساب لتعطيله الآن وجدولة حذفه نهائيا.",
+      "scheduled": "موعد الحذف: {{date}}",
+      "reason": "السبب",
+      "reasonPlaceholder": "اختياري",
+      "confirmLabel": "اكتب DELETE للتأكيد",
+      "confirmTitle": "طلب حذف الحساب؟",
+      "confirmBody": "سيتم تعطيل حسابك الآن وحذفه نهائيا بعد فترة السماح المجدولة.",
+      "confirmAction": "طلب الحذف",
+      "request": "طلب حذف الحساب",
+      "requesting": "جار إرسال الطلب...",
+      "requestFailed": "تعذر طلب حذف الحساب."
     },
     "notifications": {
       "title": "إعدادات الإشعارات",

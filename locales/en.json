@@ -20,7 +20,8 @@
       "save": "Save changes",
       "continueBrowsing": "Continue browsing",
       "cancel": "Cancel",
-      "delete": "Delete"
+      "delete": "Delete",
+      "discardChanges": "Discard changes"
     },
     "errors": {
       "title": "Something went wrong",
@@ -33,6 +34,16 @@
     "placeholders": {
       "email": "Email address",
       "password": "Password"
+    },
+    "passwordVisibility": {
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "time": {
+      "now": "now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     },
     "empty": {
       "noMatches": "No matches",
@@ -122,6 +133,32 @@
       }
     }
   },
+  "onboarding": {
+    "brand": "SBay",
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Start browsing",
+    "stepCount": "Step {{current}} of {{total}}",
+    "steps": {
+      "discover": {
+        "title": "Discover local listings",
+        "body": "Search by category, price, and location to find what is nearby."
+      },
+      "save": {
+        "title": "Save what matters",
+        "body": "Favorite listings so you can compare options and come back later."
+      },
+      "sell": {
+        "title": "Post in minutes",
+        "body": "Add photos, pricing, and details when you are ready to sell."
+      },
+      "chat": {
+        "title": "Chat with confidence",
+        "body": "Message sellers, track replies, and keep marketplace conversations in one place."
+      }
+    }
+  },
   "categories": {
     "all": "All",
     "allCategories": "All categories",
@@ -129,7 +166,22 @@
     "fashion": "Fashion",
     "home": "Home",
     "sports": "Sports",
-    "toys": "Toys"
+    "toys": "Toys",
+    "other": "Other",
+    "kitchen": "Kitchen",
+    "furniture": "Furniture",
+    "appliances": "Appliances",
+    "mobiles": "Mobiles",
+    "computers": "Computers",
+    "vehicles": "Vehicles",
+    "cars": "Cars",
+    "motorcycles": "Motorcycles",
+    "bikes": "Bikes",
+    "realEstate": "Real estate",
+    "apartments": "Apartments",
+    "services": "Services",
+    "accessories": "Accessories",
+    "baby": "Baby & kids"
   },
   "navigation": {
     "settings": "Settings",
@@ -151,12 +203,15 @@
     "errorSubtitle": "Please try again.",
     "resultsCount": "{{count}} results",
     "resultsTitle": "Results",
+    "sortBySummary": "Sorted by {{sort}}",
     "sortBy": "Sort by",
     "sortNewest": "Newest",
+    "sortPriceLow": "Price: Low to High",
+    "sortPriceHigh": "Price: High to Low",
     "sortPriceLowHigh": "Price: Low to High",
     "sortPriceHighLow": "Price: High to Low",
     "type": "Type",
-    "status": "Status",
+    "statusLabel": "Status",
     "category": "Category",
     "location": "Location",
     "minPrice": "Min price",
@@ -167,6 +222,8 @@
     "back": "Back",
     "deleteFailedTitle": "Delete failed",
     "deleteFailedBody": "Unable to delete listing.",
+    "updateFailedTitle": "Listing update failed",
+    "updateFailedBody": "Unable to update listing status.",
     "signInRequiredTitle": "Sign in required",
     "signInMessageSeller": "Please sign in to message the seller.",
     "signInFavorite": "Please sign in to favorite items.",
@@ -185,7 +242,35 @@
     "updating": "Updating...",
     "relist": "Relist",
     "markSold": "Mark sold",
-    "hideListing": "Hide listing"
+    "hideListing": "Hide listing",
+    "unavailableTitle": "Listing unavailable",
+    "unavailableMessage": "This listing is not currently available.",
+    "unavailableNotice": "Item is currently unavailable.",
+    "description": "Description",
+    "details": "Details",
+    "seller": "Seller",
+    "unknownSeller": "Unknown seller",
+    "uncategorized": "Uncategorized",
+    "condition": "Condition",
+    "stock": "Stock",
+    "soldUntil": "Sold until",
+    "sellerRatingLine": "Rating {{rating}} · {{count}} reviews",
+    "deleteListing": "Delete listing",
+    "deleting": "Deleting...",
+    "deleteTitle": "Delete listing?",
+    "deleteBody": "This action cannot be undone.",
+    "status": {
+      "active": "Active",
+      "sold": "Sold",
+      "hidden": "Hidden",
+      "deleted": "Deleted",
+      "unavailable": "Unavailable"
+    },
+    "actions": {
+      "relist": "Relist",
+      "markSold": "Mark sold",
+      "hide": "Hide"
+    }
   },
   "home": {
     "searchPlaceholder": "Search products",
@@ -243,6 +328,14 @@
       "fieldRequired": "{{field}} is required.",
       "priceInvalid": "Enter a valid price."
     },
+    "progress": {
+      "title": "Listing readiness",
+      "photos": "Photos",
+      "titleStep": "Title",
+      "price": "Price",
+      "location": "Location",
+      "description": "Description"
+    },
     "errors": {
       "loadListing": "Unable to load listing.",
       "photoPermission": "Please allow photo access to continue.",
@@ -266,6 +359,10 @@
       "hint": "Add up to 5 photos",
       "add": "Add",
       "usePhoto": "Use photo",
+      "primary": "Primary",
+      "remove": "Remove photo",
+      "moveEarlier": "Move photo earlier",
+      "moveLater": "Move photo later",
       "sourceTitle": "Add photo",
       "sourceCamera": "Camera",
       "sourceLibrary": "Photo library"
@@ -287,11 +384,16 @@
       "new": "New",
       "like_new": "Like new",
       "good": "Good",
-      "fair": "Fair"
+      "fair": "Fair",
+      "used": "Used",
+      "refurbished": "Refurbished",
+      "poor": "Poor"
     }
   },
   "chats": {
     "title": "Chats",
+    "errorTitle": "Unable to load chats",
+    "errorSubtitle": "Please try again.",
     "searchPlaceholder": "Search conversations",
     "emptyTitle": "No chats found",
     "emptySubtitle": "Start a conversation from a listing or adjust your search.",
@@ -509,7 +611,24 @@
       "currentRequired": "Current password is required.",
       "newRequired": "New password is required.",
       "passwordRule": "Password must be at least 8 characters and include uppercase, lowercase, and a number.",
-      "confirmMismatch": "Passwords do not match."
+      "confirmMismatch": "Passwords do not match.",
+      "updateFailed": "Unable to update password.",
+      "passwordSignIn": "Password sign-in",
+      "passwordSignInBody": "Your account currently uses email and password authentication. Update your password here any time you need to rotate credentials."
+    },
+    "accountDeletion": {
+      "title": "Delete account",
+      "body": "Request account deletion to deactivate your account now and schedule permanent deletion.",
+      "scheduled": "Scheduled deletion: {{date}}",
+      "reason": "Reason",
+      "reasonPlaceholder": "Optional",
+      "confirmLabel": "Type \"DELETE\" to confirm",
+      "confirmTitle": "Request account deletion?",
+      "confirmBody": "Your account will be deactivated now and permanently deleted after the scheduled grace period.",
+      "confirmAction": "Request deletion",
+      "request": "Request account deletion",
+      "requesting": "Requesting...",
+      "requestFailed": "Unable to request account deletion."
     },
     "notifications": {
       "title": "Notification settings",

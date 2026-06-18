@@ -22,7 +22,13 @@ import { useAuth } from "@/providers/AuthProvider";
 import { ScreenMessage } from "@/components/common/ScreenMessage";
 import { EmailVerificationBanner } from "@/components/auth/EmailVerificationBanner";
 import { AppScreen } from "@/components/layout/AppScreen";
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import {
   getMyListings,
@@ -791,7 +797,7 @@ export default function MeScreen() {
 
 const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
-    container: { padding: 20, gap: 16, paddingBottom: 40 },
+    container: { padding: MarketplaceSpacing.lg, gap: MarketplaceSpacing.md, paddingBottom: 32 },
     loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
     authContainer: { flex: 1, justifyContent: "center", padding: 24, gap: 14, backgroundColor: theme.background },
     authTitle: { fontSize: 24, fontWeight: "700", color: theme.text, textAlign: "center" },
@@ -803,17 +809,17 @@ const createStyles = (theme: ThemeColors) =>
     authTextButton: { paddingVertical: 8, alignItems: "center" },
     authTextLabel: { color: theme.textMuted, fontSize: 14, fontWeight: "600" },
     toolbar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    screenTitle: { fontSize: 24, fontWeight: "700", color: theme.text },
-    toolbarActions: { flexDirection: "row", gap: 12 },
-    iconButton: { width: 42, height: 42, borderRadius: 12, borderWidth: 1, borderColor: theme.border, justifyContent: "center", alignItems: "center", backgroundColor: theme.surface },
-    profileCard: { flexDirection: "row", alignItems: "center", gap: 16, padding: 16, borderRadius: 18, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, shadowColor: theme.shadow, shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+    screenTitle: { fontSize: MarketplaceTypography.screenTitle, fontWeight: "800", color: theme.text },
+    toolbarActions: { flexDirection: "row", gap: MarketplaceSpacing.sm },
+    iconButton: { width: 42, height: 42, borderRadius: MarketplaceRadius.md, borderWidth: 1, borderColor: theme.border, justifyContent: "center", alignItems: "center", backgroundColor: theme.surface },
+    profileCard: { flexDirection: "row", alignItems: "center", gap: MarketplaceSpacing.lg, padding: MarketplaceSpacing.lg, borderRadius: MarketplaceRadius.sheet, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, shadowColor: theme.shadow, ...MarketplaceShadow.card },
     avatarBlock: { alignItems: "center", gap: 6 },
     avatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: theme.primaryMuted, alignItems: "center", justifyContent: "center", overflow: "hidden" },
     avatarImage: { width: "100%", height: "100%" },
     avatarLabel: { fontSize: 20, fontWeight: "700", color: theme.chipActiveText },
     avatarButton: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: theme.surfaceMuted, borderWidth: 1, borderColor: theme.border },
     avatarButtonLabel: { fontSize: 11, fontWeight: "600", color: theme.primary },
-    profileName: { fontSize: 18, fontWeight: "700", color: theme.text },
+    profileName: { fontSize: MarketplaceTypography.title, fontWeight: "800", color: theme.text },
     profileDetail: { fontSize: 14, color: theme.textMuted },
     editFields: { gap: 8 },
     inputLabel: { fontSize: 12, fontWeight: "600", color: theme.textMuted },
@@ -835,14 +841,14 @@ const createStyles = (theme: ThemeColors) =>
     editActions: { gap: 8, alignItems: "flex-end" },
     cancelButton: { paddingHorizontal: 16, paddingVertical: 8 },
     cancelLabel: { fontSize: 13, fontWeight: "600", color: theme.textSecondary },
-    statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-    statCard: { width: "47%", backgroundColor: theme.surface, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: theme.border, shadowColor: theme.shadow, shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-    statValue: { fontSize: 16, fontWeight: "700", color: theme.text, marginBottom: 4 },
+    statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: MarketplaceSpacing.sm },
+    statCard: { width: "48%", backgroundColor: theme.surface, borderRadius: MarketplaceRadius.lg, padding: MarketplaceSpacing.md, borderWidth: 1, borderColor: theme.border, shadowColor: theme.shadow, ...MarketplaceShadow.subtle },
+    statValue: { fontSize: MarketplaceTypography.title, fontWeight: "800", color: theme.text, marginBottom: 4 },
     statLabel: { fontSize: 12, color: theme.textMuted },
-    tabsRow: { flexDirection: "row", gap: 10 },
-    tabPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface },
+    tabsRow: { flexDirection: "row", gap: MarketplaceSpacing.xs, borderRadius: MarketplaceRadius.pill, padding: MarketplaceSpacing.xs, backgroundColor: theme.surfaceMuted },
+    tabPill: { flex: 1, alignItems: "center", paddingHorizontal: MarketplaceSpacing.md, paddingVertical: MarketplaceSpacing.sm, borderRadius: MarketplaceRadius.pill, borderWidth: 1, borderColor: "transparent" },
     tabPillActive: { backgroundColor: theme.primary, borderColor: theme.primary },
-    tabLabel: { fontSize: 13, fontWeight: "600", color: theme.textSecondary },
+    tabLabel: { fontSize: MarketplaceTypography.bodySmall, fontWeight: "800", color: theme.textSecondary },
     tabLabelActive: { color: theme.primaryForeground },
     analyticsSection: { gap: 12 },
     sectionTitle: { fontSize: 17, fontWeight: "800", color: theme.text },

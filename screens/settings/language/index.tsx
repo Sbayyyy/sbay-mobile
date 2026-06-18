@@ -11,7 +11,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/hooks/use-localization";
 
@@ -22,14 +28,14 @@ export default function LanguageSettingsScreen() {
   const { t } = useTranslation();
   const { availableLanguages, language, setLanguage, isRTL } = useLocalization();
   const languages = useMemo(() => Object.values(availableLanguages), [availableLanguages]);
-  const backIcon = isRTL ? ">" : "<";
+  const backIcon = isRTL ? "chevron-right" : "chevron-left";
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.replace("/settings")}>
-            <Text style={styles.backIcon}>{backIcon}</Text>
+            <FontAwesome name={backIcon} size={15} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("settings.language.title")}</Text>
           <View style={{ width: 32 }} />
@@ -72,8 +78,8 @@ const createStyles = (theme: ThemeColors) =>
     },
     container: {
       flex: 1,
-      padding: 20,
-      gap: 16,
+      padding: MarketplaceSpacing.lg,
+      gap: MarketplaceSpacing.md,
     },
     header: {
       flexDirection: "row",
@@ -83,24 +89,19 @@ const createStyles = (theme: ThemeColors) =>
     backButton: {
       width: 32,
       height: 32,
-      borderRadius: 16,
+      borderRadius: MarketplaceRadius.pill,
       backgroundColor: theme.surfaceMuted,
       alignItems: "center",
       justifyContent: "center",
     },
-    backIcon: {
-      fontSize: 22,
-      color: theme.text,
-      lineHeight: 22,
-    },
     headerTitle: {
-      fontSize: 20,
-      fontWeight: "700",
+      fontSize: MarketplaceTypography.title,
+      fontWeight: "800",
       color: theme.text,
     },
     scroll: {
-      gap: 16,
-      paddingBottom: 40,
+      gap: MarketplaceSpacing.md,
+      paddingBottom: 32,
     },
     subtitle: {
       fontSize: 14,
@@ -108,22 +109,21 @@ const createStyles = (theme: ThemeColors) =>
       lineHeight: 20,
     },
     card: {
-      borderRadius: 18,
+      borderRadius: MarketplaceRadius.card,
       backgroundColor: theme.surface,
-      padding: 4,
+      padding: MarketplaceSpacing.xs,
+      borderWidth: 1,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 2,
+      ...MarketplaceShadow.card,
     },
     languageRow: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      borderRadius: 14,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      paddingVertical: MarketplaceSpacing.md,
+      borderRadius: MarketplaceRadius.md,
     },
     languageRowActive: {
       backgroundColor: theme.surfaceMuted,

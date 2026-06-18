@@ -8,7 +8,7 @@ import { AppScreen } from "@/components/layout/AppScreen";
 import { toListingCardListings } from "@/components/listings/listing-card-presenter";
 import { SearchBar } from "@/components/common/SearchBar";
 import { HOME_CATEGORIES } from "@/constants/mockData";
-import { type ThemeColors } from "@/constants/theme";
+import { MarketplaceSpacing, type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useNotificationContext } from "@/providers/NotificationProvider";
 import { trackInteraction } from "@/services/recommendations";
@@ -162,17 +162,17 @@ const createStyles = (theme: ThemeColors) =>
       flex: 1,
     },
     content: {
-      paddingBottom: 40,
-      paddingTop: 12,
-      gap: 12,
+      paddingBottom: 28,
+      paddingTop: MarketplaceSpacing.sm,
+      gap: MarketplaceSpacing.sm,
     },
     stickySearch: {
       backgroundColor: theme.background,
-      paddingVertical: 8,
+      paddingVertical: MarketplaceSpacing.sm,
       zIndex: 10,
       elevation: 4,
     },
     sponsoredWrapper: {
-      paddingHorizontal: 20,
+      paddingHorizontal: MarketplaceSpacing.lg,
     },
   });

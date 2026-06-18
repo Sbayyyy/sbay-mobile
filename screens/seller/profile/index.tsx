@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  I18nManager,
   Image,
   ScrollView,
   StyleSheet,
@@ -17,7 +18,13 @@ import { ListingCard } from "@/components/listings/ListingCard";
 import { toListingCardListing } from "@/components/listings/listing-card-presenter";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { getRegionLabel } from "@/constants/regions";
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { getSellerListings, type Listing as ApiListing } from "@/services/listings";
 import { getSellerProfile, type SellerProfile } from "@/services/user";
@@ -103,6 +110,7 @@ export default function SellerProfileScreen() {
 
   const ratingValue = stats?.averageRating ?? profile?.rating ?? 0;
   const reviewTotal = stats?.totalReviews ?? profile?.reviewCount ?? 0;
+  const backIconName = I18nManager.isRTL ? "chevron-forward" : "chevron-back";
 
   const ratingDistribution = useMemo(() => {
     const dist = stats?.ratingDistribution ?? {};
@@ -157,6 +165,7 @@ export default function SellerProfileScreen() {
     <AppScreen>
       <ScrollView contentContainerStyle={styles.container}>
         <TouchableOpacity style={styles.backButtonInline} onPress={() => router.back()}>
+          <Ionicons name={backIconName} size={16} color={theme.primary} />
           <Text style={styles.backButtonLabel}>
             {t("sellerProfile.actions.back", { defaultValue: "Back" })}
           </Text>
@@ -394,9 +403,9 @@ export default function SellerProfileScreen() {
 const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
     container: {
-      padding: 20,
-      paddingBottom: 40,
-      gap: 16,
+      padding: MarketplaceSpacing.lg,
+      paddingBottom: 32,
+      gap: MarketplaceSpacing.md,
     },
     loading: {
       flex: 1,
@@ -405,8 +414,8 @@ const createStyles = (theme: ThemeColors) =>
     },
     emptyState: {
       alignItems: "center",
-      gap: 8,
-      paddingVertical: 30,
+      gap: MarketplaceSpacing.sm,
+      paddingVertical: MarketplaceSpacing.xxl,
     },
     emptyTitle: {
       fontSize: 16,
@@ -419,16 +428,19 @@ const createStyles = (theme: ThemeColors) =>
       textAlign: "center",
     },
     backButton: {
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 12,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      paddingVertical: MarketplaceSpacing.sm,
+      borderRadius: MarketplaceRadius.md,
       backgroundColor: theme.surfaceMuted,
     },
     backButtonInline: {
       alignSelf: "flex-start",
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 999,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: MarketplaceSpacing.xs,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.xs,
+      borderRadius: MarketplaceRadius.pill,
       backgroundColor: theme.surfaceMuted,
     },
     backButtonLabel: {
@@ -438,21 +450,20 @@ const createStyles = (theme: ThemeColors) =>
     },
     headerCard: {
       flexDirection: "row",
-      gap: 16,
+      gap: MarketplaceSpacing.lg,
       backgroundColor: theme.surface,
-      padding: 16,
-      borderRadius: 18,
+      padding: MarketplaceSpacing.lg,
+      borderRadius: MarketplaceRadius.sheet,
       alignItems: "center",
+      borderWidth: 1,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
-      shadowOpacity: 0.12,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 3,
+      ...MarketplaceShadow.card,
     },
     avatarWrap: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
+      width: 76,
+      height: 76,
+      borderRadius: 38,
       overflow: "hidden",
       backgroundColor: theme.surfaceMuted,
       alignItems: "center",
@@ -469,17 +480,18 @@ const createStyles = (theme: ThemeColors) =>
     },
     headerInfo: {
       flex: 1,
-      gap: 6,
+      gap: MarketplaceSpacing.xs,
     },
     name: {
-      fontSize: 20,
-      fontWeight: "700",
+      fontSize: MarketplaceTypography.screenTitle,
+      fontWeight: "800",
       color: theme.text,
     },
     ratingRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
+      gap: MarketplaceSpacing.xs,
+      flexWrap: "wrap",
     },
     ratingValue: {
       fontSize: 13,
@@ -501,20 +513,20 @@ const createStyles = (theme: ThemeColors) =>
     },
     statRow: {
       flexDirection: "row",
-      gap: 12,
+      gap: MarketplaceSpacing.sm,
     },
     actionRow: {
       flexDirection: "row",
-      gap: 12,
+      gap: MarketplaceSpacing.sm,
     },
     primaryButton: {
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 8,
-      paddingVertical: 12,
-      borderRadius: 14,
+      gap: MarketplaceSpacing.sm,
+      paddingVertical: MarketplaceSpacing.md,
+      borderRadius: MarketplaceRadius.lg,
       backgroundColor: theme.primary,
     },
     primaryButtonLabel: {
@@ -534,10 +546,12 @@ const createStyles = (theme: ThemeColors) =>
     },
     statCard: {
       flex: 1,
-      backgroundColor: theme.surfaceMuted,
-      borderRadius: 14,
-      padding: 12,
-      gap: 4,
+      backgroundColor: theme.surface,
+      borderRadius: MarketplaceRadius.lg,
+      padding: MarketplaceSpacing.md,
+      gap: MarketplaceSpacing.xs,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     statLabel: {
       fontSize: 12,
@@ -550,13 +564,15 @@ const createStyles = (theme: ThemeColors) =>
     },
     tabRow: {
       flexDirection: "row",
-      gap: 12,
+      gap: MarketplaceSpacing.xs,
+      borderRadius: MarketplaceRadius.pill,
+      padding: MarketplaceSpacing.xs,
+      backgroundColor: theme.surfaceMuted,
     },
     tabButton: {
       flex: 1,
-      paddingVertical: 10,
-      borderRadius: 999,
-      backgroundColor: theme.surfaceMuted,
+      paddingVertical: MarketplaceSpacing.sm,
+      borderRadius: MarketplaceRadius.pill,
       alignItems: "center",
     },
     tabButtonActive: {
@@ -574,16 +590,18 @@ const createStyles = (theme: ThemeColors) =>
       flexDirection: "row",
       flexWrap: "wrap",
       justifyContent: "space-between",
-      rowGap: 16,
+      rowGap: MarketplaceSpacing.md,
     },
     reviewsWrap: {
-      gap: 16,
+      gap: MarketplaceSpacing.md,
     },
     reviewSummary: {
       backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 16,
-      gap: 10,
+      borderRadius: MarketplaceRadius.card,
+      padding: MarketplaceSpacing.lg,
+      gap: MarketplaceSpacing.sm,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     reviewSummaryTitle: {
       fontSize: 15,
@@ -622,9 +640,11 @@ const createStyles = (theme: ThemeColors) =>
     },
     reviewCard: {
       backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 14,
-      gap: 8,
+      borderRadius: MarketplaceRadius.card,
+      padding: MarketplaceSpacing.md,
+      gap: MarketplaceSpacing.sm,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     reviewHeader: {
       flexDirection: "row",

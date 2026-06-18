@@ -4,7 +4,12 @@ import { useTranslation } from "react-i18next";
 import { useRouter } from "expo-router";
 
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { toListingCardListing } from "@/components/listings/listing-card-presenter";
@@ -221,11 +226,11 @@ const createStyles = (theme: ThemeColors) =>
       flexDirection: "row",
       flexWrap: "wrap",
       justifyContent: "space-between",
-      rowGap: 16,
+      rowGap: MarketplaceSpacing.md,
     },
     manageCard: {
       width: "48%",
-      gap: 8,
+      gap: MarketplaceSpacing.sm,
     },
     cardFull: {
       width: "100%",
@@ -235,9 +240,9 @@ const createStyles = (theme: ThemeColors) =>
       alignItems: "center",
     },
     statusBadge: {
-      borderRadius: 999,
-      paddingHorizontal: 9,
-      paddingVertical: 4,
+      borderRadius: MarketplaceRadius.pill,
+      paddingHorizontal: MarketplaceSpacing.sm,
+      paddingVertical: MarketplaceSpacing.xs,
       backgroundColor: theme.successBackground,
       borderWidth: 1,
       borderColor: theme.success,
@@ -252,7 +257,7 @@ const createStyles = (theme: ThemeColors) =>
     },
     statusBadgeText: {
       color: theme.success,
-      fontSize: 11,
+      fontSize: MarketplaceTypography.caption,
       fontWeight: "800",
     },
     statusBadgeTextSold: {
@@ -263,14 +268,14 @@ const createStyles = (theme: ThemeColors) =>
     },
     statusActions: {
       flexDirection: "row",
-      gap: 8,
+      gap: MarketplaceSpacing.xs,
     },
     statusButton: {
       flex: 1,
       minHeight: 34,
-      borderRadius: 10,
-      paddingHorizontal: 8,
-      paddingVertical: 8,
+      borderRadius: MarketplaceRadius.sm,
+      paddingHorizontal: MarketplaceSpacing.sm,
+      paddingVertical: MarketplaceSpacing.sm,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: theme.primary,
@@ -291,12 +296,12 @@ const createStyles = (theme: ThemeColors) =>
       textAlign: "center",
     },
     boostButton: {
-      borderRadius: 12,
+      borderRadius: MarketplaceRadius.md,
       borderWidth: 1,
       borderColor: theme.primary,
       backgroundColor: theme.primary,
-      paddingHorizontal: 10,
-      paddingVertical: 9,
+      paddingHorizontal: MarketplaceSpacing.sm,
+      paddingVertical: MarketplaceSpacing.sm,
       alignItems: "center",
     },
     boostButtonDisabled: {
