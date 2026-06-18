@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   RefreshControl,
+  I18nManager,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,7 +18,13 @@ import { useFocusEffect, useRouter } from "expo-router";
 
 import { AppScreen } from "@/components/layout/AppScreen";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { archiveChat, getChatSummaries } from "@/services/messages";
 import { getMyProfile, getSellerProfile } from "@/services/user";
 import { getListing } from "@/services/listings";
@@ -55,10 +62,16 @@ export default function ChatsScreen() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return "now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) return t("common.time.now", { defaultValue: "now" });
+    if (diffMins < 60) {
+      return t("common.time.minutesAgo", { defaultValue: "{{count}}m ago", count: diffMins });
+    }
+    if (diffHours < 24) {
+      return t("common.time.hoursAgo", { defaultValue: "{{count}}h ago", count: diffHours });
+    }
+    if (diffDays < 7) {
+      return t("common.time.daysAgo", { defaultValue: "{{count}}d ago", count: diffDays });
+    }
     return date.toLocaleDateString();
   };
 
@@ -138,7 +151,12 @@ export default function ChatsScreen() {
         setConversations(rows);
       } catch (err) {
         if (!isMounted) return;
-        setError(getFriendlyErrorMessage(err, "Unable to load chats."));
+        setError(
+          getFriendlyErrorMessage(
+            err,
+            t("chats.errorSubtitle", { defaultValue: "Please try again." }),
+          ),
+        );
       } finally {
         if (!isMounted) return;
         setLoading(false);
@@ -235,7 +253,9 @@ export default function ChatsScreen() {
               />
             }
           >
-            <Text style={styles.emptyTitle}>Unable to load chats</Text>
+            <Text style={styles.emptyTitle}>
+              {t("chats.errorTitle", { defaultValue: "Unable to load chats" })}
+            </Text>
             <Text style={styles.emptySubtitle}>{error}</Text>
           </ScrollView>
         ) : list.length === 0 ? (
@@ -308,14 +328,10 @@ export default function ChatsScreen() {
                   onPress={() => handleArchiveChat(item.id)}
                   accessibilityLabel={t("chats.deleteTitle", { defaultValue: "Delete chat" })}
                 >
-                  <FontAwesome
-                    name="trash-o"
-                    size={18}
-                    color={theme.textSubtle}
-                  />
+                  <FontAwesome name="trash-o" size={18} color={theme.textSubtle} />
                 </TouchableOpacity>
                 <FontAwesome
-                  name="chevron-right"
+                  name={I18nManager.isRTL ? "chevron-left" : "chevron-right"}
                   size={14}
                   color={theme.textSubtle}
                 />
@@ -332,9 +348,9 @@ const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      padding: 20,
-      paddingBottom: 30,
-      gap: 16,
+      padding: MarketplaceSpacing.lg,
+      paddingBottom: 28,
+      gap: MarketplaceSpacing.md,
     },
     header: {
       flexDirection: "row",
@@ -342,45 +358,44 @@ const createStyles = (theme: ThemeColors) =>
       alignItems: "center",
     },
     title: {
-      fontSize: 24,
-      fontWeight: "700",
+      fontSize: MarketplaceTypography.screenTitle,
+      fontWeight: "800",
       color: theme.text,
     },
     searchBar: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 10,
-      borderRadius: 14,
+      gap: MarketplaceSpacing.sm,
+      borderRadius: MarketplaceRadius.xl,
       backgroundColor: theme.surface,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
+      paddingHorizontal: MarketplaceSpacing.md,
+      minHeight: 48,
+      borderWidth: 1,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
+      ...MarketplaceShadow.subtle,
     },
     searchInput: {
       flex: 1,
-      fontSize: 15,
+      fontSize: MarketplaceTypography.input,
       color: theme.text,
+      textAlign: I18nManager.isRTL ? "right" : "left",
     },
     listContent: {
-      gap: 14,
-      paddingBottom: 40,
+      gap: MarketplaceSpacing.sm,
+      paddingBottom: 32,
     },
     threadCard: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 14,
+      gap: MarketplaceSpacing.md,
       backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 14,
+      borderRadius: MarketplaceRadius.card,
+      padding: MarketplaceSpacing.md,
+      borderWidth: 1,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
-      shadowOpacity: 0.08,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 2,
+      ...MarketplaceShadow.subtle,
     },
     avatar: {
       width: 48,
@@ -408,7 +423,7 @@ const createStyles = (theme: ThemeColors) =>
     },
     threadBody: {
       flex: 1,
-      gap: 6,
+      gap: MarketplaceSpacing.xs,
     },
     threadHeader: {
       flexDirection: "row",
@@ -416,21 +431,21 @@ const createStyles = (theme: ThemeColors) =>
       alignItems: "center",
     },
     threadName: {
-      fontSize: 15,
-      fontWeight: "600",
+      fontSize: MarketplaceTypography.input,
+      fontWeight: "800",
       color: theme.text,
     },
     threadTime: {
-      fontSize: 12,
+      fontSize: MarketplaceTypography.meta,
       color: theme.textMuted,
     },
     listingTitle: {
-      fontSize: 14,
+      fontSize: MarketplaceTypography.body,
       color: theme.primary,
-      fontWeight: "600",
+      fontWeight: "700",
     },
     threadMessage: {
-      fontSize: 14,
+      fontSize: MarketplaceTypography.body,
       color: theme.textSecondary,
     },
     deleteButton: {

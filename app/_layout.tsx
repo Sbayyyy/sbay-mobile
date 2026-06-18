@@ -13,6 +13,7 @@ import { type ThemeColors } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { LocalizationProvider } from "../providers/LocalizationProvider";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
+import { OnboardingProvider, useOnboarding } from "@/providers/OnboardingProvider";
 import { ThemeProvider as AppThemeProvider, useThemeContext } from "@/providers/ThemeProvider";
 import { NotificationProvider, useNotificationContext } from "@/providers/NotificationProvider";
 import { AppPopupProvider } from "@/providers/AppPopupProvider";
@@ -69,13 +70,15 @@ export default function RootLayout() {
       <LocalizationProvider>
         <AppThemeProvider>
           <AuthProvider>
-            <NotificationProvider>
-              <AppPopupProvider>
-                <ErrorBoundary>
-                  <RootLayoutContent />
-                </ErrorBoundary>
-              </AppPopupProvider>
-            </NotificationProvider>
+            <OnboardingProvider>
+              <NotificationProvider>
+                <AppPopupProvider>
+                  <ErrorBoundary>
+                    <RootLayoutContent />
+                  </ErrorBoundary>
+                </AppPopupProvider>
+              </NotificationProvider>
+            </OnboardingProvider>
           </AuthProvider>
         </AppThemeProvider>
       </LocalizationProvider>
@@ -89,6 +92,7 @@ function RootLayoutContent() {
   const statusStyle: "light" | "dark" = isDark ? "light" : "dark";
   const { t } = useTranslation();
   const { status } = useAuth();
+  const { status: onboardingStatus } = useOnboarding();
   const router = useRouter();
   const segments = useSegments();
   const segmentList = useMemo(() => [...segments] as string[], [segments]);
@@ -223,6 +227,7 @@ function RootLayoutContent() {
     if (status === "loading") return;
     const route = segmentList[0];
     const isPublicAuthRoute = route === "sign-in" || route === "sign-up";
+    const isOnboardingRoute = route === "onboarding";
     const isPasswordResetRoute = route === "forgot-password" || route === "reset-password";
     const isLegacyPasswordResetRoute =
       route === "auth" && (segmentList[1] === "resetPassword" || segmentList[1] === "forgetPassword");
@@ -230,6 +235,33 @@ function RootLayoutContent() {
       route === "verify-email" ||
       (route === "auth" && segmentList[1] === "verify-email") ||
       (route === "api" && segmentList[1] === "auth" && segmentList[2] === "verify-email");
+    const canBypassOnboarding =
+      isOnboardingRoute ||
+      isVerificationRoute ||
+      isPasswordResetRoute ||
+      isLegacyPasswordResetRoute;
+    if (
+      status === "authenticated" &&
+      onboardingStatus === "pending" &&
+      !canBypassOnboarding
+    ) {
+      router.replace("/onboarding");
+      return;
+    }
+    if (
+      status === "authenticated" &&
+      onboardingStatus === "completed" &&
+      isOnboardingRoute
+    ) {
+      const pending = pendingRouteRef.current;
+      pendingRouteRef.current = null;
+      if (pending) {
+        router.replace(pending as Parameters<typeof router.replace>[0]);
+      } else {
+        router.replace("/(tabs)");
+      }
+      return;
+    }
     if (status === "authenticated" && isPublicAuthRoute) {
       const pending = pendingRouteRef.current;
       pendingRouteRef.current = null;
@@ -253,7 +285,7 @@ function RootLayoutContent() {
       }
       router.replace("/sign-in");
     }
-  }, [router, segmentList, status, pathname]);
+  }, [onboardingStatus, router, segmentList, status, pathname]);
 
   useEffect(() => {
     if (Platform.OS !== "android") return undefined;
@@ -291,7 +323,7 @@ function RootLayoutContent() {
     };
   }, [goBackOneLayer, goHome, isHomeRoute, status, t]);
 
-  if (status === "loading") {
+  if (status === "loading" || (status === "authenticated" && onboardingStatus === "loading")) {
     return (
       <PaperProvider theme={paperTheme}>
         <ThemeProvider value={navigationTheme}>
@@ -309,6 +341,7 @@ function RootLayoutContent() {
           {status === "authenticated" ? (
             <>
               <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="onboarding" />
               <Stack.Screen name="auth/verify-email" />
               <Stack.Screen name="verify-email" />
               <Stack.Screen name="forgot-password" />

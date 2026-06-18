@@ -1,9 +1,15 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image } from "expo-image";
 import { useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { I18nManager, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 type ListingImageGalleryProps = {
@@ -18,6 +24,8 @@ export function ListingImageGallery({ imageUrls, title }: ListingImageGalleryPro
   const selectedImageUrl = imageUrls[selectedImageIndex] ?? imageUrls[0];
   const imageKey = imageUrls.join("|");
   const hasMultipleImages = imageUrls.length > 1;
+  const previousIcon = I18nManager.isRTL ? "chevron-forward" : "chevron-back";
+  const nextIcon = I18nManager.isRTL ? "chevron-back" : "chevron-forward";
 
   useEffect(() => {
     setSelectedImageIndex(0);
@@ -36,20 +44,20 @@ export function ListingImageGallery({ imageUrls, title }: ListingImageGalleryPro
         {hasMultipleImages ? (
           <>
             <TouchableOpacity
-              style={[styles.navButton, styles.navLeft]}
+              style={[styles.navButton, I18nManager.isRTL ? styles.navRight : styles.navLeft]}
               onPress={() =>
                 setSelectedImageIndex((prev) => (prev === 0 ? imageUrls.length - 1 : prev - 1))
               }
             >
-              <Ionicons name="chevron-back" size={22} color={theme.text} />
+              <Ionicons name={previousIcon} size={22} color={theme.text} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.navButton, styles.navRight]}
+              style={[styles.navButton, I18nManager.isRTL ? styles.navLeft : styles.navRight]}
               onPress={() =>
                 setSelectedImageIndex((prev) => (prev === imageUrls.length - 1 ? 0 : prev + 1))
               }
             >
-              <Ionicons name="chevron-forward" size={22} color={theme.text} />
+              <Ionicons name={nextIcon} size={22} color={theme.text} />
             </TouchableOpacity>
             <View style={styles.counterBadge}>
               <Text style={styles.counterLabel}>
@@ -91,7 +99,7 @@ export function ListingImageGallery({ imageUrls, title }: ListingImageGalleryPro
 const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
     gallery: {
-      gap: 12,
+      gap: MarketplaceSpacing.md,
     },
     heroImageWrap: {
       position: "relative",
@@ -99,7 +107,7 @@ const createStyles = (theme: ThemeColors) =>
     heroImage: {
       width: "100%",
       height: 260,
-      borderRadius: 18,
+      borderRadius: MarketplaceRadius.sheet,
       backgroundColor: theme.surfaceMuted,
     },
     navButton: {
@@ -112,40 +120,37 @@ const createStyles = (theme: ThemeColors) =>
       alignItems: "center",
       justifyContent: "center",
       shadowColor: theme.shadow,
-      shadowOpacity: 0.12,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
+      ...MarketplaceShadow.subtle,
     },
     navLeft: {
-      left: 12,
+      left: MarketplaceSpacing.md,
     },
     navRight: {
-      right: 12,
+      right: MarketplaceSpacing.md,
     },
     counterBadge: {
       position: "absolute",
-      bottom: 12,
+      bottom: MarketplaceSpacing.md,
       alignSelf: "center",
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 999,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.xs,
+      borderRadius: MarketplaceRadius.pill,
       backgroundColor: "rgba(0, 0, 0, 0.6)",
     },
     counterLabel: {
       color: "#fff",
-      fontSize: 12,
+      fontSize: MarketplaceTypography.meta,
       fontWeight: "600",
     },
     thumbRow: {
       flexDirection: "row",
-      gap: 10,
-      paddingHorizontal: 4,
+      gap: MarketplaceSpacing.sm,
+      paddingHorizontal: MarketplaceSpacing.xs,
     },
     thumb: {
       width: 64,
       height: 64,
-      borderRadius: 12,
+      borderRadius: MarketplaceRadius.md,
       overflow: "hidden",
       borderWidth: 2,
       borderColor: "transparent",

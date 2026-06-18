@@ -1,5 +1,6 @@
 import { type TFunction } from "i18next";
 
+import { formatCategoryPath } from "@/constants/categories";
 import { getRegionLabel } from "@/constants/regions";
 import { type Listing as ApiListing } from "@/services/listings";
 import { type Listing as ListingCardListing } from "@/types/listing";
@@ -17,7 +18,7 @@ export function toListingCardListing(
     id: listing.id,
     title: listing.title,
     price: `${listing.priceCurrency} ${listing.priceAmount}`,
-    category: listing.categoryPath ?? fallbackCategory,
+    category: formatCategoryPath(listing.categoryPath ?? fallbackCategory, t) ?? fallbackCategory,
     location: getRegionLabel(listing.region ?? listing.seller?.city, t),
     image: getPrimaryImage(listing),
     sellerRating: listing.seller?.rating ?? null,

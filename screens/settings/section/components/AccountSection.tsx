@@ -10,10 +10,51 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { PasswordVisibilityToggle } from "@/components/form/PasswordVisibilityToggle";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { changePassword } from "@/services/auth";
 import { requestAccountDeletion } from "@/services/user";
 import { createSettingsStyles } from "./settingsStyles";
+
+type PasswordInputProps = {
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  accessibilityLabel: string;
+  theme: ReturnType<typeof useAppTheme>;
+  styles: ReturnType<typeof createSettingsStyles>;
+};
+
+function PasswordInput({
+  value,
+  onChangeText,
+  placeholder,
+  accessibilityLabel,
+  theme,
+  styles,
+}: PasswordInputProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <View style={styles.passwordInputRow}>
+      <TextInput
+        style={styles.passwordInput}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={theme.inputPlaceholder}
+        secureTextEntry={!isVisible}
+        accessibilityLabel={accessibilityLabel}
+      />
+      <PasswordVisibilityToggle
+        isVisible={isVisible}
+        onPress={() => setIsVisible((current) => !current)}
+        color={theme.textMuted}
+        style={styles.passwordVisibilityButton}
+      />
+    </View>
+  );
+}
 
 export function AccountSection() {
   const theme = useAppTheme();
@@ -55,7 +96,11 @@ export function AccountSection() {
       await changePassword(passwordForm.current, passwordForm.next);
       setPasswordForm({ current: "", next: "", confirm: "" });
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : "Unable to update password");
+      setPasswordError(
+        err instanceof Error
+          ? err.message
+          : t("settings.security.updateFailed", { defaultValue: "Unable to update password." }),
+      );
     } finally {
       setPasswordSaving(false);
     }
@@ -80,7 +125,13 @@ export function AccountSection() {
               const result = await requestAccountDeletion(deletionReason);
               setScheduledDeletionAt(result.scheduledDeletionAt);
             } catch (err) {
-              setDeletionError(err instanceof Error ? err.message : "Unable to request account deletion");
+              setDeletionError(
+                err instanceof Error
+                  ? err.message
+                  : t("settings.accountDeletion.requestFailed", {
+                      defaultValue: "Unable to request account deletion.",
+                    }),
+              );
             } finally {
               setDeletionSaving(false);
             }
@@ -98,28 +149,26 @@ export function AccountSection() {
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>{t("settings.security.current", { defaultValue: "Current password" })}</Text>
-          <TextInput
-            style={styles.input}
+          <PasswordInput
             value={passwordForm.current}
             onChangeText={(v) => setPasswordForm((p) => ({ ...p, current: v }))}
             placeholder={t("settings.security.currentPlaceholder", { defaultValue: "Enter current password" })}
-            placeholderTextColor={theme.inputPlaceholder}
-            secureTextEntry
             accessibilityLabel={t("settings.security.current", { defaultValue: "Current password" })}
+            theme={theme}
+            styles={styles}
           />
           {passwordErrors.current ? <Text style={styles.errorText}>{passwordErrors.current}</Text> : null}
         </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>{t("settings.security.new", { defaultValue: "New password" })}</Text>
-          <TextInput
-            style={styles.input}
+          <PasswordInput
             value={passwordForm.next}
             onChangeText={(v) => setPasswordForm((p) => ({ ...p, next: v }))}
             placeholder={t("settings.security.newPlaceholder", { defaultValue: "Enter new password" })}
-            placeholderTextColor={theme.inputPlaceholder}
-            secureTextEntry
             accessibilityLabel={t("settings.security.new", { defaultValue: "New password" })}
+            theme={theme}
+            styles={styles}
           />
           {passwordErrors.next ? (
             <Text style={styles.errorText}>{passwordErrors.next}</Text>
@@ -132,14 +181,13 @@ export function AccountSection() {
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>{t("settings.security.confirm", { defaultValue: "Confirm new password" })}</Text>
-          <TextInput
-            style={styles.input}
+          <PasswordInput
             value={passwordForm.confirm}
             onChangeText={(v) => setPasswordForm((p) => ({ ...p, confirm: v }))}
             placeholder={t("settings.security.confirmPlaceholder", { defaultValue: "Confirm new password" })}
-            placeholderTextColor={theme.inputPlaceholder}
-            secureTextEntry
             accessibilityLabel={t("settings.security.confirm", { defaultValue: "Confirm new password" })}
+            theme={theme}
+            styles={styles}
           />
           {passwordErrors.confirm ? <Text style={styles.errorText}>{passwordErrors.confirm}</Text> : null}
         </View>

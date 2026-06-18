@@ -5,7 +5,12 @@ import { useTranslation } from "react-i18next";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { ListingCardSkeleton } from "@/components/listings/ListingCardSkeleton";
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type Listing } from "@/types/listing";
 
@@ -87,14 +92,14 @@ const createStyles = (theme: ThemeColors) =>
       flexDirection: "row",
       flexWrap: "wrap",
       justifyContent: "space-between",
-      paddingHorizontal: 20,
-      rowGap: 16,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      rowGap: MarketplaceSpacing.md,
     },
     emptyState: {
-      paddingHorizontal: 20,
-      paddingVertical: 40,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      paddingVertical: MarketplaceSpacing.xxl,
       alignItems: "center",
-      gap: 8,
+      gap: MarketplaceSpacing.sm,
     },
     emptyTitle: {
       fontSize: 16,
@@ -106,11 +111,11 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.textMuted,
     },
     offlineBanner: {
-      marginHorizontal: 20,
-      marginBottom: 4,
-      paddingVertical: 8,
-      paddingHorizontal: 14,
-      borderRadius: 10,
+      marginHorizontal: MarketplaceSpacing.lg,
+      marginBottom: MarketplaceSpacing.xs,
+      paddingVertical: MarketplaceSpacing.sm,
+      paddingHorizontal: MarketplaceSpacing.md,
+      borderRadius: MarketplaceRadius.md,
       backgroundColor: theme.surfaceMuted,
     },
     offlineBannerText: {
@@ -119,20 +124,21 @@ const createStyles = (theme: ThemeColors) =>
       textAlign: "center",
     },
     loadMoreWrapper: {
-      paddingHorizontal: 20,
-      paddingTop: 8,
-      paddingBottom: 4,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      paddingTop: MarketplaceSpacing.sm,
+      paddingBottom: MarketplaceSpacing.xs,
     },
     loadMoreButton: {
-      borderRadius: 14,
-      borderWidth: 1.5,
+      borderRadius: MarketplaceRadius.lg,
+      borderWidth: 1,
       borderColor: theme.primary,
-      paddingVertical: 14,
+      paddingVertical: MarketplaceSpacing.md,
       alignItems: "center",
+      backgroundColor: theme.surface,
     },
     loadMoreLabel: {
-      fontSize: 15,
-      fontWeight: "600",
+      fontSize: MarketplaceTypography.input,
+      fontWeight: "800",
       color: theme.primary,
     },
   });

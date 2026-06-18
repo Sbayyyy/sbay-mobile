@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  I18nManager,
   Image,
   KeyboardAvoidingView,
   Linking,
@@ -37,7 +38,13 @@ import {
   type SyriaRegionId,
 } from "@/constants/regions";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import {
   createListing,
   getListing,
@@ -116,6 +123,8 @@ export default function AddListingScreen() {
   const { status } = useAuth();
   const { showError, showSuccess } = useAppPopup();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const previousPhotoIcon = I18nManager.isRTL ? "chevron-right" : "chevron-left";
+  const nextPhotoIcon = I18nManager.isRTL ? "chevron-left" : "chevron-right";
 
   const resetCreateForm = useCallback(() => {
     setTitle("");
@@ -514,6 +523,38 @@ export default function AddListingScreen() {
       null,
     [boostOptions, selectedBoostOptionId],
   );
+  const readinessSteps = useMemo(
+    () => [
+      {
+        key: "photos",
+        label: t("addListing.progress.photos", { defaultValue: "Photos" }),
+        complete: photos.some(Boolean),
+      },
+      {
+        key: "title",
+        label: t("addListing.progress.titleStep", { defaultValue: "Title" }),
+        complete: title.trim().length > 0 && !formErrors.title,
+      },
+      {
+        key: "price",
+        label: t("addListing.progress.price", { defaultValue: "Price" }),
+        complete: price.trim().length > 0 && !formErrors.price,
+      },
+      {
+        key: "location",
+        label: t("addListing.progress.location", { defaultValue: "Location" }),
+        complete: location.trim().length > 0 && !formErrors.location,
+      },
+      {
+        key: "description",
+        label: t("addListing.progress.description", { defaultValue: "Description" }),
+        complete: description.trim().length > 0 && !formErrors.description,
+      },
+    ],
+    [description, formErrors, location, photos, price, t, title],
+  );
+  const completedReadinessSteps = readinessSteps.filter((step) => step.complete).length;
+  const readinessPercent = Math.round((completedReadinessSteps / readinessSteps.length) * 100);
 
   const handleDistrictChange = useCallback((nextDistrict: DistrictId) => {
     setLocation(nextDistrict);
@@ -816,6 +857,43 @@ export default function AddListingScreen() {
 
           {profile && !isEmailVerified(profile) ? <EmailVerificationBanner /> : null}
 
+          <View style={styles.progressCard}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressTitle}>
+                {t("addListing.progress.title", { defaultValue: "Listing readiness" })}
+              </Text>
+              <Text style={styles.progressCount}>
+                {completedReadinessSteps}/{readinessSteps.length}
+              </Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${readinessPercent}%` }]} />
+            </View>
+            <View style={styles.progressSteps}>
+              {readinessSteps.map((step) => (
+                <View
+                  key={step.key}
+                  style={[styles.progressStep, step.complete && styles.progressStepComplete]}
+                >
+                  <FontAwesome
+                    name={step.complete ? "check-circle" : "circle-o"}
+                    size={13}
+                    color={step.complete ? theme.success : theme.textSubtle}
+                  />
+                  <Text
+                    style={[
+                      styles.progressStepLabel,
+                      step.complete && styles.progressStepLabelComplete,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {step.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{t("addListing.photos.title")}</Text>
@@ -833,14 +911,19 @@ export default function AddListingScreen() {
                       <Image source={{ uri: photos[index]! }} style={styles.photoImage} />
                       {index === 0 ? (
                         <View style={styles.primaryBadge}>
-                          <Text style={styles.primaryBadgeText}>Primary</Text>
+                          <Text style={styles.primaryBadgeText}>
+                            {t("addListing.photos.primary", { defaultValue: "Primary" })}
+                          </Text>
                         </View>
                       ) : null}
                       <TouchableOpacity
                         style={styles.removePhotoButton}
                         onPress={() => removePhoto(index)}
+                        accessibilityLabel={t("addListing.photos.remove", {
+                          defaultValue: "Remove photo",
+                        })}
                       >
-                        <Text style={styles.removePhotoLabel}>×</Text>
+                        <FontAwesome name="times" size={14} color="#fff" />
                       </TouchableOpacity>
                       <View style={styles.photoControls}>
                         <TouchableOpacity
@@ -850,8 +933,11 @@ export default function AddListingScreen() {
                           ]}
                           onPress={() => movePhoto(index, "left")}
                           disabled={index === 0}
+                          accessibilityLabel={t("addListing.photos.moveEarlier", {
+                            defaultValue: "Move photo earlier",
+                          })}
                         >
-                          <Text style={styles.photoControlLabel}>◀</Text>
+                          <FontAwesome name={previousPhotoIcon} size={12} color="#fff" />
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[
@@ -860,8 +946,11 @@ export default function AddListingScreen() {
                           ]}
                           onPress={() => movePhoto(index, "right")}
                           disabled={index === photos.length - 1}
+                          accessibilityLabel={t("addListing.photos.moveLater", {
+                            defaultValue: "Move photo later",
+                          })}
                         >
-                          <Text style={styles.photoControlLabel}>▶</Text>
+                          <FontAwesome name={nextPhotoIcon} size={12} color="#fff" />
                         </TouchableOpacity>
                       </View>
                     </>
@@ -1157,7 +1246,9 @@ export default function AddListingScreen() {
               onPress={handleDiscardChanges}
               disabled={isSubmitting}
             >
-              <Text style={styles.secondaryButtonLabel}>Discard changes</Text>
+              <Text style={styles.secondaryButtonLabel}>
+                {t("common.actions.discardChanges", { defaultValue: "Discard changes" })}
+              </Text>
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity
@@ -1283,15 +1374,15 @@ const createStyles = (theme: ThemeColors) =>
       fontWeight: "700",
     },
     content: {
-      padding: 20,
-      gap: 16,
+      padding: MarketplaceSpacing.lg,
+      gap: MarketplaceSpacing.md,
     },
     header: {
-      gap: 8,
+      gap: MarketplaceSpacing.xs,
     },
     title: {
-      fontSize: 24,
-      fontWeight: "700",
+      fontSize: MarketplaceTypography.screenTitle,
+      fontWeight: "800",
       color: theme.text,
     },
     subtitle: {
@@ -1299,16 +1390,83 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.textMuted,
       lineHeight: 20,
     },
+    progressCard: {
+      borderRadius: MarketplaceRadius.card,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+      padding: MarketplaceSpacing.lg,
+      gap: MarketplaceSpacing.md,
+      shadowColor: theme.shadow,
+      ...MarketplaceShadow.subtle,
+    },
+    progressHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: MarketplaceSpacing.md,
+    },
+    progressTitle: {
+      flex: 1,
+      fontSize: MarketplaceTypography.input,
+      fontWeight: "800",
+      color: theme.text,
+    },
+    progressCount: {
+      fontSize: MarketplaceTypography.bodySmall,
+      fontWeight: "800",
+      color: theme.primary,
+    },
+    progressTrack: {
+      height: 7,
+      borderRadius: MarketplaceRadius.pill,
+      backgroundColor: theme.surfaceMuted,
+      overflow: "hidden",
+    },
+    progressFill: {
+      height: "100%",
+      borderRadius: MarketplaceRadius.pill,
+      backgroundColor: theme.primary,
+    },
+    progressSteps: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: MarketplaceSpacing.sm,
+    },
+    progressStep: {
+      minHeight: 30,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: MarketplaceSpacing.xs,
+      paddingHorizontal: MarketplaceSpacing.sm,
+      paddingVertical: MarketplaceSpacing.xs,
+      borderRadius: MarketplaceRadius.pill,
+      backgroundColor: theme.surfaceMuted,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    progressStepComplete: {
+      backgroundColor: theme.successBackground,
+      borderColor: theme.success,
+    },
+    progressStepLabel: {
+      maxWidth: 92,
+      fontSize: MarketplaceTypography.caption,
+      fontWeight: "800",
+      color: theme.textMuted,
+    },
+    progressStepLabelComplete: {
+      color: theme.success,
+    },
     section: {
       backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 16,
+      borderRadius: MarketplaceRadius.card,
+      padding: MarketplaceSpacing.lg,
+      borderWidth: 1,
+      borderColor: theme.border,
       shadowColor: theme.shadow,
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
-      gap: 12,
+      ...MarketplaceShadow.subtle,
+      gap: MarketplaceSpacing.md,
     },
     sectionHeader: {
       flexDirection: "row",
@@ -1316,8 +1474,8 @@ const createStyles = (theme: ThemeColors) =>
       alignItems: "center",
     },
     sectionTitle: {
-      fontSize: 16,
-      fontWeight: "600",
+      fontSize: MarketplaceTypography.input,
+      fontWeight: "800",
       color: theme.text,
     },
     sectionHint: {
@@ -1332,17 +1490,17 @@ const createStyles = (theme: ThemeColors) =>
     photoGrid: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: 12,
+      gap: MarketplaceSpacing.sm,
     },
     photoSlot: {
-      width: "30%",
-      aspectRatio: 1,
-      borderRadius: 14,
-      borderWidth: 1.5,
+      width: "31%",
+      aspectRatio: 1.08,
+      borderRadius: MarketplaceRadius.lg,
+      borderWidth: 1,
       borderColor: theme.border,
       justifyContent: "center",
       alignItems: "center",
-      gap: 6,
+      gap: MarketplaceSpacing.xs,
       backgroundColor: theme.surfaceMuted,
       overflow: "hidden",
     },
@@ -1373,11 +1531,6 @@ const createStyles = (theme: ThemeColors) =>
     photoControlDisabled: {
       opacity: 0.4,
     },
-    photoControlLabel: {
-      color: "#fff",
-      fontSize: 14,
-      fontWeight: "700",
-    },
     removePhotoButton: {
       position: "absolute",
       top: 6,
@@ -1388,12 +1541,6 @@ const createStyles = (theme: ThemeColors) =>
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: "#E11D48",
-    },
-    removePhotoLabel: {
-      color: "#fff",
-      fontSize: 16,
-      fontWeight: "700",
-      lineHeight: 18,
     },
     primaryBadge: {
       position: "absolute",
@@ -1410,16 +1557,16 @@ const createStyles = (theme: ThemeColors) =>
       color: "#fff",
     },
     descriptionInput: {
-      height: 120,
+      height: 108,
       textAlignVertical: "top",
     },
     row: {
       flexDirection: "row",
-      gap: 12,
+      gap: MarketplaceSpacing.md,
     },
     priceCurrencyRow: {
       flexDirection: "row",
-      gap: 12,
+      gap: MarketplaceSpacing.md,
       alignItems: "flex-start",
     },
     priceField: {
@@ -1437,25 +1584,22 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.text,
     },
     menuButton: {
-      borderRadius: 12,
+      borderRadius: MarketplaceRadius.md,
       borderColor: theme.border,
       borderWidth: 1,
       backgroundColor: theme.surface,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.sm,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       shadowColor: theme.shadow,
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
+      ...MarketplaceShadow.subtle,
     },
     menuButtonLabel: {
       color: theme.text,
       fontSize: 15,
-      textAlign: "left",
+      textAlign: I18nManager.isRTL ? "right" : "left",
       flex: 1,
     },
     menuChevron: {
@@ -1491,17 +1635,14 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: "center",
     },
     modalCard: {
-      borderRadius: 18,
+      borderRadius: MarketplaceRadius.sheet,
       backgroundColor: theme.surface,
       borderWidth: 1,
       borderColor: theme.border,
       maxHeight: "70%",
       overflow: "hidden",
       shadowColor: theme.shadow,
-      shadowOpacity: 0.2,
-      shadowRadius: 16,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 6,
+      ...MarketplaceShadow.raised,
     },
     modalHeader: {
       paddingHorizontal: 16,
@@ -1527,7 +1668,7 @@ const createStyles = (theme: ThemeColors) =>
     },
     photoPreviewCard: {
       width: "100%",
-      borderRadius: 18,
+      borderRadius: MarketplaceRadius.sheet,
       backgroundColor: theme.surface,
       overflow: "hidden",
       gap: 0,
@@ -1539,16 +1680,16 @@ const createStyles = (theme: ThemeColors) =>
     },
     photoPreviewActions: {
       flexDirection: "row",
-      gap: 10,
-      padding: 14,
+      gap: MarketplaceSpacing.sm,
+      padding: MarketplaceSpacing.md,
     },
     photoPreviewCancel: {
       flex: 1,
-      borderRadius: 14,
+      borderRadius: MarketplaceRadius.lg,
       borderWidth: 1,
       borderColor: theme.border,
       backgroundColor: theme.surfaceMuted,
-      paddingVertical: 14,
+      paddingVertical: MarketplaceSpacing.md,
       alignItems: "center",
     },
     photoPreviewCancelLabel: {
@@ -1558,9 +1699,9 @@ const createStyles = (theme: ThemeColors) =>
     },
     photoPreviewConfirm: {
       flex: 1,
-      borderRadius: 14,
+      borderRadius: MarketplaceRadius.lg,
       backgroundColor: theme.primary,
-      paddingVertical: 14,
+      paddingVertical: MarketplaceSpacing.md,
       alignItems: "center",
     },
     photoPreviewConfirmLabel: {
@@ -1569,19 +1710,19 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.primaryForeground,
     },
     footer: {
-      padding: 20,
-      paddingBottom: 28,
+      padding: MarketplaceSpacing.lg,
+      paddingBottom: 24,
       backgroundColor: theme.background,
-      gap: 12,
+      gap: MarketplaceSpacing.sm,
     },
     validationBanner: {
-      borderRadius: 14,
+      borderRadius: MarketplaceRadius.lg,
       borderWidth: 1,
       borderColor: theme.danger,
       backgroundColor: theme.dangerBackground,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      gap: 4,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.sm,
+      gap: MarketplaceSpacing.xs,
     },
     validationBannerTitle: {
       color: theme.danger,
@@ -1595,11 +1736,11 @@ const createStyles = (theme: ThemeColors) =>
     },
     secondaryButton: {
       width: "100%",
-      borderRadius: 16,
+      borderRadius: MarketplaceRadius.lg,
       borderWidth: 1,
       borderColor: theme.border,
       backgroundColor: theme.surface,
-      paddingVertical: 14,
+      paddingVertical: MarketplaceSpacing.md,
       alignItems: "center",
     },
     secondaryButtonLabel: {
@@ -1609,23 +1750,20 @@ const createStyles = (theme: ThemeColors) =>
     },
     submitButton: {
       width: "100%",
-      borderRadius: 16,
+      borderRadius: MarketplaceRadius.lg,
       backgroundColor: theme.primary,
-      paddingVertical: 16,
+      paddingVertical: MarketplaceSpacing.md,
       alignItems: "center",
       shadowColor: theme.primary,
-      shadowOpacity: 0.25,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 3,
+      ...MarketplaceShadow.card,
     },
     submitDisabled: {
       backgroundColor: theme.textSubtle,
       shadowOpacity: 0,
     },
     submitLabel: {
-      fontSize: 16,
-      fontWeight: "600",
+      fontSize: MarketplaceTypography.input,
+      fontWeight: "800",
       color: theme.primaryForeground,
     },
     errorText: {

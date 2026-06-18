@@ -7,6 +7,11 @@ import {
 } from "react-native";
 import { memo } from "react";
 
+import {
+  MarketplaceRadius,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 export type FilterChipOption = {
@@ -53,6 +58,7 @@ function HorizontalFilterChipsComponent({
               },
             ]}
             onPress={() => onSelect(option.id)}
+            activeOpacity={0.85}
           >
             {option.emoji ? (
               <Text style={styles.emoji}>{option.emoji}</Text>
@@ -78,23 +84,24 @@ export const HorizontalFilterChips = memo(HorizontalFilterChipsComponent);
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingHorizontal: 12,
+    paddingHorizontal: MarketplaceSpacing.sm,
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginHorizontal: 8,
-    borderRadius: 16,
+    minHeight: 38,
+    paddingHorizontal: MarketplaceSpacing.md,
+    paddingVertical: MarketplaceSpacing.sm,
+    marginHorizontal: MarketplaceSpacing.xs,
+    borderRadius: MarketplaceRadius.pill,
     borderWidth: 1,
   },
   emoji: {
-    fontSize: 16,
-    marginRight: 6,
+    fontSize: 15,
+    marginRight: MarketplaceSpacing.xs,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: MarketplaceTypography.bodySmall,
+    fontWeight: "700",
   },
 });

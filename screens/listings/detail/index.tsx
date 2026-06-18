@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Linking,
+  I18nManager,
   Modal,
-  Platform,
   ScrollView,
   Share,
   StyleSheet,
@@ -19,8 +18,15 @@ import { useTranslation } from "react-i18next";
 import { AppScreen } from "@/components/layout/AppScreen";
 import { ListingImageGallery } from "@/components/listings/ListingImageGallery";
 import { ReportModal } from "@/components/reports/ReportModal";
+import { formatCategoryPath } from "@/constants/categories";
 import { getRegionLabel } from "@/constants/regions";
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import {
   deleteListing,
@@ -35,7 +41,7 @@ import { getMyProfile, type UserProfile } from "@/services/user";
 import { addFavorite, getFavorites, removeFavorite } from "@/services/favorites";
 import { openChat } from "@/services/messages";
 import { WEB_BASE_URL } from "@/services/config";
-import {SafeAreaView} from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppPopup } from "@/providers/AppPopupProvider";
 import {
   isEmailVerified,
@@ -119,7 +125,12 @@ export default function ListingDetailScreen() {
       })
       .catch((err) => {
         if (!isMounted) return;
-        setError(getFriendlyErrorMessage(err, "Unable to load listing."));
+        setError(
+          getFriendlyErrorMessage(
+            err,
+            t("listings.errorSubtitle", { defaultValue: "Please try again." }),
+          ),
+        );
       })
       .finally(() => {
         if (!isMounted) return;
@@ -128,7 +139,7 @@ export default function ListingDetailScreen() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, t]);
 
   if (loading) {
     return (
@@ -141,16 +152,19 @@ export default function ListingDetailScreen() {
   }
 
   if (!listing || error) {
-    
     return (
       <AppScreen>
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>Listing unavailable</Text>
+          <Text style={styles.emptyTitle}>
+            {t("listings.unavailableTitle", { defaultValue: "Listing unavailable" })}
+          </Text>
           <Text style={styles.emptySubtitle}>
-            {error ?? "Please try again."}
+            {error ?? t("listings.tryAgain", { defaultValue: "Please try again." })}
           </Text>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonLabel}>Go back</Text>
+            <Text style={styles.backButtonLabel}>
+              {t("sellerProfile.actions.goBack", { defaultValue: "Go back" })}
+            </Text>
           </TouchableOpacity>
         </View>
       </AppScreen>
@@ -165,24 +179,34 @@ export default function ListingDetailScreen() {
       : [imageUrl];
 
   const conditionLabels: Record<string, string> = {
-    New: "New",
-    LikeNew: "Like new",
-    Good: "Good",
-    Fair: "Fair",
-    Poor: "Poor",
-    Used: "Used",
-    Refurbished: "Refurbished",
+    New: t("addListing.conditions.new", { defaultValue: "New" }),
+    LikeNew: t("addListing.conditions.like_new", { defaultValue: "Like new" }),
+    Good: t("addListing.conditions.good", { defaultValue: "Good" }),
+    Fair: t("addListing.conditions.fair", { defaultValue: "Fair" }),
+    Poor: t("addListing.conditions.poor", { defaultValue: "Poor" }),
+    Used: t("addListing.conditions.used", { defaultValue: "Used" }),
+    Refurbished: t("addListing.conditions.refurbished", { defaultValue: "Refurbished" }),
   };
 
   const listingStatus = (listing.status ?? "active").toLowerCase();
   const isSold = listingStatus === "sold" || (listing.stock != null && listing.stock <= 0);
   const isHidden = listingStatus === "hidden" || listingStatus === "inactive";
   const isAvailable = listingStatus === "active" && (listing.stock === undefined || listing.stock > 0);
-  const statusLabel = isSold ? "Sold" : isHidden ? "Hidden" : "Active";
+  const statusLabel = isSold
+    ? t("listings.status.sold", { defaultValue: "Sold" })
+    : isHidden
+      ? t("listings.status.hidden", { defaultValue: "Hidden" })
+      : t("listings.status.active", { defaultValue: "Active" });
   const sellerProfileId = listing.seller?.id ?? listing.sellerId ?? null;
   const regionLabel = getRegionLabel(listing.region, t);
+  const categoryLabel = formatCategoryPath(listing.categoryPath, t);
+  const conditionLabel = listing.condition
+    ? conditionLabels[listing.condition] ?? listing.condition
+    : null;
   const isOwnListing =
     !!profileId && (listing.sellerId === profileId || listing.seller?.id === profileId);
+  const backIconName = I18nManager.isRTL ? "chevron-forward" : "chevron-back";
+  const forwardIconName = I18nManager.isRTL ? "chevron-back" : "chevron-forward";
 
   const handleDeleteListing = () => {
     if (deleteLoading) return;
@@ -219,8 +243,11 @@ export default function ListingDetailScreen() {
       setListing(updated);
     } catch (err) {
       showError(
-        getActionErrorMessage(err, "Unable to update listing status."),
-        "Listing update failed",
+        getActionErrorMessage(
+          err,
+          t("listings.updateFailedBody", { defaultValue: "Unable to update listing status." }),
+        ),
+        t("listings.updateFailedTitle", { defaultValue: "Listing update failed" }),
       );
     } finally {
       setStatusUpdating(false);
@@ -279,12 +306,19 @@ export default function ListingDetailScreen() {
     }
   };
   return (
-  <AppScreen>
-    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity style={styles.backButtonInline} onPress={() => router.back()}>
-          <Text style={styles.backButtonLabel}>{t("listings.back")}</Text>
-        </TouchableOpacity>
+    <AppScreen>
+      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.container,
+            !isOwnListing && styles.containerWithStickyAction,
+          ]}
+        >
+          <TouchableOpacity style={styles.backButtonInline} onPress={() => router.back()}>
+            <Ionicons name={backIconName} size={16} color={theme.primary} />
+            <Text style={styles.backButtonLabel}>{t("listings.back")}</Text>
+          </TouchableOpacity>
 
         <ListingImageGallery imageUrls={imageUrls} title={listing.title} />
 
@@ -395,7 +429,7 @@ export default function ListingDetailScreen() {
           {listing.condition ? (
             <View style={styles.metaChip}>
               <Text style={styles.metaChipLabel}>
-                {conditionLabels[listing.condition] ?? listing.condition}
+                {conditionLabel}
               </Text>
             </View>
           ) : null}
@@ -404,54 +438,70 @@ export default function ListingDetailScreen() {
               <Text style={styles.metaChipLabel}>{regionLabel}</Text>
             </View>
           ) : null}
-          {listing.categoryPath ? (
+          {categoryLabel ? (
             <View style={styles.metaChip}>
-              <Text style={styles.metaChipLabel}>{listing.categoryPath}</Text>
+              <Text style={styles.metaChipLabel}>{categoryLabel}</Text>
             </View>
           ) : null}
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Description</Text>
+          <Text style={styles.sectionTitle}>
+            {t("listings.description", { defaultValue: "Description" })}
+          </Text>
           <Text style={styles.sectionBody}>{listing.description}</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Details</Text>
+          <Text style={styles.sectionTitle}>
+            {t("listings.details", { defaultValue: "Details" })}
+          </Text>
           <View style={styles.detailGrid}>
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Category</Text>
+              <Text style={styles.detailLabel}>
+                {t("listings.category", { defaultValue: "Category" })}
+              </Text>
               <Text style={styles.detailValue}>
-                {listing.categoryPath ?? "Uncategorized"}
+                {categoryLabel ?? t("listings.uncategorized", { defaultValue: "Uncategorized" })}
               </Text>
             </View>
             {listing.condition ? (
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Condition</Text>
+                <Text style={styles.detailLabel}>
+                  {t("listings.condition", { defaultValue: "Condition" })}
+                </Text>
                 <Text style={styles.detailValue}>
-                  {conditionLabels[listing.condition] ?? listing.condition}
+                  {conditionLabel}
                 </Text>
               </View>
             ) : null}
             {listing.region ? (
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Location</Text>
+                <Text style={styles.detailLabel}>
+                  {t("listings.location", { defaultValue: "Location" })}
+                </Text>
                 <Text style={styles.detailValue}>{regionLabel}</Text>
               </View>
             ) : null}
             {listing.stock != null ? (
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Stock</Text>
+                <Text style={styles.detailLabel}>
+                  {t("listings.stock", { defaultValue: "Stock" })}
+                </Text>
                 <Text style={styles.detailValue}>{listing.stock}</Text>
               </View>
             ) : null}
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Status</Text>
+              <Text style={styles.detailLabel}>
+                {t("listings.statusLabel", { defaultValue: "Status" })}
+              </Text>
               <Text style={styles.detailValue}>{statusLabel}</Text>
             </View>
             {listing.soldUntil ? (
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Sold until</Text>
+                <Text style={styles.detailLabel}>
+                  {t("listings.soldUntil", { defaultValue: "Sold until" })}
+                </Text>
                 <Text style={styles.detailValue}>
                   {new Date(listing.soldUntil).toLocaleDateString()}
                 </Text>
@@ -461,7 +511,9 @@ export default function ListingDetailScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Seller</Text>
+          <Text style={styles.sectionTitle}>
+            {t("listings.seller", { defaultValue: "Seller" })}
+          </Text>
           <TouchableOpacity
             style={styles.sellerRow}
             disabled={!sellerProfileId}
@@ -488,44 +540,35 @@ export default function ListingDetailScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.sectionBody}>
-                {listing.seller?.name ?? "Unknown seller"}
+                {listing.seller?.name ?? t("listings.unknownSeller", { defaultValue: "Unknown seller" })}
               </Text>
               {listing.seller ? (
                 <Text style={styles.sectionMeta}>
-                  Rating {listing.seller.rating.toFixed(1)} ·{" "}
-                  {listing.seller.reviewCount} reviews
+                  {t("listings.sellerRatingLine", {
+                    defaultValue: "Rating {{rating}} · {{count}} reviews",
+                    rating: listing.seller.rating.toFixed(1),
+                    count: listing.seller.reviewCount,
+                  })}
                 </Text>
               ) : null}
             </View>
             {sellerProfileId ? (
-              <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+              <Ionicons name={forwardIconName} size={18} color={theme.textMuted} />
             ) : null}
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          {!isAvailable ? (
-            <View style={styles.noticeBanner}>
-              <Text style={styles.noticeText}>Item is currently unavailable.</Text>
-            </View>
-          ) : null}
+        {(!isAvailable || isOwnListing) ? (
+          <View style={styles.section}>
+            {!isAvailable ? (
+              <View style={styles.noticeBanner}>
+                <Text style={styles.noticeText}>
+                  {t("listings.unavailableNotice", { defaultValue: "Item is currently unavailable." })}
+                </Text>
+              </View>
+            ) : null}
 
-          {!isOwnListing ? (
-            <TouchableOpacity
-              style={[styles.primaryButton, (openingChat || !isAvailable) && { opacity: 0.7 }]}
-              onPress={handleContactSeller}
-              disabled={openingChat || !isAvailable}
-            >
-              {openingChat ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
-              )}
-              <Text style={styles.primaryButtonLabel}>
-                {openingChat ? t("listings.opening", { defaultValue: "Opening..." }) : t("listings.contactSellerTitle", { defaultValue: "Contact seller" })}
-              </Text>
-            </TouchableOpacity>
-          ) : (
+            {isOwnListing ? (
             <View style={styles.ownerActions}>
               <View style={styles.noticeBannerInfo}>
                 <Text style={styles.noticeInfoText}>{t("listings.yourListing", { defaultValue: "This is your listing." })}</Text>
@@ -590,13 +633,41 @@ export default function ListingDetailScreen() {
               >
                 <Ionicons name="trash-outline" size={18} color="#fff" />
                 <Text style={styles.primaryButtonLabel}>
-                  {deleteLoading ? "Deleting..." : "Delete listing"}
+                  {deleteLoading
+                    ? t("listings.deleting", { defaultValue: "Deleting..." })
+                    : t("listings.deleteListing", { defaultValue: "Delete listing" })}
                 </Text>
               </TouchableOpacity>
             </View>
-          )}
-        </View>
+            ) : null}
+          </View>
+        ) : null}
       </ScrollView>
+
+      {!isOwnListing ? (
+        <View style={styles.stickyActionBar}>
+          <TouchableOpacity
+            style={[
+              styles.primaryButton,
+              styles.stickyPrimaryButton,
+              (openingChat || !isAvailable) && { opacity: 0.7 },
+            ]}
+            onPress={handleContactSeller}
+            disabled={openingChat || !isAvailable}
+          >
+            {openingChat ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
+            )}
+            <Text style={styles.primaryButtonLabel}>
+              {openingChat
+                ? t("listings.opening", { defaultValue: "Opening..." })
+                : t("listings.contactSellerTitle", { defaultValue: "Contact seller" })}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       <Modal
         visible={deleteDialogOpen}
@@ -606,28 +677,34 @@ export default function ListingDetailScreen() {
       >
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Delete listing?</Text>
+            <Text style={styles.modalTitle}>
+              {t("listings.deleteTitle", { defaultValue: "Delete listing?" })}
+            </Text>
             <Text style={styles.modalBody}>
-              This action cannot be undone.
+              {t("listings.deleteBody", { defaultValue: "This action cannot be undone." })}
             </Text>
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => setDeleteDialogOpen(false)}
               >
-                <Text style={styles.modalButtonText}>Cancel</Text>
+                <Text style={styles.modalButtonText}>
+                  {t("common.actions.cancel", { defaultValue: "Cancel" })}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonDanger]}
                 onPress={confirmDelete}
               >
-                <Text style={styles.modalButtonText}>Delete</Text>
+                <Text style={styles.modalButtonText}>
+                  {t("common.actions.delete", { defaultValue: "Delete" })}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-{listing?.id ? (
+      {listing?.id ? (
         <ReportModal
           visible={reportOpen}
           targetType="Listing"
@@ -635,9 +712,9 @@ export default function ListingDetailScreen() {
           onClose={() => setReportOpen(false)}
         />
       ) : null}
-    </SafeAreaView>
-  </AppScreen>
-);
+      </SafeAreaView>
+    </AppScreen>
+  );
 }
 
 const createStyles = (theme: ThemeColors) =>
@@ -645,10 +722,16 @@ const createStyles = (theme: ThemeColors) =>
     safeArea: {
       flex: 1,
     },
+    scroll: {
+      flex: 1,
+    },
     container: {
-      padding: 20,
-      gap: 16,
-      paddingBottom: 40,
+      padding: MarketplaceSpacing.lg,
+      gap: MarketplaceSpacing.md,
+      paddingBottom: 32,
+    },
+    containerWithStickyAction: {
+      paddingBottom: MarketplaceSpacing.md,
     },
     loading: {
       flex: 1,
@@ -656,7 +739,7 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: "center",
     },
     header: {
-      gap: 6,
+      gap: MarketplaceSpacing.xs,
     },
     titleRow: {
       flexDirection: "row",
@@ -666,14 +749,15 @@ const createStyles = (theme: ThemeColors) =>
     },
     title: {
       flex: 1,
-      fontSize: 22,
-      fontWeight: "700",
+      fontSize: MarketplaceTypography.screenTitle,
+      fontWeight: "800",
       color: theme.text,
+      lineHeight: 28,
     },
     statusBadge: {
       borderRadius: 999,
-      paddingHorizontal: 10,
-      paddingVertical: 5,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.xs,
       backgroundColor: theme.successBackground,
       borderWidth: 1,
       borderColor: theme.success,
@@ -698,22 +782,23 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.textMuted,
     },
     price: {
-      fontSize: 20,
-      fontWeight: "700",
+      fontSize: 22,
+      fontWeight: "900",
       color: theme.success,
     },
     actionRow: {
       flexDirection: "row",
-      gap: 12,
+      gap: MarketplaceSpacing.sm,
+      flexWrap: "wrap",
     },
     actionButton: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
-      borderRadius: 12,
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-      backgroundColor: theme.surfaceMuted,
+      gap: MarketplaceSpacing.xs,
+      borderRadius: MarketplaceRadius.pill,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.sm,
+      backgroundColor: theme.surface,
       borderWidth: 1,
       borderColor: theme.border,
     },
@@ -725,12 +810,12 @@ const createStyles = (theme: ThemeColors) =>
     metaRow: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: 8,
+      gap: MarketplaceSpacing.sm,
     },
     metaChip: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 999,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.xs,
+      borderRadius: MarketplaceRadius.pill,
       backgroundColor: theme.surfaceMuted,
     },
     metaChipLabel: {
@@ -739,17 +824,24 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.textSecondary,
     },
     section: {
-      gap: 6,
+      gap: MarketplaceSpacing.sm,
+      borderRadius: MarketplaceRadius.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.surface,
+      padding: MarketplaceSpacing.lg,
+      shadowColor: theme.shadow,
+      ...MarketplaceShadow.subtle,
     },
     sectionTitle: {
-      fontSize: 16,
-      fontWeight: "700",
+      fontSize: MarketplaceTypography.input,
+      fontWeight: "800",
       color: theme.text,
     },
     sectionBody: {
-      fontSize: 14,
+      fontSize: MarketplaceTypography.body,
       color: theme.textMuted,
-      lineHeight: 20,
+      lineHeight: 21,
     },
     sectionMeta: {
       fontSize: 12,
@@ -758,14 +850,14 @@ const createStyles = (theme: ThemeColors) =>
     detailGrid: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: 12,
+      gap: MarketplaceSpacing.sm,
     },
     detailItem: {
-      width: "47%",
+      width: "48%",
       backgroundColor: theme.surfaceMuted,
-      borderRadius: 12,
-      padding: 12,
-      gap: 4,
+      borderRadius: MarketplaceRadius.md,
+      padding: MarketplaceSpacing.md,
+      gap: MarketplaceSpacing.xs,
       borderWidth: 1,
       borderColor: theme.border,
     },
@@ -781,12 +873,12 @@ const createStyles = (theme: ThemeColors) =>
     sellerRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
+      gap: MarketplaceSpacing.md,
     },
     sellerAvatar: {
       width: 48,
       height: 48,
-      borderRadius: 24,
+      borderRadius: MarketplaceRadius.pill,
       backgroundColor: theme.primaryMuted,
       alignItems: "center",
       justifyContent: "center",
@@ -802,8 +894,8 @@ const createStyles = (theme: ThemeColors) =>
       color: theme.primary,
     },
     noticeBanner: {
-      padding: 12,
-      borderRadius: 12,
+      padding: MarketplaceSpacing.md,
+      borderRadius: MarketplaceRadius.md,
       backgroundColor: "#FDECEC",
     },
     noticeText: {
@@ -812,8 +904,8 @@ const createStyles = (theme: ThemeColors) =>
       textAlign: "center",
     },
     noticeBannerInfo: {
-      padding: 12,
-      borderRadius: 12,
+      padding: MarketplaceSpacing.md,
+      borderRadius: MarketplaceRadius.md,
       backgroundColor: "#E9F2FF",
     },
     noticeInfoText: {
@@ -822,14 +914,15 @@ const createStyles = (theme: ThemeColors) =>
       textAlign: "center",
     },
     primaryButton: {
-      marginTop: 12,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 10,
-      paddingVertical: 14,
-      borderRadius: 14,
+      gap: MarketplaceSpacing.sm,
+      paddingVertical: MarketplaceSpacing.md,
+      borderRadius: MarketplaceRadius.lg,
       backgroundColor: theme.primary,
+      shadowColor: theme.primary,
+      ...MarketplaceShadow.subtle,
     },
     dangerButton: {
       backgroundColor: theme.danger,
@@ -845,6 +938,23 @@ const createStyles = (theme: ThemeColors) =>
       fontWeight: "600",
       color: "#fff",
     },
+    stickyActionBar: {
+      paddingHorizontal: MarketplaceSpacing.lg,
+      paddingTop: MarketplaceSpacing.md,
+      paddingBottom: MarketplaceSpacing.lg,
+      backgroundColor: theme.navigationBackground,
+      borderTopWidth: 1,
+      borderTopColor: theme.navigationBorder,
+      shadowColor: theme.shadow,
+      shadowOpacity: 0.12,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: -4 },
+      elevation: 8,
+    },
+    stickyPrimaryButton: {
+      width: "100%",
+      minHeight: 50,
+    },
     ownerActions: {
       gap: 12,
     },
@@ -852,8 +962,8 @@ const createStyles = (theme: ThemeColors) =>
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
-      padding: 24,
-      gap: 10,
+      padding: MarketplaceSpacing.xxl,
+      gap: MarketplaceSpacing.sm,
     },
     emptyTitle: {
       fontSize: 18,
@@ -866,16 +976,19 @@ const createStyles = (theme: ThemeColors) =>
       textAlign: "center",
     },
     backButton: {
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 12,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      paddingVertical: MarketplaceSpacing.sm,
+      borderRadius: MarketplaceRadius.md,
       backgroundColor: theme.surfaceMuted,
     },
     backButtonInline: {
       alignSelf: "flex-start",
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 999,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: MarketplaceSpacing.xs,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.xs,
+      borderRadius: MarketplaceRadius.pill,
       backgroundColor: theme.surfaceMuted,
     },
     backButtonLabel: {
@@ -888,14 +1001,14 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: "center",
       alignItems: "center",
       backgroundColor: "rgba(0, 0, 0, 0.5)",
-      padding: 24,
+      padding: MarketplaceSpacing.xxl,
     },
     modalCard: {
       width: "100%",
-      borderRadius: 16,
-      padding: 20,
+      borderRadius: MarketplaceRadius.sheet,
+      padding: MarketplaceSpacing.xl,
       backgroundColor: theme.surface,
-      gap: 12,
+      gap: MarketplaceSpacing.md,
     },
     modalTitle: {
       fontSize: 18,

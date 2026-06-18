@@ -18,10 +18,15 @@ import {
 import { getChats, getUnreadCount } from "@/services/messages";
 import { useNotificationContext } from "@/providers/NotificationProvider";
 import { type HubConnection } from "@microsoft/signalr";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+} from "@/constants/theme";
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = 60 + insets.bottom;
+  const tabBarHeight = 62 + insets.bottom;
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const router = useRouter();
@@ -139,18 +144,23 @@ export default function TabsLayout() {
           tabBarInactiveTintColor: theme.tabIconDefault,
           tabBarStyle: {
             borderTopWidth: 1,
-            elevation: 5,
+            elevation: 10,
             backgroundColor: theme.navigationBackground,
             borderTopColor: theme.navigationBorder,
             height: tabBarHeight,
             paddingBottom: Math.max(insets.bottom, 0),
-            paddingTop: 4,
+            paddingTop: 5,
+            shadowColor: theme.shadow,
+            shadowOpacity: 0.12,
+            shadowRadius: 14,
+            shadowOffset: { width: 0, height: -4 },
           },
           tabBarLabelStyle: {
             fontSize: 11,
+            fontWeight: "700",
           },
           tabBarItemStyle: {
-            paddingBottom: 4,
+            paddingBottom: MarketplaceSpacing.xs,
           },
         }}
       >
@@ -158,8 +168,8 @@ export default function TabsLayout() {
           name="index"
           options={{
             title: t("navigation.tabs.home"),
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />
             ),
           }}
         />
@@ -168,8 +178,8 @@ export default function TabsLayout() {
           name="favorites"
           options={{
             title: t("navigation.tabs.favorites"),
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="heart-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? "heart" : "heart-outline"} size={size} color={color} />
             ),
           }}
         />
@@ -209,8 +219,8 @@ export default function TabsLayout() {
               borderRadius: 9,
               paddingHorizontal: 4,
             },
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="chatbubble-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? "chatbubble" : "chatbubble-outline"} size={size} color={color} />
             ),
           }}
         />
@@ -219,8 +229,8 @@ export default function TabsLayout() {
           name="me"
           options={{
             title: t("navigation.tabs.me"),
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person-outline" size={size} color={color} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? "person" : "person-outline"} size={size} color={color} />
             ),
           }}
         />
@@ -239,17 +249,14 @@ const createStyles = (theme: ReturnType<typeof useAppTheme>) =>
       width: 50,
       height: 50,
       marginTop: -18,
-      borderRadius: 25,
+      borderRadius: MarketplaceRadius.pill,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: theme.primary,
       borderWidth: 3,
       borderColor: theme.navigationBackground,
       shadowColor: theme.shadow,
-      shadowOpacity: 0.2,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 6,
+      ...MarketplaceShadow.raised,
     },
     addListingLabel: {
       fontSize: 11,

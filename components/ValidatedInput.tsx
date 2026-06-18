@@ -8,6 +8,12 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { PasswordVisibilityToggle } from "@/components/form/PasswordVisibilityToggle";
+import {
+  MarketplaceRadius,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import {
   type TextValidator,
@@ -26,6 +32,7 @@ type ValidatedInputProps = Omit<TextInputProps, "onChangeText"> & {
   validateOnBlur?: boolean;
   validateOnChange?: boolean;
   showErrors?: boolean;
+  showSecureTextToggle?: boolean;
   onValidationChange?: (result: ValidationResult) => void;
 };
 
@@ -41,8 +48,10 @@ export function ValidatedInput({
   validateOnBlur = true,
   validateOnChange = false,
   showErrors,
+  showSecureTextToggle = true,
   onValidationChange,
   onBlur,
+  secureTextEntry,
   ...rest
 }: ValidatedInputProps) {
   const theme = useAppTheme();
@@ -51,6 +60,7 @@ export function ValidatedInput({
   const [touched, setTouched] = useState(false);
   const [result, setResult] = useState<ValidationResult>(emptyResult);
   const [isValidating, setIsValidating] = useState(false);
+  const [isSecureTextVisible, setIsSecureTextVisible] = useState(false);
   const validationRunId = useRef(0);
   const didForceValidation = useRef(false);
 
@@ -113,6 +123,8 @@ export function ValidatedInput({
 
   const shouldShowErrors = showErrors ?? touched;
   const firstIssue = result.issues[0];
+  const hasError = shouldShowErrors && !result.valid;
+  const shouldRenderSecureToggle = Boolean(secureTextEntry && showSecureTextToggle);
 
   useEffect(() => {
     if (!showErrors) {
@@ -127,19 +139,46 @@ export function ValidatedInput({
   return (
     <View style={styles.container}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
-      <TextInput
-        {...rest}
-        value={value}
-        onChangeText={handleChange}
-        onBlur={handleBlur}
-        placeholderTextColor={theme.inputPlaceholder}
-        style={[
-          styles.input,
-          rest.style,
-          shouldShowErrors && !result.valid && styles.inputError,
-        ]}
-      />
-      {shouldShowErrors && !result.valid ? (
+      {shouldRenderSecureToggle ? (
+        <View
+          style={[
+            styles.input,
+            styles.inputWithToggle,
+            hasError && styles.inputError,
+          ]}
+        >
+          <TextInput
+            {...rest}
+            value={value}
+            onChangeText={handleChange}
+            onBlur={handleBlur}
+            placeholderTextColor={theme.inputPlaceholder}
+            secureTextEntry={!isSecureTextVisible}
+            style={[styles.inputField, rest.style]}
+          />
+          <PasswordVisibilityToggle
+            isVisible={isSecureTextVisible}
+            onPress={() => setIsSecureTextVisible((current) => !current)}
+            color={theme.textMuted}
+            style={styles.visibilityButton}
+          />
+        </View>
+      ) : (
+        <TextInput
+          {...rest}
+          value={value}
+          onChangeText={handleChange}
+          onBlur={handleBlur}
+          placeholderTextColor={theme.inputPlaceholder}
+          secureTextEntry={secureTextEntry}
+          style={[
+            styles.input,
+            rest.style,
+            hasError && styles.inputError,
+          ]}
+        />
+      )}
+      {hasError ? (
         <Text style={styles.errorText}>{firstIssue?.message}</Text>
       ) : helperText ? (
         <Text style={styles.helperText}>{helperText}</Text>
@@ -153,25 +192,46 @@ export function ValidatedInput({
 const createStyles = (theme: ReturnType<typeof useAppTheme>) =>
   StyleSheet.create({
     container: {
-      gap: 6,
+      gap: MarketplaceSpacing.xs,
     },
     label: {
-      fontSize: 14,
-      fontWeight: "600",
+      fontSize: MarketplaceTypography.body,
+      fontWeight: "700",
       color: theme.text,
     },
     input: {
       borderWidth: 1,
       borderColor: theme.border,
-      borderRadius: 12,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      fontSize: 15,
+      borderRadius: MarketplaceRadius.md,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.sm,
+      fontSize: MarketplaceTypography.input,
       color: theme.text,
       backgroundColor: theme.surface,
     },
+    inputWithToggle: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: MarketplaceSpacing.sm,
+      paddingVertical: 0,
+      paddingRight: MarketplaceSpacing.sm,
+    },
+    inputField: {
+      flex: 1,
+      minHeight: 44,
+      paddingVertical: 12,
+      fontSize: MarketplaceTypography.input,
+      color: theme.text,
+    },
     inputError: {
       borderColor: theme.danger,
+    },
+    visibilityButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
     },
     helperText: {
       fontSize: 12,

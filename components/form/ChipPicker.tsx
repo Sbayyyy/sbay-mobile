@@ -6,6 +6,11 @@ import {
   ViewStyle,
 } from "react-native";
 
+import {
+  MarketplaceRadius,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 type Option<T extends string> = {
@@ -71,25 +76,26 @@ export function ChipPicker<T extends string>({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    gap: MarketplaceSpacing.sm,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: MarketplaceTypography.body,
+    fontWeight: "700",
   },
   row: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: MarketplaceSpacing.sm,
   },
   chip: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    minHeight: 36,
+    borderRadius: MarketplaceRadius.pill,
+    paddingHorizontal: MarketplaceSpacing.md,
+    paddingVertical: MarketplaceSpacing.sm,
     borderWidth: 1,
   },
   chipLabel: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: MarketplaceTypography.bodySmall,
+    fontWeight: "700",
   },
 });

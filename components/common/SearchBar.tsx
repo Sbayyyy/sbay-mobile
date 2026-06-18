@@ -1,8 +1,14 @@
-import { StyleSheet, TextInput, TouchableOpacity, View, Text } from "react-native";
+import { I18nManager, StyleSheet, TextInput, TouchableOpacity, View, Text } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "expo-router";
 
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 type SearchBarProps = {
@@ -46,9 +52,14 @@ export function SearchBar({
           onChangeText={onChange}
           returnKeyType="search"
           onSubmitEditing={onSubmit}
+          textAlign={I18nManager.isRTL ? "right" : "left"}
         />
         {value.length > 0 ? (
-          <TouchableOpacity onPress={() => onChange("")}>
+          <TouchableOpacity
+            onPress={() => onChange("")}
+            style={styles.clearButton}
+            accessibilityRole="button"
+          >
             <FontAwesome name="times" size={16} color={theme.textSubtle} />
           </TouchableOpacity>
         ) : null}
@@ -88,40 +99,41 @@ export function SearchBar({
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 20,
+    marginHorizontal: MarketplaceSpacing.lg,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: MarketplaceSpacing.sm,
   },
   inputRow: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    gap: MarketplaceSpacing.sm,
+    minHeight: 48,
+    borderRadius: MarketplaceRadius.xl,
+    paddingHorizontal: MarketplaceSpacing.md,
     borderWidth: 1,
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...MarketplaceShadow.subtle,
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: MarketplaceTypography.input,
+  },
+  clearButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
   },
   notificationButton: {
-    width: 55,
-    height: 65,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: MarketplaceRadius.xl,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...MarketplaceShadow.subtle,
   },
   badge: {
     position: "absolute",

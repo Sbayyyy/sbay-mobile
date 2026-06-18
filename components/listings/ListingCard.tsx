@@ -11,7 +11,13 @@ import { Image } from "expo-image";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Listing } from "@/types/listing";
 
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { resolveMediaUrl } from "@/services/media";
 
@@ -47,17 +53,24 @@ function ListingCardComponent({ listing, onPress, style }: ListingCardProps) {
         />
       ) : (
         <View style={[styles.image, styles.imagePlaceholder]}>
-          <FontAwesome name="image" size={28} color={theme.textSubtle} />
+          <FontAwesome name="image" size={24} color={theme.textSubtle} />
         </View>
       )}
       <View style={styles.body}>
+        <Text style={styles.price}>{listing.price}</Text>
         <Text style={styles.title} numberOfLines={2}>
           {listing.title}
         </Text>
-        <Text style={styles.price}>{listing.price}</Text>
         {listing.location ? (
-          <Text style={styles.location} numberOfLines={1}>
-            {listing.location}
+          <View style={styles.metadataRow}>
+            <FontAwesome name="map-marker" size={11} color={theme.textSubtle} />
+            <Text style={styles.metadataText} numberOfLines={1}>
+              {listing.location}
+            </Text>
+          </View>
+        ) : listing.category ? (
+          <Text style={styles.categoryText} numberOfLines={1}>
+            {listing.category}
           </Text>
         ) : null}
         {showSellerRating || listing.sellerMemberSince ? (
@@ -87,19 +100,16 @@ const createStyles = (theme: ThemeColors) =>
     card: {
       width: "48%",
       backgroundColor: theme.surface,
-      borderRadius: 18,
+      borderRadius: MarketplaceRadius.card,
       overflow: "hidden",
-      borderWidth: 2,
+      borderWidth: 1,
       borderColor: theme.border,
       shadowColor: theme.shadow,
-      shadowOpacity: 0.15,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 3,
+      ...MarketplaceShadow.card,
     },
     image: {
       width: "100%",
-      height: 110,
+      aspectRatio: 1.18,
     },
     imagePlaceholder: {
       backgroundColor: theme.surfaceMuted,
@@ -107,28 +117,42 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: "center",
     },
     body: {
-      padding: 12,
-      gap: 6,
+      padding: MarketplaceSpacing.md,
+      gap: MarketplaceSpacing.xs,
     },
     title: {
-      fontSize: 14,
-      fontWeight: "600",
+      minHeight: 34,
+      fontSize: MarketplaceTypography.body,
+      fontWeight: "700",
       color: theme.text,
+      lineHeight: 17,
     },
     price: {
-      fontSize: 15,
-      fontWeight: "700",
+      fontSize: MarketplaceTypography.input,
+      fontWeight: "800",
       color: theme.success,
     },
-    location: {
-      fontSize: 12,
+    metadataRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      minHeight: 18,
+    },
+    metadataText: {
+      flex: 1,
+      fontSize: MarketplaceTypography.meta,
+      color: theme.textMuted,
+    },
+    categoryText: {
+      minHeight: 18,
+      fontSize: MarketplaceTypography.meta,
       color: theme.textMuted,
     },
     sellerMetaRow: {
-      minHeight: 20,
+      minHeight: 18,
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
+      gap: MarketplaceSpacing.xs,
     },
     ratingPill: {
       flexDirection: "row",
@@ -136,13 +160,13 @@ const createStyles = (theme: ThemeColors) =>
       gap: 3,
     },
     ratingText: {
-      fontSize: 11,
+      fontSize: MarketplaceTypography.caption,
       fontWeight: "700",
       color: theme.textSecondary,
     },
     memberText: {
       flex: 1,
-      fontSize: 11,
+      fontSize: MarketplaceTypography.caption,
       color: theme.textMuted,
     },
   });

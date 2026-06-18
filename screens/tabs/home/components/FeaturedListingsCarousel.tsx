@@ -5,7 +5,13 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-nati
 import { useTranslation } from "react-i18next";
 
 import { SectionHeader } from "@/components/common/SectionHeader";
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { type Listing } from "@/types/listing";
 
@@ -76,28 +82,30 @@ export const FeaturedListingsCarousel = memo(function FeaturedListingsCarousel({
 const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
     featuredWrapper: {
-      marginHorizontal: 20,
-      borderRadius: 16,
+      marginHorizontal: MarketplaceSpacing.lg,
+      borderRadius: MarketplaceRadius.xl,
       borderWidth: 1,
       borderColor: theme.primary,
       backgroundColor: theme.primaryMuted,
-      paddingVertical: 12,
+      paddingVertical: MarketplaceSpacing.sm,
     },
     featuredRow: {
-      paddingHorizontal: 12,
-      gap: 12,
+      paddingHorizontal: MarketplaceSpacing.sm,
+      gap: MarketplaceSpacing.sm,
     },
     featuredCard: {
-      width: 160,
-      borderRadius: 14,
+      width: 148,
+      borderRadius: MarketplaceRadius.lg,
       backgroundColor: theme.surface,
       overflow: "hidden",
       borderWidth: 1,
       borderColor: theme.border,
+      shadowColor: theme.shadow,
+      ...MarketplaceShadow.subtle,
     },
     featuredImage: {
       width: "100%",
-      height: 110,
+      aspectRatio: 1.2,
     },
     featuredImagePlaceholder: {
       backgroundColor: theme.surfaceMuted,
@@ -105,17 +113,17 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: "center",
     },
     featuredBody: {
-      padding: 10,
-      gap: 4,
+      padding: MarketplaceSpacing.sm,
+      gap: MarketplaceSpacing.xs,
     },
     featuredTitle: {
-      fontSize: 13,
-      fontWeight: "600",
+      fontSize: MarketplaceTypography.bodySmall,
+      fontWeight: "700",
       color: theme.text,
     },
     featuredPrice: {
-      fontSize: 13,
-      fontWeight: "700",
+      fontSize: MarketplaceTypography.bodySmall,
+      fontWeight: "800",
       color: theme.success,
     },
   });

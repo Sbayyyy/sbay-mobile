@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  I18nManager,
   Modal,
   Pressable,
   ScrollView,
@@ -10,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { AppScreen } from "@/components/layout/AppScreen";
@@ -24,7 +26,13 @@ import {
   SYRIA_REGION_OPTIONS,
   type SyriaRegionId,
 } from "@/constants/regions";
-import { type ThemeColors } from "@/constants/theme";
+import {
+  MarketplaceRadius,
+  MarketplaceShadow,
+  MarketplaceSpacing,
+  MarketplaceTypography,
+  type ThemeColors,
+} from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { searchListings, type Listing as ApiListing } from "@/services/listings";
 import { getSponsoredAds, type SponsoredAd } from "@/services/ads";
@@ -239,6 +247,86 @@ export default function SearchScreen() {
       })),
     [sortedListings, t],
   );
+  const sortLabel = useMemo(() => {
+    if (sortBy === "price_low") {
+      return t("listings.sortPriceLow", { defaultValue: "Price: Low to High" });
+    }
+    if (sortBy === "price_high") {
+      return t("listings.sortPriceHigh", { defaultValue: "Price: High to Low" });
+    }
+    return t("listings.sortNewest", { defaultValue: "Newest" });
+  }, [sortBy, t]);
+  const activeFilterCount = [
+    status !== "all",
+    featuredFilter !== "all",
+    category !== "all",
+    location !== "all",
+    minPrice.trim().length > 0,
+    maxPrice.trim().length > 0,
+  ].filter(Boolean).length;
+  const filterLabel = activeFilterCount
+    ? `${t("common.actions.filters", { defaultValue: "Filters" })} (${activeFilterCount})`
+    : t("common.actions.filters", { defaultValue: "Filters" });
+  const resetFilters = () => {
+    setSortBy("newest");
+    setStatus("all");
+    setFeaturedFilter("all");
+    setCategory("all");
+    setLocation("all");
+    setMinPrice("");
+    setMaxPrice("");
+  };
+  const activeFilters = [
+    featuredFilter === "featured"
+      ? {
+          key: "featured",
+          label: t("home.featuredTitle", { defaultValue: "Featured" }),
+          onRemove: () => setFeaturedFilter("all"),
+        }
+      : null,
+    status !== "all"
+      ? {
+          key: "status",
+          label:
+            status === "new"
+              ? t("addListing.conditions.new", { defaultValue: "New" })
+              : status === "used"
+                ? t("addListing.conditions.used", { defaultValue: "Used" })
+                : status === "renewed"
+                  ? t("addListing.conditions.refurbished", { defaultValue: "Renewed" })
+                  : t("addListing.conditions.poor", { defaultValue: "Defective" }),
+          onRemove: () => setStatus("all"),
+        }
+      : null,
+    category !== "all"
+      ? {
+          key: "category",
+          label: categoryOptions.find((item) => item.id === category)?.label ?? category,
+          onRemove: () => setCategory("all"),
+        }
+      : null,
+    location !== "all"
+      ? {
+          key: "location",
+          label: locationOptions.find((item) => item.id === location)?.label ?? location,
+          onRemove: () => setLocation("all"),
+        }
+      : null,
+    minPrice.trim()
+      ? {
+          key: "minPrice",
+          label: `${t("listings.minPrice", { defaultValue: "Min price" })}: ${minPrice.trim()}`,
+          onRemove: () => setMinPrice(""),
+        }
+      : null,
+    maxPrice.trim()
+      ? {
+          key: "maxPrice",
+          label: `${t("listings.maxPrice", { defaultValue: "Max price" })}: ${maxPrice.trim()}`,
+          onRemove: () => setMaxPrice(""),
+        }
+      : null,
+  ].filter((item): item is { key: string; label: string; onRemove: () => void } => item !== null);
 
   return (
     <AppScreen>
@@ -257,17 +345,51 @@ export default function SearchScreen() {
               style={styles.filterButton}
               onPress={() => setFiltersOpen(true)}
             >
-              <Text style={styles.filterButtonLabel}>
-                {t("common.actions.filters", { defaultValue: "Filters" })}
-              </Text>
+              <FontAwesome name="sliders" size={14} color={theme.primary} />
+              <Text style={styles.filterButtonLabel}>{filterLabel}</Text>
             </TouchableOpacity>
-            <Text style={styles.resultCount}>
-              {t("listings.resultsCount", {
-                defaultValue: "{{count}} results",
-                count: displayListings.length,
-              })}
-            </Text>
+            <View style={styles.resultSummary}>
+              <Text style={styles.resultCount}>
+                {t("listings.resultsCount", {
+                  defaultValue: "{{count}} results",
+                  count: displayListings.length,
+                })}
+              </Text>
+              <Text style={styles.sortSummary}>
+                {t("listings.sortBySummary", {
+                  defaultValue: "Sorted by {{sort}}",
+                  sort: sortLabel,
+                })}
+              </Text>
+            </View>
           </View>
+
+          {activeFilters.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.activeFiltersRow}
+            >
+              {activeFilters.map((filter) => (
+                <TouchableOpacity
+                  key={filter.key}
+                  style={styles.activeFilterChip}
+                  onPress={filter.onRemove}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.activeFilterLabel} numberOfLines={1}>
+                    {filter.label}
+                  </Text>
+                  <FontAwesome name="times" size={12} color={theme.primary} />
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity style={styles.clearFilterChip} onPress={resetFilters}>
+                <Text style={styles.clearFilterLabel}>
+                  {t("common.actions.reset", { defaultValue: "Reset" })}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          ) : null}
 
           <SectionHeader
             title={t("listings.resultsTitle", { defaultValue: "Results" })}
@@ -358,7 +480,7 @@ export default function SearchScreen() {
                 ]}
               />
               <ChipPicker
-                label={t("listings.status", { defaultValue: "Status" })}
+                label={t("listings.statusLabel", { defaultValue: "Status" })}
                 value={status}
                 onChange={setStatus}
                 options={[
@@ -422,15 +544,7 @@ export default function SearchScreen() {
               <View style={styles.modalActions}>
                 <TouchableOpacity
                   style={styles.modalButton}
-                  onPress={() => {
-                    setSortBy("newest");
-                    setStatus("all");
-                    setFeaturedFilter("all");
-                    setCategory("all");
-                    setLocation("all");
-                    setMinPrice("");
-                    setMaxPrice("");
-                  }}
+                  onPress={resetFilters}
                 >
                   <Text style={styles.modalButtonText}>
                     {t("common.actions.reset", { defaultValue: "Reset" })}
@@ -459,56 +573,109 @@ const createStyles = (theme: ThemeColors) =>
       flex: 1,
     },
     searchWrapper: {
-      paddingTop: 12,
-      paddingBottom: 8,
+      paddingTop: MarketplaceSpacing.sm,
+      paddingBottom: MarketplaceSpacing.xs,
       backgroundColor: theme.background,
     },
     content: {
-      paddingBottom: 40,
-      paddingTop: 12,
-      gap: 12,
+      paddingBottom: 28,
+      paddingTop: MarketplaceSpacing.sm,
+      gap: MarketplaceSpacing.sm,
     },
     filterRow: {
-      paddingHorizontal: 20,
+      paddingHorizontal: MarketplaceSpacing.lg,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
     },
     filterButton: {
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      borderRadius: 999,
-      backgroundColor: theme.surfaceMuted,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: MarketplaceSpacing.xs,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.sm,
+      borderRadius: MarketplaceRadius.pill,
+      backgroundColor: theme.surface,
       borderWidth: 1,
       borderColor: theme.border,
+      shadowColor: theme.shadow,
+      ...MarketplaceShadow.subtle,
     },
     filterButtonLabel: {
       color: theme.primary,
-      fontWeight: "600",
+      fontWeight: "800",
+    },
+    resultSummary: {
+      flex: 1,
+      alignItems: "flex-end",
+      gap: 2,
     },
     resultCount: {
       color: theme.textMuted,
-      fontSize: 13,
+      fontSize: MarketplaceTypography.bodySmall,
+      fontWeight: "700",
+    },
+    sortSummary: {
+      color: theme.textSubtle,
+      fontSize: MarketplaceTypography.caption,
+      fontWeight: "600",
+    },
+    activeFiltersRow: {
+      paddingHorizontal: MarketplaceSpacing.lg,
+      gap: MarketplaceSpacing.sm,
+    },
+    activeFilterChip: {
+      maxWidth: 190,
+      minHeight: 34,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: MarketplaceSpacing.xs,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.xs,
+      borderRadius: MarketplaceRadius.pill,
+      backgroundColor: theme.primaryMuted,
+      borderWidth: 1,
+      borderColor: theme.primary,
+    },
+    activeFilterLabel: {
+      color: theme.primary,
+      fontSize: MarketplaceTypography.bodySmall,
+      fontWeight: "800",
+    },
+    clearFilterChip: {
+      minHeight: 34,
+      justifyContent: "center",
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.xs,
+      borderRadius: MarketplaceRadius.pill,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    clearFilterLabel: {
+      color: theme.textMuted,
+      fontSize: MarketplaceTypography.bodySmall,
+      fontWeight: "800",
     },
     loading: {
-      paddingVertical: 24,
+      paddingVertical: MarketplaceSpacing.xxl,
       alignItems: "center",
     },
     grid: {
       flexDirection: "row",
       flexWrap: "wrap",
       justifyContent: "space-between",
-      paddingHorizontal: 20,
-      rowGap: 16,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      rowGap: MarketplaceSpacing.md,
     },
     sponsoredGridItem: {
       width: "48%",
     },
     emptyState: {
-      paddingHorizontal: 20,
-      paddingVertical: 40,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      paddingVertical: MarketplaceSpacing.xxl,
       alignItems: "center",
-      gap: 8,
+      gap: MarketplaceSpacing.sm,
     },
     emptyTitle: {
       fontSize: 16,
@@ -523,23 +690,25 @@ const createStyles = (theme: ThemeColors) =>
       flex: 1,
       backgroundColor: "rgba(0, 0, 0, 0.4)",
       justifyContent: "center",
-      padding: 20,
+      padding: MarketplaceSpacing.lg,
     },
     modalCard: {
       backgroundColor: theme.surface,
-      borderRadius: 18,
-      padding: 18,
+      borderRadius: MarketplaceRadius.sheet,
+      padding: MarketplaceSpacing.lg,
       maxHeight: "85%",
       borderWidth: 1,
       borderColor: theme.border,
+      shadowColor: theme.shadow,
+      ...MarketplaceShadow.raised,
     },
     modalContent: {
-      gap: 16,
-      paddingBottom: 12,
+      gap: MarketplaceSpacing.lg,
+      paddingBottom: MarketplaceSpacing.md,
     },
     modalTitle: {
-      fontSize: 18,
-      fontWeight: "700",
+      fontSize: MarketplaceTypography.title,
+      fontWeight: "800",
       color: theme.text,
     },
     priceRow: {
@@ -557,22 +726,23 @@ const createStyles = (theme: ThemeColors) =>
     priceInput: {
       borderWidth: 1,
       borderColor: theme.border,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
+      borderRadius: MarketplaceRadius.md,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: MarketplaceSpacing.sm,
       color: theme.text,
       backgroundColor: theme.surface,
+      textAlign: I18nManager.isRTL ? "right" : "left",
     },
     modalActions: {
       flexDirection: "row",
       justifyContent: "flex-end",
-      gap: 12,
-      paddingTop: 4,
+      gap: MarketplaceSpacing.md,
+      paddingTop: MarketplaceSpacing.xs,
     },
     modalButton: {
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 12,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      paddingVertical: MarketplaceSpacing.sm,
+      borderRadius: MarketplaceRadius.md,
       backgroundColor: theme.surfaceMuted,
       borderWidth: 1,
       borderColor: theme.border,
