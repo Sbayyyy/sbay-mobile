@@ -56,6 +56,20 @@
     "successTitle": "Done",
     "dismiss": "OK"
   },
+  "contact": {
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "subject": "Subject",
+      "subjectPlaceholder": "How can we help?",
+      "message": "Message",
+      "messagePlaceholder": "Tell us what happened.",
+      "submitting": "Sending...",
+      "submit": "Send message"
+    }
+  },
   "auth": {
     "signIn": {
       "title": "Sign in",
@@ -84,6 +98,14 @@
       "errors": {
         "unable": "Unable to sign in. Try again."
       }
+    },
+    "google": {
+      "signIn": "Continue with Google",
+      "signUp": "Sign up with Google",
+      "divider": "or continue with email",
+      "completing": "Completing Google sign-in...",
+      "errorTitle": "Google sign-in failed",
+      "error": "Unable to continue with Google."
     },
     "signUp": {
       "title": "Create account",
@@ -184,6 +206,7 @@
     "baby": "Baby & kids"
   },
   "navigation": {
+    "back": "Back",
     "settings": "Settings",
     "modalTitle": "Modal",
     "tabs": {
@@ -416,7 +439,9 @@
       "title": "Offer",
       "counterTitle": "Counter offer",
       "accept": "Accept",
+      "acceptAccessibilityLabel": "Accept offer",
       "reject": "Reject",
+      "rejectAccessibilityLabel": "Reject offer",
       "counter": "Counter",
       "status": {
         "pending": "Pending",
@@ -594,7 +619,10 @@
       "comingSoon": "Coming soon",
       "displayNameRequired": "Display name is required.",
       "displayNameInvalid": "Display name contains disallowed content.",
-      "phoneInvalid": "Phone contains disallowed content."
+      "phoneInvalid": "Phone contains disallowed content.",
+      "loadError": "Unable to load profile.",
+      "uploadError": "Unable to upload avatar.",
+      "saveError": "Unable to save profile."
     },
     "security": {
       "title": "Security",
@@ -637,7 +665,70 @@
       "outbid": "Outbid alerts",
       "wonAuction": "Won auctions",
       "priceDrops": "Price drops",
-      "promotions": "Promotions"
+      "promotions": "Promotions",
+      "loadError": "Unable to load notification settings.",
+      "saveError": "Unable to save notification settings.",
+      "saveErrorTitle": "Could not save",
+      "emailSection": "Email",
+      "emailMessages": "Email messages",
+      "emailNewBids": "Email new bids",
+      "emailOutbid": "Email outbid alerts",
+      "emailWonAuction": "Email won auctions",
+      "emailPriceDrops": "Email price drops",
+      "emailPromotions": "Email promotions",
+      "pushSection": "Push",
+      "pushMessages": "Push messages",
+      "pushNewBids": "Push new bids",
+      "pushOutbid": "Push outbid alerts",
+      "pushWonAuction": "Push won auctions",
+      "synced": "Preferences sync with your account."
+    },
+    "payments": {
+      "title": "Payments",
+      "subtitle": "Paid boosts are created at checkout and activated after the provider confirms payment.",
+      "providerValue": "Checkout",
+      "providerLabel": "Secure provider",
+      "savedCardsValue": "None",
+      "savedCardsLabel": "Cards stored in app",
+      "boostPackages": "Boost packages",
+      "loadError": "Unable to load payment options.",
+      "retry": "Retry",
+      "durationDays": "{{count}} days",
+      "noPackages": "No paid packages are available right now.",
+      "howTitle": "How payments work",
+      "howBody": "Choose a boost while publishing or from My listings. The app opens checkout, then your listing updates automatically after confirmation.",
+      "billingHelp": "Open billing help"
+    },
+    "help": {
+      "contactTitle": "Contact support",
+      "contactBody": "Send a message to the support team.",
+      "contactRequired": "Fill out all contact fields.",
+      "contactSuccess": "Message sent. Support will follow up soon.",
+      "contactError": "Unable to send message. Please try again.",
+      "bugTitle": "Report a bug",
+      "bugBody": "Send a technical report with mobile device details.",
+      "bugRequired": "Add a bug title and description.",
+      "bugSuccess": "Bug report sent. Thank you.",
+      "bugError": "Unable to submit bug report. Please try again.",
+      "bugSummary": "Title",
+      "bugSummaryPlaceholder": "Short bug summary",
+      "bugScreen": "Screen",
+      "bugScreenPlaceholder": "settings/help",
+      "bugSeverity": "Severity",
+      "severityLow": "Low",
+      "severityMedium": "Medium",
+      "severityHigh": "High",
+      "severityCritical": "Critical",
+      "bugDescription": "Description",
+      "bugDescriptionPlaceholder": "What did you expect, and what happened instead?",
+      "bugSteps": "Steps to reproduce",
+      "bugStepsPlaceholder": "1. Open... 2. Tap...",
+      "bugExpected": "Expected",
+      "bugExpectedPlaceholder": "What should happen?",
+      "bugActual": "Actual",
+      "bugActualPlaceholder": "What happened instead?",
+      "bugSubmitting": "Submitting...",
+      "bugSubmit": "Submit bug report"
     }
   },
   "sellerProfile": {

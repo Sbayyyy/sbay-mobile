@@ -36,9 +36,15 @@ export function NotificationsSection() {
       const data = await getNotificationPreferences();
       setPrefs(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load notification settings");
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("settings.notifications.loadError", {
+              defaultValue: "Unable to load notification settings.",
+            }),
+      );
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -59,7 +65,12 @@ export function NotificationsSection() {
       }
     } catch (err) {
       setPrefs(previous);
-      const message = err instanceof Error ? err.message : "Unable to save notification settings";
+      const message =
+        err instanceof Error
+          ? err.message
+          : t("settings.notifications.saveError", {
+              defaultValue: "Unable to save notification settings.",
+            });
       setError(message);
       Alert.alert(t("settings.notifications.saveErrorTitle", { defaultValue: "Could not save" }), message);
     } finally {

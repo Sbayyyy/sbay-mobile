@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { I18nManager, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Constants from "expo-constants";
 import { useTranslation } from "react-i18next";
 
@@ -94,7 +94,7 @@ export function AboutSection() {
             accessibilityRole="button"
           >
             <Text style={styles.linkLabel}>{item.label}</Text>
-            <Text style={styles.linkChevron}>&gt;</Text>
+            <Text style={styles.linkChevron}>{I18nManager.isRTL ? "<" : ">"}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -124,7 +124,13 @@ const createLocalStyles = (theme: ThemeColors) =>
       borderBottomColor: theme.hairline,
     },
     infoLabel: { flex: 1, color: theme.textMuted, fontSize: 13, fontWeight: "600" },
-    infoValue: { flex: 1.3, color: theme.text, fontSize: 13, fontWeight: "700", textAlign: "right" },
+    infoValue: {
+      flex: 1.3,
+      color: theme.text,
+      fontSize: 13,
+      fontWeight: "700",
+      textAlign: I18nManager.isRTL ? "left" : "right",
+    },
     linkGroup: {
       borderRadius: 14,
       borderWidth: 1,

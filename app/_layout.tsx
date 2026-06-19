@@ -3,7 +3,7 @@ import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { BackHandler, LogBox, Platform, ToastAndroid } from "react-native";
+import { BackHandler, LogBox, Platform } from "react-native";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
 import * as Notifications from "expo-notifications";
@@ -99,15 +99,12 @@ function RootLayoutContent() {
   const pathname = usePathname();
   const { refreshUnreadCount } = useNotificationContext();
   const pendingRouteRef = useRef<string | null>(null);
-  const lastBackPressRef = useRef(0);
-  const lastHomeBackPressRef = useRef(0);
 
   const isHomeRoute = useCallback(() => {
     return segmentList[0] === "(tabs)" && (segmentList[1] == null || segmentList[1] === "index");
   }, [segmentList]);
 
   const goHome = useCallback(() => {
-    lastHomeBackPressRef.current = 0;
     router.replace("/(tabs)");
   }, [router]);
 
@@ -229,6 +226,7 @@ function RootLayoutContent() {
     const isPublicAuthRoute = route === "sign-in" || route === "sign-up";
     const isOnboardingRoute = route === "onboarding";
     const isPasswordResetRoute = route === "forgot-password" || route === "reset-password";
+    const isGoogleAuthRoute = route === "auth" && segmentList[1] === "google";
     const isLegacyPasswordResetRoute =
       route === "auth" && (segmentList[1] === "resetPassword" || segmentList[1] === "forgetPassword");
     const isVerificationRoute =
@@ -237,6 +235,7 @@ function RootLayoutContent() {
       (route === "api" && segmentList[1] === "auth" && segmentList[2] === "verify-email");
     const canBypassOnboarding =
       isOnboardingRoute ||
+      isGoogleAuthRoute ||
       isVerificationRoute ||
       isPasswordResetRoute ||
       isLegacyPasswordResetRoute;
@@ -275,6 +274,7 @@ function RootLayoutContent() {
     if (
       status === "unauthenticated" &&
       !isPublicAuthRoute &&
+      !isGoogleAuthRoute &&
       !isPasswordResetRoute &&
       !isLegacyPasswordResetRoute &&
       !isVerificationRoute
@@ -293,27 +293,11 @@ function RootLayoutContent() {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (status !== "authenticated") return false;
 
-      const now = Date.now();
-
       if (isHomeRoute()) {
-        const homeElapsed = now - lastHomeBackPressRef.current;
-        if (homeElapsed < 1800) {
-          BackHandler.exitApp();
-          return true;
-        }
-        lastHomeBackPressRef.current = now;
-        ToastAndroid.show(t("navigation.backToExit", { defaultValue: "Press back again to exit" }), ToastAndroid.SHORT);
+        BackHandler.exitApp();
         return true;
       }
 
-      const elapsed = now - lastBackPressRef.current;
-      if (elapsed < 700) {
-        lastBackPressRef.current = 0;
-        goHome();
-        return true;
-      }
-
-      lastBackPressRef.current = now;
       goBackOneLayer();
       return true;
     });
@@ -321,7 +305,7 @@ function RootLayoutContent() {
     return () => {
       subscription.remove();
     };
-  }, [goBackOneLayer, goHome, isHomeRoute, status, t]);
+  }, [goBackOneLayer, isHomeRoute, status]);
 
   if (status === "loading" || (status === "authenticated" && onboardingStatus === "loading")) {
     return (
@@ -342,6 +326,7 @@ function RootLayoutContent() {
             <>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="onboarding" />
+              <Stack.Screen name="auth/google" />
               <Stack.Screen name="auth/verify-email" />
               <Stack.Screen name="verify-email" />
               <Stack.Screen name="forgot-password" />
@@ -363,6 +348,7 @@ function RootLayoutContent() {
               <Stack.Screen name="sign-up" />
               <Stack.Screen name="forgot-password" />
               <Stack.Screen name="reset-password" />
+              <Stack.Screen name="auth/google" />
               <Stack.Screen name="auth/forgetPassword" />
               <Stack.Screen name="auth/resetPassword" />
               <Stack.Screen name="auth/verify-email" />

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  I18nManager,
   StyleSheet,
   Text,
   TextInput,
@@ -207,14 +208,15 @@ const createStyles = (theme: ReturnType<typeof useAppTheme>) =>
       paddingVertical: MarketplaceSpacing.sm,
       fontSize: MarketplaceTypography.input,
       color: theme.text,
-      backgroundColor: theme.surface,
+      backgroundColor: theme.inputBackground,
+      textAlign: I18nManager.isRTL ? "right" : "left",
     },
     inputWithToggle: {
       flexDirection: "row",
       alignItems: "center",
       gap: MarketplaceSpacing.sm,
       paddingVertical: 0,
-      paddingRight: MarketplaceSpacing.sm,
+      paddingEnd: MarketplaceSpacing.sm,
     },
     inputField: {
       flex: 1,
@@ -222,6 +224,7 @@ const createStyles = (theme: ReturnType<typeof useAppTheme>) =>
       paddingVertical: 12,
       fontSize: MarketplaceTypography.input,
       color: theme.text,
+      textAlign: I18nManager.isRTL ? "right" : "left",
     },
     inputError: {
       borderColor: theme.danger,

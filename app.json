@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.syrianbay.app",
-      "versionCode": 23,
+      "versionCode": 25,
       "icon":"./assets/images/playstore-icon.png",
       "intentFilters": [
         {

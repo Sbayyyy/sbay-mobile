@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import { AppScreen } from "@/components/layout/AppScreen";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { ValidatedInput } from "@/components/ValidatedInput";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { register } from "@/services/auth";
@@ -399,6 +400,16 @@ export default function SignUpScreen() {
           </Text>
         </View>
 
+        <GoogleAuthButton mode="signUp" disabled={isSubmitting} />
+
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerLabel}>
+            {t("auth.google.divider", { defaultValue: "or continue with email" })}
+          </Text>
+          <View style={styles.dividerLine} />
+        </View>
+
         <View style={styles.form}>
           <ValidatedInput
             label={t("auth.signUp.nameRequiredLabel", { defaultValue: "User name *" })}
@@ -611,6 +622,21 @@ const createStyles = (theme: ReturnType<typeof useAppTheme>) =>
     },
     form: {
       gap: 16,
+    },
+    dividerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    dividerLine: {
+      flex: 1,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: theme.border,
+    },
+    dividerLabel: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: theme.textMuted,
     },
     submitButton: {
       borderRadius: 16,

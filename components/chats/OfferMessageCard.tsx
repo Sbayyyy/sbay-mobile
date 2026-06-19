@@ -32,6 +32,8 @@ export function OfferMessageCard({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const statusKey = `chats.offer.status.${offer.status}` as const;
   const statusLabel = t(statusKey, { defaultValue: offer.status.charAt(0).toUpperCase() + offer.status.slice(1) });
+  const acceptLabel = t("chats.offer.accept", { defaultValue: "Accept" });
+  const rejectLabel = t("chats.offer.reject", { defaultValue: "Reject" });
 
   return (
     <View style={styles.offerCard}>
@@ -60,22 +62,26 @@ export function OfferMessageCard({
           {canAcceptReject ? (
             <>
               <TouchableOpacity
-                accessibilityLabel={t("chats.offer.accept", { defaultValue: "Accept" })}
+                accessibilityLabel={t("chats.offer.acceptAccessibilityLabel", {
+                  defaultValue: "Accept offer",
+                })}
                 style={[styles.offerActionButton, styles.offerAcceptButton]}
                 disabled={busy}
                 onPress={() => onAccept(message)}
               >
                 <Text style={styles.offerPrimaryActionLabel}>
-                  {busy ? "..." : t("chats.offer.accept", { defaultValue: "Accept" })}
+                  {busy ? "..." : acceptLabel}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                accessibilityLabel={t("chats.offer.reject", { defaultValue: "Reject" })}
+                accessibilityLabel={t("chats.offer.rejectAccessibilityLabel", {
+                  defaultValue: "Reject offer",
+                })}
                 style={styles.offerActionButton}
                 disabled={busy}
                 onPress={() => onReject(message)}
               >
-                <Text style={styles.offerSecondaryActionLabel}>{t("chats.offer.reject", { defaultValue: "Reject" })}</Text>
+                <Text style={styles.offerSecondaryActionLabel}>{rejectLabel}</Text>
               </TouchableOpacity>
             </>
           ) : null}

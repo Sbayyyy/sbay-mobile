@@ -410,6 +410,17 @@ export default function SearchScreen() {
               <Text style={styles.emptySubtitle}>
                 {t("listings.emptySubtitle")}
               </Text>
+              {activeFilterCount > 0 ? (
+                <TouchableOpacity
+                  style={styles.emptyAction}
+                  onPress={resetFilters}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.emptyActionLabel}>
+                    {t("common.actions.reset", { defaultValue: "Reset" })}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : (
             <View style={styles.grid}>
@@ -672,19 +683,43 @@ const createStyles = (theme: ThemeColors) =>
       width: "48%",
     },
     emptyState: {
+      marginHorizontal: MarketplaceSpacing.lg,
       paddingHorizontal: MarketplaceSpacing.lg,
       paddingVertical: MarketplaceSpacing.xxl,
       alignItems: "center",
       gap: MarketplaceSpacing.sm,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: MarketplaceRadius.card,
+      shadowColor: theme.shadow,
+      ...MarketplaceShadow.subtle,
     },
     emptyTitle: {
       fontSize: 16,
       fontWeight: "700",
       color: theme.text,
+      textAlign: "center",
     },
     emptySubtitle: {
       fontSize: 14,
       color: theme.textMuted,
+      textAlign: "center",
+      lineHeight: 20,
+    },
+    emptyAction: {
+      marginTop: MarketplaceSpacing.xs,
+      minHeight: 42,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      borderRadius: MarketplaceRadius.md,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.primary,
+    },
+    emptyActionLabel: {
+      color: theme.primaryForeground,
+      fontSize: MarketplaceTypography.bodySmall,
+      fontWeight: "800",
     },
     modalBackdrop: {
       flex: 1,

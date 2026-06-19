@@ -1,0 +1,16 @@
+FROM node:22-bookworm
+
+ENV EXPO_NO_TELEMETRY=1 \
+    CI=1 \
+    BROWSER=none
+
+WORKDIR /app
+
+COPY package.json package-lock.json .npmrc ./
+RUN npm ci
+
+COPY . .
+
+EXPOSE 8081 19000 19001 19002 19006
+
+CMD ["npx", "expo", "start", "--web", "--host", "lan"]

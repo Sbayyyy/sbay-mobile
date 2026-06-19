@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   Alert,
+  I18nManager,
   KeyboardAvoidingView,
   Platform,
   Text,
@@ -45,6 +46,7 @@ function PasswordInput({
         placeholderTextColor={theme.inputPlaceholder}
         secureTextEntry={!isVisible}
         accessibilityLabel={accessibilityLabel}
+        textAlign={I18nManager.isRTL ? "right" : "left"}
       />
       <PasswordVisibilityToggle
         isVisible={isVisible}
