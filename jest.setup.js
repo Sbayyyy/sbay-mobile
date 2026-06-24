@@ -69,12 +69,6 @@ jest.mock("expo-router", () => ({
   }),
 }));
 
-// Mock expo-navigation-bar
-jest.mock("expo-navigation-bar", () => ({
-  setBackgroundColorAsync: jest.fn(),
-  setButtonStyleAsync: jest.fn(),
-}));
-
 // Suppress console errors in tests
 const originalError = console.error;
 beforeAll(() => {

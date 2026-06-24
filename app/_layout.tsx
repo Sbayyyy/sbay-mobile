@@ -1,7 +1,6 @@
 import { DarkTheme as NavigationDarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import * as NavigationBar from "expo-navigation-bar";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { BackHandler, LogBox, Platform } from "react-native";
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
@@ -117,10 +116,6 @@ function RootLayoutContent() {
         router.replace("/settings");
         return;
       }
-      if (router.canGoBack()) {
-        router.back();
-        return;
-      }
       router.replace("/(tabs)/me");
       return;
     }
@@ -170,11 +165,6 @@ function RootLayoutContent() {
       dark: isDark,
     };
   }, [colors, isDark]);
-
-  useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(colors.navigationBackground).catch(() => {});
-    NavigationBar.setButtonStyleAsync(isDark ? "light" : "dark").catch(() => {});
-  }, [colors.navigationBackground, isDark]);
 
   const openNotificationTarget = useCallback(
     (data?: PushNotificationData | null) => {
@@ -312,7 +302,7 @@ function RootLayoutContent() {
       <PaperProvider theme={paperTheme}>
         <ThemeProvider value={navigationTheme}>
           <StartupLoadingScreen colors={colors} />
-          <StatusBar style="light" translucent backgroundColor="transparent" />
+          <StatusBar style="light" />
         </ThemeProvider>
       </PaperProvider>
     );
@@ -358,7 +348,7 @@ function RootLayoutContent() {
           )}
         </Stack>
         <BugReportFab />
-        <StatusBar style={statusStyle} translucent backgroundColor="transparent" />
+        <StatusBar style={statusStyle} />
       </ThemeProvider>
     </PaperProvider>
   );

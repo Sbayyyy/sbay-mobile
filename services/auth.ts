@@ -137,8 +137,16 @@ export async function completeGoogleAuthFromParams(
 
   const token = getFirstParam(params, ["token", "accessToken", "access_token", "jwt"]);
   const refreshToken = getFirstParam(params, ["refreshToken", "refresh_token"]);
+  const refreshTokenExpiresAt = getFirstParam(params, [
+    "refreshTokenExpiresAt",
+    "refresh_token_expires_at",
+  ]);
   if (token) {
-    return { token, refreshToken: refreshToken ?? null };
+    return {
+      token,
+      refreshToken: refreshToken ?? null,
+      refreshTokenExpiresAt: refreshTokenExpiresAt ?? null,
+    };
   }
 
   const code = getFirstParam(params, ["code"]);
