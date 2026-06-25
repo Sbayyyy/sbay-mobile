@@ -56,6 +56,20 @@
     "successTitle": "تم",
     "dismiss": "حسنا"
   },
+  "contact": {
+    "form": {
+      "name": "الاسم",
+      "namePlaceholder": "اسمك",
+      "email": "البريد الإلكتروني",
+      "emailPlaceholder": "you@example.com",
+      "subject": "الموضوع",
+      "subjectPlaceholder": "كيف يمكننا المساعدة؟",
+      "message": "الرسالة",
+      "messagePlaceholder": "أخبرنا بما حدث.",
+      "submitting": "جار الإرسال...",
+      "submit": "إرسال الرسالة"
+    }
+  },
   "auth": {
     "signIn": {
       "title": "تسجيل الدخول",
@@ -84,6 +98,14 @@
       "errors": {
         "unable": "تعذر تسجيل الدخول. حاول مرة أخرى."
       }
+    },
+    "google": {
+      "signIn": "المتابعة باستخدام Google",
+      "signUp": "التسجيل باستخدام Google",
+      "divider": "أو تابع بالبريد الإلكتروني",
+      "completing": "جار إكمال تسجيل الدخول عبر Google...",
+      "errorTitle": "فشل تسجيل الدخول عبر Google",
+      "error": "تعذر المتابعة باستخدام Google."
     },
     "signUp": {
       "title": "إنشاء حساب",
@@ -158,6 +180,7 @@
     "baby": "أطفال"
   },
   "navigation": {
+    "back": "رجوع",
     "settings": "الإعدادات",
     "modalTitle": "نافذة منبثقة",
     "tabs": {
@@ -387,7 +410,9 @@
       "title": "عرض",
       "counterTitle": "عرض مضاد",
       "accept": "قبول",
+      "acceptAccessibilityLabel": "قبول العرض",
       "reject": "رفض",
+      "rejectAccessibilityLabel": "رفض العرض",
       "counter": "رد",
       "status": {
         "pending": "قيد الانتظار",
@@ -565,7 +590,10 @@
       "comingSoon": "قريبا",
       "displayNameRequired": "اسم العرض مطلوب.",
       "displayNameInvalid": "اسم العرض يحتوي على محتوى غير مسموح.",
-      "phoneInvalid": "رقم الهاتف يحتوي على محتوى غير مسموح."
+      "phoneInvalid": "رقم الهاتف يحتوي على محتوى غير مسموح.",
+      "loadError": "تعذر تحميل الملف الشخصي.",
+      "uploadError": "تعذر رفع الصورة.",
+      "saveError": "تعذر حفظ الملف الشخصي."
     },
     "security": {
       "title": "الأمان",
@@ -608,7 +636,70 @@
       "outbid": "تنبيهات تجاوز المزايدة",
       "wonAuction": "مزادات فزت بها",
       "priceDrops": "انخفاض الأسعار",
-      "promotions": "العروض الترويجية"
+      "promotions": "العروض الترويجية",
+      "loadError": "تعذر تحميل إعدادات الإشعارات.",
+      "saveError": "تعذر حفظ إعدادات الإشعارات.",
+      "saveErrorTitle": "تعذر الحفظ",
+      "emailSection": "البريد الإلكتروني",
+      "emailMessages": "رسائل البريد الإلكتروني",
+      "emailNewBids": "مزايدات جديدة عبر البريد",
+      "emailOutbid": "تنبيهات تجاوز المزايدة عبر البريد",
+      "emailWonAuction": "مزادات فزت بها عبر البريد",
+      "emailPriceDrops": "انخفاض الأسعار عبر البريد",
+      "emailPromotions": "العروض الترويجية عبر البريد",
+      "pushSection": "الإشعارات الفورية",
+      "pushMessages": "رسائل فورية",
+      "pushNewBids": "مزايدات جديدة فورية",
+      "pushOutbid": "تنبيهات تجاوز المزايدة فورية",
+      "pushWonAuction": "مزادات فزت بها فورية",
+      "synced": "تتم مزامنة التفضيلات مع حسابك."
+    },
+    "payments": {
+      "title": "المدفوعات",
+      "subtitle": "يتم إنشاء التعزيزات المدفوعة عند الدفع وتفعيلها بعد تأكيد مزود الدفع.",
+      "providerValue": "الدفع",
+      "providerLabel": "مزود آمن",
+      "savedCardsValue": "لا يوجد",
+      "savedCardsLabel": "بطاقات محفوظة في التطبيق",
+      "boostPackages": "باقات التعزيز",
+      "loadError": "تعذر تحميل خيارات الدفع.",
+      "retry": "إعادة المحاولة",
+      "durationDays": "{{count}} يوم",
+      "noPackages": "لا توجد باقات مدفوعة متاحة حاليا.",
+      "howTitle": "كيف تعمل المدفوعات",
+      "howBody": "اختر تعزيزا أثناء النشر أو من إعلاناتي. يفتح التطبيق صفحة الدفع، ثم يتم تحديث الإعلان تلقائيا بعد التأكيد.",
+      "billingHelp": "فتح مساعدة الفواتير"
+    },
+    "help": {
+      "contactTitle": "التواصل مع الدعم",
+      "contactBody": "أرسل رسالة إلى فريق الدعم.",
+      "contactRequired": "املأ جميع حقول التواصل.",
+      "contactSuccess": "تم إرسال الرسالة. سيتابع الدعم معك قريبا.",
+      "contactError": "تعذر إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+      "bugTitle": "الإبلاغ عن خلل",
+      "bugBody": "أرسل تقريرا تقنيا مع تفاصيل الجهاز.",
+      "bugRequired": "أضف عنوان الخلل ووصفه.",
+      "bugSuccess": "تم إرسال تقرير الخلل. شكرا لك.",
+      "bugError": "تعذر إرسال تقرير الخلل. يرجى المحاولة مرة أخرى.",
+      "bugSummary": "العنوان",
+      "bugSummaryPlaceholder": "ملخص قصير للخلل",
+      "bugScreen": "الشاشة",
+      "bugScreenPlaceholder": "settings/help",
+      "bugSeverity": "الأولوية",
+      "severityLow": "منخفض",
+      "severityMedium": "متوسط",
+      "severityHigh": "مرتفع",
+      "severityCritical": "حرج",
+      "bugDescription": "الوصف",
+      "bugDescriptionPlaceholder": "ما الذي توقعت حدوثه، وماذا حدث بدلا من ذلك؟",
+      "bugSteps": "خطوات إعادة المشكلة",
+      "bugStepsPlaceholder": "1. افتح... 2. اضغط...",
+      "bugExpected": "المتوقع",
+      "bugExpectedPlaceholder": "ما الذي يجب أن يحدث؟",
+      "bugActual": "الفعلي",
+      "bugActualPlaceholder": "ماذا حدث بدلا من ذلك؟",
+      "bugSubmitting": "جار الإرسال...",
+      "bugSubmit": "إرسال تقرير الخلل"
     }
   },
   "modal": {

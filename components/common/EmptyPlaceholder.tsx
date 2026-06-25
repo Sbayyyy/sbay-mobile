@@ -54,6 +54,8 @@ export function EmptyPlaceholder({
             { backgroundColor: theme.primary, borderColor: theme.border },
           ]}
           onPress={onActionPress}
+          disabled={!onActionPress}
+          accessibilityRole="button"
         >
           <Text style={[styles.buttonLabel, { color: theme.primaryForeground }]}>
             {actionLabel}
@@ -66,26 +68,30 @@ export function EmptyPlaceholder({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 18,
+    width: "100%",
+    maxWidth: 420,
+    alignSelf: "center",
+    borderRadius: 16,
     alignItems: "center",
-    padding: 28,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
     gap: 12,
     borderWidth: 1,
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
   icon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 17,
+    fontWeight: "800",
     textAlign: "center",
   },
   subtitle: {
@@ -95,10 +101,13 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 4,
-    paddingHorizontal: 18,
+    minHeight: 44,
+    paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonLabel: {
     fontWeight: "600",

@@ -44,7 +44,9 @@ export default function FavoritesScreen() {
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
-  const handlePlaceholder = () => {};
+  const handlePlaceholder = () => {
+    router.push("/search?reset=true");
+  };
 
   const loadFavorites = useCallback((mode: "initial" | "refresh" = "initial") => {
     let isMounted = true;

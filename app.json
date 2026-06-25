@@ -4,8 +4,8 @@
     "slug": "sbay",
     "version": "1.0.0",
     "description": "سباي سوق سوريا المحلي للبيع والشراء: سيارات، عقارات، إلكترونيات، أثاث، أزياء وإعلانات قريبة مع محادثة آمنة. SBay is Syria's local marketplace.",
-    "orientation": "portrait",
-    "icon": "./assets/images/playstore-icon.png",
+    "orientation": "default",
+    "icon": "./assets/images/android-icon-foreground.png",
     "scheme": "sbay",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -19,8 +19,13 @@
     },
     "android": {
       "package": "com.syrianbay.app",
-      "versionCode": 23,
-      "icon":"./assets/images/playstore-icon.png",
+      "versionCode": 27,
+      "icon": "./assets/images/android-icon-foreground.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png",
+        "backgroundColor": "#0f448f"
+      },
       "intentFilters": [
         {
           "action": "VIEW",
@@ -109,9 +114,10 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/playstore-icon.png"
     },
     "plugins": [
+      "./plugins/withLargeScreenSupport",
       "expo-router",
       [
         "expo-splash-screen",

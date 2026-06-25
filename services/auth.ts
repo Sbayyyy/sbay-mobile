@@ -1,8 +1,9 @@
 import * as SecureStore from "expo-secure-store";
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 
-import { apiRequest } from "@/services/api";
+import { API_BASE_URL, apiRequest } from "@/services/api";
 import { getAuthToken, setAuthToken, type AuthRefreshResult } from "@/services/auth-session";
-import { API_BASE_URL } from "@/services/api";
 import { ErrorReporter } from "@/services/error-reporter";
 
 export type AuthUser = {
@@ -27,6 +28,13 @@ export type AuthResponse = {
   token: string;
   refreshToken?: string | null;
   refreshTokenExpiresAt?: string | null;
+};
+
+export type GoogleAuthResult = {
+  token: string;
+  refreshToken?: string | null;
+  refreshTokenExpiresAt?: string | null;
+  user?: AuthUser | null;
 };
 
 export type RegisterResponse = {
@@ -68,6 +76,14 @@ export type ResetPasswordPayload = {
 
 const TOKEN_STORAGE_KEY = "sbay.auth.token";
 const REFRESH_TOKEN_STORAGE_KEY = "sbay.auth.refreshToken";
+const GOOGLE_REDIRECT_PATH = "auth/google";
+export const GOOGLE_AUTH_CANCELLED_ERROR = "google_auth_cancelled";
+const GOOGLE_AUTH_START_PATH =
+  process.env.EXPO_PUBLIC_GOOGLE_AUTH_START_PATH ?? "/api/auth/google/mobile/start";
+const GOOGLE_AUTH_EXCHANGE_PATH =
+  process.env.EXPO_PUBLIC_GOOGLE_AUTH_EXCHANGE_PATH ?? "/api/auth/google/mobile/callback";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
   return apiRequest<AuthResponse>("/api/auth/login", {
@@ -83,6 +99,89 @@ export async function register(payload: RegisterPayload): Promise<RegisterRespon
     body: JSON.stringify(payload),
     skipAuthRefresh: true,
   });
+}
+
+function getFirstParam(
+  params: Record<string, string | string[] | undefined>,
+  keys: string[],
+): string | undefined {
+  for (const key of keys) {
+    const value = params[key];
+    if (Array.isArray(value)) {
+      const first = value.find((item) => item.trim().length > 0);
+      if (first) return first;
+    } else if (value?.trim()) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+export function getGoogleRedirectUri(): string {
+  return Linking.createURL(GOOGLE_REDIRECT_PATH);
+}
+
+export function getGoogleAuthStartUrl(redirectUri = getGoogleRedirectUri()): string {
+  const separator = GOOGLE_AUTH_START_PATH.includes("?") ? "&" : "?";
+  return `${API_BASE_URL}${GOOGLE_AUTH_START_PATH}${separator}redirectUri=${encodeURIComponent(redirectUri)}`;
+}
+
+export async function completeGoogleAuthFromParams(
+  params: Record<string, string | string[] | undefined>,
+  redirectUri = getGoogleRedirectUri(),
+): Promise<GoogleAuthResult> {
+  const error = getFirstParam(params, ["error", "error_description", "message"]);
+  if (error) {
+    throw new Error(error);
+  }
+
+  const token = getFirstParam(params, ["token", "accessToken", "access_token", "jwt"]);
+  const refreshToken = getFirstParam(params, ["refreshToken", "refresh_token"]);
+  const refreshTokenExpiresAt = getFirstParam(params, [
+    "refreshTokenExpiresAt",
+    "refresh_token_expires_at",
+  ]);
+  if (token) {
+    return {
+      token,
+      refreshToken: refreshToken ?? null,
+      refreshTokenExpiresAt: refreshTokenExpiresAt ?? null,
+    };
+  }
+
+  const code = getFirstParam(params, ["code"]);
+  if (!code) {
+    throw new Error("Google sign-in did not return an authorization code.");
+  }
+
+  return apiRequest<GoogleAuthResult>(GOOGLE_AUTH_EXCHANGE_PATH, {
+    method: "POST",
+    body: JSON.stringify({ code, redirectUri }),
+    skipAuthRefresh: true,
+  });
+}
+
+export async function completeGoogleAuthFromUrl(
+  callbackUrl: string,
+  redirectUri = getGoogleRedirectUri(),
+): Promise<GoogleAuthResult> {
+  const parsed = Linking.parse(callbackUrl);
+  return completeGoogleAuthFromParams(
+    (parsed.queryParams ?? {}) as Record<string, string | string[] | undefined>,
+    redirectUri,
+  );
+}
+
+export async function loginWithGoogle(): Promise<GoogleAuthResult> {
+  const redirectUri = getGoogleRedirectUri();
+  const authUrl = getGoogleAuthStartUrl(redirectUri);
+  const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+
+  if (result.type === "success") {
+    return completeGoogleAuthFromUrl(result.url, redirectUri);
+  }
+
+  throw new Error(GOOGLE_AUTH_CANCELLED_ERROR);
 }
 
 export async function requestEmailVerification(): Promise<void> {

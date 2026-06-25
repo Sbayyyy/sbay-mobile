@@ -253,10 +253,12 @@ export default function ChatsScreen() {
               />
             }
           >
-            <Text style={styles.emptyTitle}>
-              {t("chats.errorTitle", { defaultValue: "Unable to load chats" })}
-            </Text>
-            <Text style={styles.emptySubtitle}>{error}</Text>
+            <View style={styles.emptyPanel}>
+              <Text style={styles.emptyTitle}>
+                {t("chats.errorTitle", { defaultValue: "Unable to load chats" })}
+              </Text>
+              <Text style={styles.emptySubtitle}>{error}</Text>
+            </View>
           </ScrollView>
         ) : list.length === 0 ? (
           <ScrollView
@@ -269,8 +271,10 @@ export default function ChatsScreen() {
               />
             }
           >
-            <Text style={styles.emptyTitle}>{t("chats.emptyTitle")}</Text>
-            <Text style={styles.emptySubtitle}>{t("chats.emptySubtitle")}</Text>
+            <View style={styles.emptyPanel}>
+              <Text style={styles.emptyTitle}>{t("chats.emptyTitle")}</Text>
+              <Text style={styles.emptySubtitle}>{t("chats.emptySubtitle")}</Text>
+            </View>
           </ScrollView>
         ) : (
           <ScrollView
@@ -475,10 +479,24 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 10,
     },
     emptyState: {
-      flex: 1,
+      flexGrow: 1,
       justifyContent: "center",
       alignItems: "center",
-      gap: 8,
+      paddingVertical: MarketplaceSpacing.xxl,
+      paddingHorizontal: MarketplaceSpacing.sm,
+    },
+    emptyPanel: {
+      width: "100%",
+      alignItems: "center",
+      gap: MarketplaceSpacing.sm,
+      paddingHorizontal: MarketplaceSpacing.lg,
+      paddingVertical: MarketplaceSpacing.xxl,
+      borderRadius: MarketplaceRadius.card,
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+      shadowColor: theme.shadow,
+      ...MarketplaceShadow.subtle,
     },
     loadingState: {
       flex: 1,
@@ -494,6 +512,6 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 14,
       color: theme.textMuted,
       textAlign: "center",
-      paddingHorizontal: 40,
+      lineHeight: 20,
     },
   });

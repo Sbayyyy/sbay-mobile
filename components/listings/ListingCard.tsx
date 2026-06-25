@@ -57,7 +57,14 @@ function ListingCardComponent({ listing, onPress, style }: ListingCardProps) {
         </View>
       )}
       <View style={styles.body}>
-        <Text style={styles.price}>{listing.price}</Text>
+        <Text
+          style={styles.price}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
+        >
+          {listing.price}
+        </Text>
         <Text style={styles.title} numberOfLines={2}>
           {listing.title}
         </Text>
@@ -103,13 +110,13 @@ const createStyles = (theme: ThemeColors) =>
       borderRadius: MarketplaceRadius.card,
       overflow: "hidden",
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.hairline,
       shadowColor: theme.shadow,
       ...MarketplaceShadow.card,
     },
     image: {
       width: "100%",
-      aspectRatio: 1.18,
+      aspectRatio: 1.12,
     },
     imagePlaceholder: {
       backgroundColor: theme.surfaceMuted,
@@ -117,20 +124,22 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: "center",
     },
     body: {
-      padding: MarketplaceSpacing.md,
-      gap: MarketplaceSpacing.xs,
+      paddingHorizontal: MarketplaceSpacing.md,
+      paddingVertical: 10,
+      gap: 5,
     },
     title: {
-      minHeight: 34,
+      minHeight: 36,
       fontSize: MarketplaceTypography.body,
       fontWeight: "700",
       color: theme.text,
-      lineHeight: 17,
+      lineHeight: 18,
     },
     price: {
-      fontSize: MarketplaceTypography.input,
+      fontSize: 16,
       fontWeight: "800",
       color: theme.success,
+      lineHeight: 20,
     },
     metadataRow: {
       flexDirection: "row",

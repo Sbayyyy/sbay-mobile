@@ -41,10 +41,6 @@ export default function SettingsHome() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
     router.replace("/(tabs)/me");
   };
 
@@ -92,8 +88,8 @@ export default function SettingsHome() {
                 style={[styles.row, !isLast && styles.rowDivider]}
                 onPress={() =>
                   item.id === "language"
-                    ? router.push("/settings/language")
-                    : router.push(`/settings/${item.id}`)
+                    ? router.replace("/settings/language")
+                    : router.replace(`/settings/${item.id}`)
                 }
               >
                 <Text style={styles.label}>{t(item.labelKey)}</Text>

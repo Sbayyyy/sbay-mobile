@@ -42,6 +42,12 @@ export function HelpSection() {
   const [bugSaving, setBugSaving] = useState(false);
   const [bugSuccess, setBugSuccess] = useState<string | null>(null);
   const [bugError, setBugError] = useState<string | null>(null);
+  const severityLabels: Record<BugReportSeverity, string> = {
+    low: t("settings.help.severityLow", { defaultValue: "Low" }),
+    medium: t("settings.help.severityMedium", { defaultValue: "Medium" }),
+    high: t("settings.help.severityHigh", { defaultValue: "High" }),
+    critical: t("settings.help.severityCritical", { defaultValue: "Critical" }),
+  };
 
   const prefillProfile = useCallback(async () => {
     try {
@@ -204,7 +210,9 @@ export function HelpSection() {
                   accessibilityRole="radio"
                   accessibilityState={{ selected: active }}
                 >
-                  <Text style={[styles.segmentLabel, active && styles.segmentLabelActive]}>{severity}</Text>
+                  <Text style={[styles.segmentLabel, active && styles.segmentLabelActive]}>
+                    {severityLabels[severity]}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
@@ -256,6 +264,6 @@ const createLocalStyles = (theme: ThemeColors) =>
     segmentRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     segmentButton: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surfaceMuted },
     segmentButtonActive: { borderColor: theme.primary, backgroundColor: theme.primaryMuted },
-    segmentLabel: { fontSize: 13, fontWeight: "700", color: theme.textMuted, textTransform: "capitalize" },
+    segmentLabel: { fontSize: 13, fontWeight: "700", color: theme.textMuted },
     segmentLabelActive: { color: theme.primary },
   });

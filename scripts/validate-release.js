@@ -69,6 +69,10 @@ function getPngDimensions(file) {
 }
 
 function validatePng(file, { minSize, square = true, exactSize }) {
+  if (typeof file !== "string" || file.trim().length === 0) {
+    return;
+  }
+
   const dimensions = getPngDimensions(file);
   if (!dimensions) return;
 
@@ -106,19 +110,16 @@ if (appJson?.expo) {
   assertHexColor(adaptiveIcon.backgroundColor, "expo.android.adaptiveIcon.backgroundColor");
   assertString(expo.icon, "expo.icon");
   assertString(adaptiveIcon.foregroundImage, "expo.android.adaptiveIcon.foregroundImage");
-  assertString(adaptiveIcon.backgroundImage, "expo.android.adaptiveIcon.backgroundImage");
   assertString(adaptiveIcon.monochromeImage, "expo.android.adaptiveIcon.monochromeImage");
   assertString(expo.web?.favicon, "expo.web.favicon");
 
   const iconPath = expo.icon?.replace(/^\.\//, "");
   const foregroundPath = adaptiveIcon.foregroundImage?.replace(/^\.\//, "");
-  const backgroundPath = adaptiveIcon.backgroundImage?.replace(/^\.\//, "");
   const monochromePath = adaptiveIcon.monochromeImage?.replace(/^\.\//, "");
   const faviconPath = expo.web?.favicon?.replace(/^\.\//, "");
 
   validatePng(iconPath, { exactSize: 1024 });
   validatePng(foregroundPath, { minSize: 432 });
-  validatePng(backgroundPath, { minSize: 432 });
   validatePng(monochromePath, { minSize: 432 });
   validatePng(faviconPath, { minSize: 32 });
 }

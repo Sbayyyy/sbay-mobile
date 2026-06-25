@@ -20,6 +20,43 @@ services:
       - gradle-cache:/root/.gradle
     command: npx expo start --lan --port 8081
 
+  web-preview:
+    build:
+      context: .
+      dockerfile: Dockerfile.preview
+    image: ${DOCKER_WEB_IMAGE:-sbay-mobile:expo-web}
+    env_file:
+      - .env
+    environment:
+      EXPO_NO_TELEMETRY: "1"
+      BROWSER: "none"
+      CI: "1"
+    ports:
+      - "8081:8081"
+      - "19000:19000"
+      - "19001:19001"
+      - "19002:19002"
+      - "19006:19006"
+    command: npx expo start --web --host lan
+
+  expo-go:
+    build:
+      context: .
+      dockerfile: Dockerfile.preview
+    image: ${DOCKER_WEB_IMAGE:-sbay-mobile:expo-web}
+    env_file:
+      - .env
+    environment:
+      EXPO_NO_TELEMETRY: "1"
+      BROWSER: "none"
+      REACT_NATIVE_PACKAGER_HOSTNAME: ${EXPO_PACKAGER_HOSTNAME:-192.168.178.113}
+    ports:
+      - "8081:8081"
+      - "19000:19000"
+      - "19001:19001"
+      - "19002:19002"
+    command: sh -lc "unset CI && npx expo start --go --host lan --port 8081"
+
   android-build:
     build:
       context: .

@@ -4,7 +4,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -43,11 +42,15 @@ export function ProfileSection() {
         avatar: profile.avatar ?? "",
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load profile");
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("settings.profile.loadError", { defaultValue: "Unable to load profile." }),
+      );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -70,7 +73,11 @@ export function ProfileSection() {
       const updated = await updateMyProfile({ avatar: url });
       setFormData((prev) => ({ ...prev, avatar: updated.avatar ?? url }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to upload avatar");
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("settings.profile.uploadError", { defaultValue: "Unable to upload avatar." }),
+      );
     } finally {
       setAvatarUploading(false);
     }
@@ -95,7 +102,11 @@ export function ProfileSection() {
     try {
       await updateMyProfile({ displayName: sanitizeInput(nameValue), phone: phoneValue ? sanitizeInput(phoneValue) : null });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to save profile");
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("settings.profile.saveError", { defaultValue: "Unable to save profile." }),
+      );
     } finally {
       setSaving(false);
     }
