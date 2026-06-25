@@ -19,7 +19,6 @@ import { AppPopupProvider } from "@/providers/AppPopupProvider";
 import { type PushNotificationData } from "@/types/notifications";
 import { getNotificationTarget } from "@/services/notification-links";
 import { markNotificationRead } from "@/services/notifications";
-import { BugReportFab } from "@/components/support/BugReportFab";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { StartupLoadingScreen } from "@/components/common/StartupLoadingScreen";
 import { ErrorReporter } from "@/services/error-reporter";
@@ -347,7 +346,6 @@ function RootLayoutContent() {
             </>
           )}
         </Stack>
-        <BugReportFab />
         <StatusBar style={statusStyle} />
       </ThemeProvider>
     </PaperProvider>
