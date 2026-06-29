@@ -11,7 +11,10 @@ import {
 } from "@/constants/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useAuth } from "@/providers/AuthProvider";
-import { completeGoogleAuthFromParams } from "@/services/auth";
+import {
+  completeGoogleAuthFromParams,
+  GOOGLE_AUTH_UNAVAILABLE_ERROR,
+} from "@/services/auth";
 
 export default function GoogleAuthCallbackScreen() {
   const rawParams = useLocalSearchParams<Record<string, string | string[]>>();
@@ -36,6 +39,14 @@ export default function GoogleAuthCallbackScreen() {
       })
       .catch((err) => {
         if (!active) return;
+        if (err instanceof Error && err.message === GOOGLE_AUTH_UNAVAILABLE_ERROR) {
+          setError(
+            t("auth.google.comingSoonMessage", {
+              defaultValue: "Google sign-in is coming soon.",
+            }),
+          );
+          return;
+        }
         setError(
           err instanceof Error
             ? err.message

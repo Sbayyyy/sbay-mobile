@@ -4,6 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 
 import { API_BASE_URL, apiRequest } from "@/services/api";
 import { getAuthToken, setAuthToken, type AuthRefreshResult } from "@/services/auth-session";
+import { GOOGLE_AUTH_ENABLED } from "@/services/config";
 import { ErrorReporter } from "@/services/error-reporter";
 
 export type AuthUser = {
@@ -78,6 +79,7 @@ const TOKEN_STORAGE_KEY = "sbay.auth.token";
 const REFRESH_TOKEN_STORAGE_KEY = "sbay.auth.refreshToken";
 const GOOGLE_REDIRECT_PATH = "auth/google";
 export const GOOGLE_AUTH_CANCELLED_ERROR = "google_auth_cancelled";
+export const GOOGLE_AUTH_UNAVAILABLE_ERROR = "google_auth_unavailable";
 const GOOGLE_AUTH_START_PATH =
   process.env.EXPO_PUBLIC_GOOGLE_AUTH_START_PATH ?? "/api/auth/google/mobile/start";
 const GOOGLE_AUTH_EXCHANGE_PATH =
@@ -128,8 +130,12 @@ export function getGoogleAuthStartUrl(redirectUri = getGoogleRedirectUri()): str
 
 export async function completeGoogleAuthFromParams(
   params: Record<string, string | string[] | undefined>,
-  redirectUri = getGoogleRedirectUri(),
+  redirectUri?: string,
 ): Promise<GoogleAuthResult> {
+  if (!GOOGLE_AUTH_ENABLED) {
+    throw new Error(GOOGLE_AUTH_UNAVAILABLE_ERROR);
+  }
+
   const error = getFirstParam(params, ["error", "error_description", "message"]);
   if (error) {
     throw new Error(error);
@@ -156,15 +162,22 @@ export async function completeGoogleAuthFromParams(
 
   return apiRequest<GoogleAuthResult>(GOOGLE_AUTH_EXCHANGE_PATH, {
     method: "POST",
-    body: JSON.stringify({ code, redirectUri }),
+    body: JSON.stringify({
+      code,
+      redirectUri: redirectUri ?? getGoogleRedirectUri(),
+    }),
     skipAuthRefresh: true,
   });
 }
 
 export async function completeGoogleAuthFromUrl(
   callbackUrl: string,
-  redirectUri = getGoogleRedirectUri(),
+  redirectUri?: string,
 ): Promise<GoogleAuthResult> {
+  if (!GOOGLE_AUTH_ENABLED) {
+    throw new Error(GOOGLE_AUTH_UNAVAILABLE_ERROR);
+  }
+
   const parsed = Linking.parse(callbackUrl);
   return completeGoogleAuthFromParams(
     (parsed.queryParams ?? {}) as Record<string, string | string[] | undefined>,
@@ -173,6 +186,10 @@ export async function completeGoogleAuthFromUrl(
 }
 
 export async function loginWithGoogle(): Promise<GoogleAuthResult> {
+  if (!GOOGLE_AUTH_ENABLED) {
+    throw new Error(GOOGLE_AUTH_UNAVAILABLE_ERROR);
+  }
+
   const redirectUri = getGoogleRedirectUri();
   const authUrl = getGoogleAuthStartUrl(redirectUri);
   const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);

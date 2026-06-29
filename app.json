@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.syrianbay.app",
-      "versionCode": 27,
+      "versionCode": 28,
       "icon": "./assets/images/android-icon-foreground.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -158,6 +158,7 @@
     },
     "extra": {
       "apiBaseUrl": "https://api.syrian-bay.com",
+      "googleAuthEnabled": false,
       "webBaseUrl": "https://syrian-bay.com",
       "router": {},
       "eas": {
